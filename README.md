@@ -24,7 +24,8 @@ and a focus on keeping things lean in memory.
 
 ## Status
 
-Early drafting stage. Nothing real to be seen here, yet.
+A first crude example works (not the one directly below, but the one at the bottom). This means you are invited to start playing with this
+library, _but_ many things will change, including in backwards-incompatible ways.
 
 ## Example mockup - Not (yet) compilable/working in this form - but see further below
 
