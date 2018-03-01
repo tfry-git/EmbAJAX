@@ -33,12 +33,12 @@ Early drafting stage. Nothing real to be seen here, yet.
 ArduJAXSlider *slider1;
 ArduJAXDisplay *display1;
 
-page1 = ArduJAXPage(
+page1 = ArduJAXPage(ArudJAX_makeList({
    new ArduJAXStatic("<h1>Hello world</h1><p>This is a static section of plain old HTML. Next up: A slider / range control</p>"),
    slider1 = new ArduJAXSlider("slider1_id", min, max, initial),
    new ArduJAXStatic("<h1>Hello world</h1><p>This is a static section of plain old HTML. Next up: A slider / range control</p>"),
    display1 = new ArduJAXDisplay("display1_id", "Some intial value")
-);
+}));
 
 // Note ArduJAX-Objects could be allocated on the stack, too, but that would require more tedious writing, or some really fancy
 // macros. As ArduJAX objects will probably be alive for the entire runtime, heap fragmentation should not be an issue.
@@ -47,13 +47,14 @@ void handlePage() {
   if(server.method() == HTTP_POST) { // AJAX request
     page1.handleRequest(server.arg("data"));
   } else {  // Page load
-    server.send(200, "text/html", page1.write());  
+    page1.print();
   }
 }
 
 void setup() {
 // [...]  // usual web server setup
   server.on("/", handleRoot);  // set handler
+  ArduJAXBase::setDriver(new ArduJAXOoutputDriverESP8266(&server));
 }
 
 void loop() {
