@@ -28,9 +28,9 @@ public:
 };
 
 #if defined (ESP8266)
-class ArduJAXOoutputDriverESP8266 : public ArduJAXOutputDriverBase {
+class ArduJAXOutputDriverESP8266 : public ArduJAXOutputDriverBase {
 public:
-    ArduJAXOutputDriverESP8266(ESP8266Webserver *server) {
+    ArduJAXOutputDriverESP8266(ESP8266WebServer *server) {
         _server = server;
     }
     void printHeader(bool html) override {
@@ -44,32 +44,37 @@ public:
     void printContent(const char *content) override {
         _server->sendContent(content);
     }
+    const char* getArg (const char* name);
 private:
-    ESP8266Webserver *_server;
+    ESP8266WebServer *_server;
 };
 #endif
 
 class ArduJAXBase {
 public:
     virtual void print() = 0;
-    static void setDriver(ArduJAXOutputdriverBase *driver) {
+    static void setDriver(ArduJAXOutputDriverBase *driver) {
         _driver = driver;
     }
-protected;
-    static ArdUJAXOuputDriverBase *_driver;
+    virtual bool sendUpdates() {
+        return false;
+    }
+protected:
+    static ArduJAXOutputDriverBase *_driver;
 };
+ArduJAXOutputDriverBase *ArduJAXBase::_driver;  // TODO: terrible HACK
 
 struct ArduJAXList {
     uint8_t count;
-    ArudJAXBase* members;
+    ArduJAXBase** members;
 };
 
-template<size_t N> ArduJAXList void AruduJAX_makeList (ArduJAXBase* (&list)[N]) {  // does constexpr. work?
+template<size_t N> ArduJAXList ArduJAX_makeList (ArduJAXBase* (&list)[N]) {  // does constexpr. work?
     ArduJAXList ret;
     ret.count = N;
     ret.members = new ArduJAXBase*[N]; // note: list passed by reference, as automatic size detection does not work, otherwise. Hence need to copy
     for (int i = 0; i < N; ++i) {
-        members[i] = list[i];
+        ret.members[i] = list[i];
     }
     return ret;
 }
@@ -84,6 +89,14 @@ public:
             _children.members[i]->print();
         }
     }
+    bool sendUpdates() override {
+        bool sent = false;
+        for (int i = 0; i < _children.count; ++i) {
+            if (sent) _driver->printContent(",\n");
+            sent = _children.members[i]->sendUpdates();
+        }
+        return sent;
+    }
 protected:
     ArduJAXList _children;
 };
@@ -94,10 +107,45 @@ public:
         _content = content;
     }
     void print() override {
-        _driver.printContent(_content);
+        _driver->printContent(_content);
     }
 protected:
-    const char* content;
+    const char* _content;
+};
+
+class ArduJAXControllable : public ArduJAXBase {
+public:
+    ArduJAXControllable(const char* id) {
+        _id = id;
+        changed = false;
+        _value = "";
+    }
+    void print() override {
+        _driver->printContent("<div id=\"");
+        _driver->printContent(_id);
+        _driver->printContent("\">");
+        _driver->printContent(_value);
+        _driver->printContent("</div>\n");
+    }
+    virtual bool sendUpdates()  {
+        if (!changed) return false;
+        _driver->printContent("{\n\"id\": \"");
+        _driver->printContent(_id);
+        _driver->printContent("\",\n\"changes\": [{\n\"value\": \"");
+        _driver->printContent(_value);
+        _driver->printContent("\",\n\"set\": \"innerHTML\"\n}]\n}");
+        changed = false;
+        return true;
+    }
+    void setValue(const char* new_value) {
+        _value = new_value;
+        changed = true;
+    }
+protected:
+friend class ArduJAXPage;
+    const char* _id;
+    const char* _value;
+    bool changed;  // Needs syncing to client? TODO: actually this would have to be per client, but for now we focus on the single client use-case
 };
 
 class ArduJAXPage : public ArduJAXContainer {
@@ -107,31 +155,42 @@ public:
     }
     void print() override {
         _driver->printHeader(true);
-        _driver->print("<HTML><HEAD><TITTLE>");
-        _driver->print(title);
-        _driver->print("</TITLE>\n<SCRIPT>\n");
-        _driver->print("function doRequest(request='', id='', value='') {\n"
-                       "    var req = new XMLHttpRequest();\n"
-                       "    req.onload = function() {\n"
-                       "       doUpdates(JSON.parse(req.responseText);\n
-                       "    }\n"
-                       "    req.open('POST', window.location.pathName, true);\n"
-                       "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
-                       "    req.send('request=' + request + '&id=' + id + '&value=' + value)\n"
-                       "}\n");
-        _driver->print("function doUpdates(updates) {\n"
-                       "    for(i = 0; i < updates.length; i++) {\n"
-                       "       element = doc.getElementById(updates[i].id);\n"
-                       "       changes = updates[i].changes;\n"
-                       "       for(j = 0; j < changes; ++j) {\n"
-                       "          element[changes[j].set] = element[changes[j].value];\n"
-                       "       }\n"
-                       "    }\n"
-                       "}\n");
-        _driver->print("</SCRIPT><HEAD>\n<BODY>\n");
+        _driver->printContent("<HTML><HEAD><TITLE>");
+        _driver->printContent(_title);
+        _driver->printContent("</TITLE>\n<SCRIPT>\n");
+        _driver->printContent("function doRequest(request='', id='', value='') {\n"
+                              "    var req = new XMLHttpRequest();\n"
+                              "    req.onload = function() {\n"
+                              "       doUpdates(JSON.parse(req.responseText));\n"
+                              "    }\n"
+                              "    req.open('POST', 'ardujax', true);\n"
+                              "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
+                              "    req.send('request=' + request + '&id=' + id + '&value=' + value);\n"
+                              "}\n");
+        _driver->printContent("function doUpdates(updates) {\n"
+                              "    for(i = 0; i < updates.length; i++) {\n"
+                              "       element = document.getElementById(updates[i].id);\n"
+                              "       changes = updates[i].changes;\n"
+                              "       for(j = 0; j < changes.length; ++j) {\n"
+                              "          element[changes[j].set] = changes[j].value;\n"
+                              "       }\n"
+                              "    }\n"
+                              "}\n");
+        _driver->printContent("function doPoll() {\n"
+                              "    doRequest('poll');\n"
+                              "}\n"
+                              "setInterval(doPoll,1000);\n");
+        _driver->printContent("</SCRIPT></HEAD>\n<BODY>\n");
         printChildren();
-        _driver->print("\n</BODY></HTML>\n");
+        _driver->printContent("\n</BODY></HTML>\n");
+    }
+    void handleRequest() {
+        // ignore any parameters for now. TODO: acutally handle the request
+        _driver->printHeader(false);
+        _driver->printContent("[\n");
+        sendUpdates();
+        _driver->printContent("\n]\n");
     }
 protected:
-    const char* title;
+    const char* _title;
 };

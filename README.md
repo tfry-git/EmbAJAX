@@ -26,7 +26,7 @@ and a focus on keeping things lean in memory.
 
 Early drafting stage. Nothing real to be seen here, yet.
 
-## Example mockup
+## Example mockup - Not (yet) compilable/working in this form - but see further below
 
 ```
 
@@ -45,7 +45,7 @@ page1 = ArduJAXPage(ArudJAX_makeList({
 
 void handlePage() {
   if(server.method() == HTTP_POST) { // AJAX request
-    page1.handleRequest(server.arg("data"));
+    page1.handleRequest();
   } else {  // Page load
     page1.print();
   }
@@ -62,4 +62,49 @@ void loop() {
   display1.setValue(digitalRead(another_pin) ? "Status OK" : "Status Fail");
 }
 
+```
+
+## And a less exciting, but somewhat convoluted show off of a test-case that actually works right now (on ESP8266)
+
+```
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <ArduJAX.h>
+
+ESP8266WebServer server(80); //Server on port 80
+
+ArduJAXControllable tester("millis");
+ArduJAXBase* elements[] = {
+  new ArduJAXStatic("<h1>This is a test</h1>"),
+  &tester
+};
+ArduJAXPage page(ArduJAX_makeList(elements), "ArduJAXTest");
+ArduJAXOutputDriverESP8266 driver(&server);
+
+void handleRoot() {
+  page.print();
+}
+
+void handleReq() {
+  page.handleRequest();
+}
+
+void setup() {
+
+// Please fill in: Set up your WIFI connection
+[...]
+
+  page.setDriver(&driver);
+  server.on("/", handleRoot);
+  server.on("/", HTTP_POST, handleRoot);
+  server.on("/ardujax", handleReq);
+  server.begin();
+}
+
+String dummy;
+void loop() {
+  server.handleClient();
+  dummy = String(millis ());
+  tester.setValue (dummy.c_str ());
+}
 ```
