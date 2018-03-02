@@ -18,8 +18,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
 **/
+#ifndef ARDUJAX_H
+#define ARDUJAX_H
+
+#include <Arduino.h>
+
+#define ARDUJAX_MAX_ID_LEN 16
 
 class ArduJAXOutputDriverBase;
+class ArduJAXElement;
+class ArduJAXContainer;
+
 class ArduJAXBase {
 public:
     virtual void print() const = 0;
@@ -27,7 +36,7 @@ public:
         _driver = driver;
     }
     /** serialize pending changes for the client. Virtual so you could customize it, completely, but
-     *  instead you probably want to override ArduJAXControllable::valueProperty(), only, instead.
+     *  instead you probably want to override ArduJAXElement::valueProperty(), only, instead.
      *
      *  @param since revision number last sent to the server. Send only changes that occured since this revision.
      *  @param first if false, @em and this object writes any update, it should write a ',', first.
@@ -36,8 +45,19 @@ public:
     virtual bool sendUpdates(uint16_t since, bool first=true) {
         return false;
     }
+    /** Cast this object to ArduJAXElement if it is a controllable element.
+     *  @return 0, if this is not a controllable element. */
+    virtual ArduJAXElement* toElement() {
+        return 0;
+    }
+    /** Cast this object to ArduJAXContainer if it is a container.
+     *  @return 0, if this is not a container. */
+    virtual ArduJAXContainer* toContainer() {
+        return 0;
+    }
 protected:
     static ArduJAXOutputDriverBase *_driver;
+    static char itoa_buf[8];
 };
 
 /** Output driver as an abstraction over the server read/write commands.
@@ -51,7 +71,7 @@ public:
     }
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
-    virtual String getArg(const char* name) = 0;
+    virtual const char* getArg(const char* name, char* buf, int buflen) = 0;
     uint16_t revision() const {
         return _revision;
     }
@@ -67,7 +87,8 @@ private:
     uint16_t next_revision;
 };
 
-#if defined (ESP8266)
+#if defined (ESP8266)  // TODO: Move this to extra header
+#include <ESP8266WebServer.h>
 class ArduJAXOutputDriverESP8266 : public ArduJAXOutputDriverBase {
 public:
     ArduJAXOutputDriverESP8266(ESP8266WebServer *server) {
@@ -85,15 +106,14 @@ public:
     void printContent(const char *content) override {
         _server->sendContent(content);
     }
-    String getArg(const char* name) override {
-        return _server->arg(name);
+    const char* getArg(const char* name, char* buf, int buflen) override {
+        _server->arg(name).toCharArray (buf, buflen);
+        return buf;
     };
 private:
     ESP8266WebServer *_server;
 };
 #endif
-
-ArduJAXOutputDriverBase *ArduJAXBase::_driver;  // TODO: terrible HACK
 
 struct ArduJAXList {
     uint8_t count;
@@ -127,13 +147,20 @@ public:
         }
         return first;
     }
+    /** Recursively look for a child (hopefully, there is only one) of the given id, and return a pointer to it. */
+    ArduJAXElement* findChild(const char*id) const;
+    ArduJAXContainer *toContainer() override {
+        return this;
+    }
 protected:
     ArduJAXList _children;
 };
 
-/** This class represents a chunk of static HTML that will not be changed / cannot be interacted with. Neither from the client, nor from the server. */
+/** This class represents a chunk of static HTML that will not be changed / cannot be interacted with. Neither from the client, nor from the server.
+ *  This does not have to correspond to a complete HTML element, it can be any fragment. */
 class ArduJAXStatic : public ArduJAXBase {
 public:
+    /** ctor. Note: Content string is not copied. Don't make this a temporary. */
     ArduJAXStatic(const char* content) {
         _content = content;
     }
@@ -144,88 +171,68 @@ protected:
     const char* _content;
 };
 
-/** Base class for objects that can be changed, either from the client, or from the server, or both. The base class implements an HTML "span" element.
- *  The inner content of that span can be changed using setValue(). */
-class ArduJAXControllable : public ArduJAXBase {
+/** Abstract Base class for objects that can be changed, either from the server, or from both the client and the server both.
+ *  To create a derived class, you will need to provide appropriate implementations of print(), value(), and valueProperty().
+ *  Further, you will most likely want to add a function like setValue() for control from the server. If the element is to
+ *  receive updates from the client side, you will a) have to include an appropriate onChange-call in print(), and b) provide
+ *  a non-empty implementation of updateFromDriverArg().
+ *
+ *  Best look at a simple example such as ArduJAXActiveSpan or ArduJAXSlider for details.
+ */
+class ArduJAXElement : public ArduJAXBase {
 public:
-    ArduJAXControllable(const char* id) {
-        _id = id;
-        _flags = StatusVisible;
-        _value = "";
-        revision = 0;
+    /** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
+    ArduJAXElement(const char* id);
+
+    const char* id() const {
+        return _id;
     }
-    void print() const override {
-        _driver->printContent("<span id=\"");
-        _driver->printContent(_id);
-        _driver->printContent("\">");
-        _driver->printContent(_value);
-        _driver->printContent("</span>\n");
+    bool sendUpdates(uint16_t since, bool first=true) override;
+    void setVisible(bool visible);
+
+    /** const char representation of the current server side value. Must be implemented in derived class.
+     *  Note: deliberately not const, to allow for non-const conversion and caching. */
+    virtual const char* value() = 0;
+
+    /** override this in your derived class to allow updates to be propagated from client to server (if wanted).
+     *  The implementation should _not_ call setChanged(). */
+    virtual void updateFromDriverArg(const char* argname) {
+        return;
     }
-    bool sendUpdates(uint16_t since, bool first=true) override {
-        if (!changed(since)) return false;
-         if (!first) _driver->printContent(",\n");
-        _driver->printContent("{\n\"id\": \"");
-        _driver->printContent(_id);
-        _driver->printContent("\",\n\"changes\": [");
-        for (int8_t i = -2; i < additionalPropertyCount(); ++i) {
-            if (i != -2) _driver->printContent(",");
-           _driver->printContent("{\n\"set\": \"");
-           _driver->printContent(properyId(i));
-           _driver->printContent("\",\n\"value\": \"");
-           _driver->printContent(properyValue(i));
-           _driver->printContent("\"\n}");
-        }
-        _driver->printContent("]\n}");
-        setChanged();
-        return true;
-    }
-    void setVisible(bool visible) {
-        if (visible == _flags & StatusVisible) return;
-        setChanged();
-        if (visible) _flags |= StatusVisible;
-        else _flags -= _flags & StatusVisible;
-    }
-    virtual void setValue(const char* new_value) {
-        _value = new_value;
-        setChanged();
-    }
-    const char* value() const {
-        return _value;
-    }
-    virtual const char* valueProperty() const {
-        return "innerHTML";
-    }
+
+    /** The JS property that will have to be set on the client */
+    virtual const char* valueProperty() const = 0;
+
     /** To allow addition of further properties to sync to the client, in derived classes */
     virtual uint8_t additionalPropertyCount() const {
         return 0;
     }
+
     /** To allow addition of further properties to sync to the client, in derived classes.
      *  NOTE: do call the base implementation when overriding: It handles the built-in properties
      *  with negative numbering; */
-    virtual const char* properyId(int8_t num) const {
+    virtual const char* propertyId(int8_t num) const {
         if (num == -1) return (valueProperty());
         if (num == -2) return ("style.display");
         return "";
     }
+
     /** To allow addition of further properties to sync to the client, in derived classes.
      *  NOTE: do call the base implementation when overriding: It handles the built-in properties
      *  with negative numbering; */
-    virtual const char* properyValue(int8_t num) const {
-        if (num == -1) return (_value);
+    virtual const char* propertyValue(int8_t num) {
+        if (num == -1) return (value());
         if (num == -2) return (_flags & StatusVisible ? "initial" : "none");
         return "";
+    }
+    ArduJAXElement *toElement() override {
+        return this;
     }
 protected:
 friend class ArduJAXPage;
     const char* _id;
-    const char* _value;
-    void setChanged() {
-        revision = _driver->setChanged();
-    }
-    bool changed(uint16_t since) {
-        if ((revision + 20000) < since) revision = since + 1;    // basic overflow protection. Results in sending _all_ states at least every 20000 request cycles
-        return (revision > since);
-    }
+    void setChanged();
+    bool changed(uint16_t since);
     enum {
         StatusVisible = 1,
         StatusChanged = 2
@@ -235,25 +242,78 @@ private:
     uint16_t revision;
 };
 
+/** An HTML span element with content that can be updated from the server (not the client) */
+class ArduJAXMutableSpan : public ArduJAXElement {
+public:
+    ArduJAXMutableSpan(const char* id) : ArduJAXElement(id) {
+        _value = 0;
+    }
+    void print() const override;
+    const char* value() override {
+        return _value;
+    }
+    const char* valueProperty() const override {
+        return "innerHTML";
+    }
+    /** Set the <span>s content to the given value. Note: The string is not copied, so don't make this a temporary. */
+    void setValue(const char* value) {
+        _value = value;
+        setChanged();
+    }
+private:
+    const char* _value;
+};
+
+/** An HTML span element with content that can be updated from the server (not the client) */
+class ArduJAXSlider : public ArduJAXElement {
+public:
+    ArduJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial) : ArduJAXElement(id) {
+        _value = initial;
+        _min = min;
+        _max = max;
+    }
+    void print() const override;
+    const char* value() override;
+    const char* valueProperty() const override {
+        return "value";
+    }
+    void setValue(int16_t value) {
+        _value = value;
+        setChanged();
+    }
+    void updateFromDriverArg(const char* argname) override;
+private:
+    int16_t _min, _max, _value;
+};
+
+/** This is the main interface class. Create a web-page with a list of elements on it, and arrange for
+ *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,
+ *  both page loads, and AJAX are handled on the same URL, but the first via GET, and the second
+ *  via POST. */
 class ArduJAXPage : public ArduJAXContainer {
 public:
-    ArduJAXPage(ArduJAXList children, const char* title) : ArduJAXContainer(children) {
+    /** Create a web page.
+     *  @param children list of elements on the page
+     *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
+     *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
+    ArduJAXPage(ArduJAXList children, const char* title, const char* header_add = 0) : ArduJAXContainer(children) {
         _title = title;
+        _header_add = 0;
     }
     void print() const override {
         _driver->printHeader(true);
         _driver->printContent("<HTML><HEAD><TITLE>");
-        _driver->printContent(_title);
+        if (_title) _driver->printContent(_title);
         _driver->printContent("</TITLE>\n<SCRIPT>\n");
         _driver->printContent("var serverrevision = 0;\n"
-                              "function doRequest(request='', id='', value='') {\n"
+                              "function doRequest(id='', value='') {\n"
                               "    var req = new XMLHttpRequest();\n"
                               "    req.onload = function() {\n"
                               "       doUpdates(JSON.parse(req.responseText));\n"
                               "    }\n"
                               "    req.open('POST', document.URL, true);\n"
                               "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
-                              "    req.send('request=' + request + '&id=' + id + '&value=' + value + '&revision=' + serverrevision);\n"
+                              "    req.send('id=' + id + '&value=' + encodeURIComponent(value) + '&revision=' + serverrevision);\n"
                               "}\n");
         _driver->printContent("function doUpdates(response) {\n"
                               "    serverrevision = response.revision;\n"
@@ -272,25 +332,44 @@ public:
                               "    }\n"
                               "}\n");
         _driver->printContent("function doPoll() {\n"
-                              "    doRequest('poll');\n"
+                              "    doRequest();\n"  // poll == request without id
                               "}\n"
                               "setInterval(doPoll,1000);\n");
-        _driver->printContent("</SCRIPT></HEAD>\n<BODY>\n");
+        _driver->printContent("</SCRIPT>\n");
+        if (_header_add) _driver->printContent(_header_add);
+        _driver->printContent("</HEAD>\n<BODY>\n");
         printChildren();
         _driver->printContent("\n</BODY></HTML>\n");
     }
+    /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
+     *  to whichever URL you served the page itself, from. */
     void handleRequest() {
-        // ignore any parameters for now. TODO: actually handle the request other than poll
+        char conversion_buf[ARDUJAX_MAX_ID_LEN];
+
+        // handle value changes sent from client
+        uint16_t client_revision = atoi(_driver->getArg("revision", conversion_buf, ARDUJAX_MAX_ID_LEN));
+        const char *id = _driver->getArg("id", conversion_buf, ARDUJAX_MAX_ID_LEN);
+        ArduJAXElement *element = (id[0] == '\0') ? 0 : findChild(id);
+        if (element) {
+            element->updateFromDriverArg("value");
+        }
+
+        // then relay value changes that have occured in the server (possibly in response to those sent)
         _driver->printHeader(false);
         _driver->printContent("{\"revision\": ");
-        String dummy(_driver->revision());
-        _driver->printContent(dummy.c_str());
+        _driver->printContent(itoa(_driver->revision(), conversion_buf, 10));
         _driver->printContent(",\n\"updates\": [\n");
-        uint16_t client_revision = atoi(_driver->getArg("revision").c_str());
         sendUpdates(client_revision);
         _driver->printContent("\n]}\n");
+
+        if (element) {
+            element->setChanged(); // So changes sent from one client will be synced to the other clients
+        }
         _driver->nextRevision();
     }
 protected:
     const char* _title;
+    const char* _header_add;
 };
+
+#endif

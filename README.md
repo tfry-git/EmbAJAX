@@ -1,6 +1,6 @@
 # ArduJAX
 
-Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
+Simplistic framework for creating and handling displays and controls on a web page served by an Arduino (or other small device).
 
 ## Overview
 
@@ -19,74 +19,45 @@ I.e. the core features are:
 - Object-based representation of the controls on the web page. The programmer can simply interact with local objects, while the
   framework takes care of keeping information in sync with the client.
 - Allows multiple clients to interact with the same page, concurrently.
+  - You can even pass information between two clients this way: Try loading the example, below, in two separate browsers!
 
 This framework _could_ be used indepently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
 and a focus on keeping things lean in memory.
 
 ## Status
 
-A first crude example works (not the one directly below, but the one at the bottom). This means you are invited to start playing with this
+A first crude example works (see below). This means you are invited to start playing with this
 library, _but_ many things will change, including in backwards-incompatible ways.
 
-## Example mockup - Not (yet) compilable/working in this form - but see further below
+## Example sketch (compilable on ESP8266)
 
-```
-
-ArduJAXSlider *slider1;
-ArduJAXDisplay *display1;
-
-page1 = ArduJAXPage(ArudJAX_makeList({
-   new ArduJAXStatic("<h1>Hello world</h1><p>This is a static section of plain old HTML. Next up: A slider / range control</p>"),
-   slider1 = new ArduJAXSlider("slider1_id", min, max, initial),
-   new ArduJAXStatic("<h1>Hello world</h1><p>This is a static section of plain old HTML. Next up: A slider / range control</p>"),
-   display1 = new ArduJAXDisplay("display1_id", "Some intial value")
-}));
-// Note ArduJAX-Objects could be allocated on the stack, too, but that would require more tedious writing, or some really fancy
-// macros. As ArduJAX objects will probably be alive for the entire runtime, heap fragmentation should not be an issue.
-
-void handlePage() {
-  if(server.method() == HTTP_POST) { // AJAX request
-    page1.handleRequest();
-  } else {  // Page load
-    page1.print();
-  }
-}
-
-void setup() {
-// Please fill in: Set up your WIFI connection
-[...]
-
-  new ArduJAXOoutputDriverESP8266(&server);
-  server.on("/", handlePage);  // set handler
-}
-
-void loop() {
-  digitalWrite(some_pin, slider1.numericValue());
-  display1.setValue(digitalRead(another_pin) ? "Status OK" : "Status Fail");
-}
-
-```
-
-## And a less exciting off of a test-case that actually works right now (on ESP8266)
+Not terribly useful, but you know what to really do with a slider, and a display, right?
 
 ```
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ArduJAX.h>
 
-ESP8266WebServer server(80); //Server on port 80
+// Set up web server, and register it with ArduJAX
+ESP8266WebServer server(80);
 ArduJAXOutputDriverESP8266 driver(&server);
 
-ArduJAXControllable tester("millis");
-ArduJAXControllable tester2("blinky");
+// I admit, the following isn't yet as elegant as what I'd have hoped, for,
+// but you'll admit, it's not too difficult to read and write, either:
+ArduJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
+ArduJAXMutableSpan display("display");         // a plain text display
+ArduJAXMutableSpan blinky("blinky");           // another plain text display that we will show/hide from the server
 ArduJAXBase* elements[] = {
-  new ArduJAXStatic("<h1>This is a test</h1><p>"),
-  &tester,
-  new ArduJAXStatic("</p><p>"),
-  &tester2
+  new ArduJAXStatic("<h1>This is a test</h1><p>The value you set in the following slider: "),
+  &slider,
+  new ArduJAXStatic(" is sent to the server...</p><p>... which displays it here: <b>"),
+  &display,
+  new ArduJAXStatic("</b></p><p>And here's a totally useless element showing and hiding based on server time: "),
+  &blinky
 };
 ArduJAXPage page(ArduJAX_makeList(elements), "ArduJAXTest");
 
+// This is all you need to write for the page handler
 void handlePage() {
   if(server.method() == HTTP_POST) { // AJAX request
     page.handleRequest();
@@ -96,23 +67,29 @@ void handlePage() {
 }
 
 void setup() {
+  // Example WIFI setup as an access point. Change this to whatever suits you, best.
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig (IPAddress (192,168,4,1), IPAddress (0,0,0,0), IPAddress (255,255,255,0));
+  WiFi.softAP(ArduJAXTest, 12345678);
 
-// Please fill in: Set up your WIFI connection
-[...]
-
+  // Tell the server to serve our ArduJAX test page on root
   server.on("/", handlePage);
   server.begin();
 
-  tester2.setValue("The server makes me blink");
+  // Just a dummy text. You could change this at any time during loop, too!
+  blinky.setValue("Server makes me blink");
 }
 
-String dummy;
 void loop() {
+  // handle network
   server.handleClient();
-  dummy = String(millis ());
-  tester.setValue (dummy.c_str ());
-  tester2.setVisible((millis() / 2000) % 2);
+
+  // And these two lines are all you have to write for the logic: Read slider value, write it to display,
+  // and toggle the blinky every three seconds.
+  display.setValue (slider.value());
+  blinky.setVisible((millis() / 3000) % 2);
 }
+
 ```
 
 ## Some implementation notes
@@ -124,3 +101,18 @@ changes to the server, so in most cases, the client would still appear to be ref
 
 To avoid sending all states of all controls on each request from each client, the framework keeps track of the lastest "revision number"
 sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded.
+
+- Explain why avoidance of String, and future directions
+- Explain reason for updateFromDriverArg
+
+## Some TODOs
+
+- More controls (obviously), importantly buttons, and text input
+- Ability to register callbacks on value changes, which will allow for cleaner code, and immediate reaction
+
+## The beggar's line
+
+So far everbody else has been rolling their own piece of AJAX for their own little project, and that's what I could have done, too, in a
+tenth of the time spent on this framework, including its docs. But I chose to write all this, instead. Because I believe in re-usable solutions
+and shared efforts. If you do too, and this framework is useful to you, consider dropping a micro-donation via PayPal to thomas.friedrichsmeier@gmx.de .
+Thanks!
