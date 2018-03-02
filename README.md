@@ -17,9 +17,10 @@ I.e. the core features are:
 - Automatic addition of AJAX code to relay control information from the client to the server and back
 - Automatic handling of the AJAX requests on the server side
 - Object-based representation of the controls on the web page. The programmer can simply interact with local objects, while the
-  framework shall take care of keeping information in sync with the client.
+  framework takes care of keeping information in sync with the client.
+- Allows multiple clients to interact with the same page, concurrently.
 
-This framework _could_ be used independtly of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
+This framework _could_ be used indepently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
 and a focus on keeping things lean in memory.
 
 ## Status
@@ -74,6 +75,7 @@ void loop() {
 #include <ArduJAX.h>
 
 ESP8266WebServer server(80); //Server on port 80
+ArduJAXOutputDriverESP8266 driver(&server);
 
 ArduJAXControllable tester("millis");
 ArduJAXControllable tester2("blinky");
@@ -98,7 +100,6 @@ void setup() {
 // Please fill in: Set up your WIFI connection
 [...]
 
-  new ArduJAXOutputDriverESP8266 (&server);
   server.on("/", handlePage);
   server.begin();
 
@@ -120,3 +121,6 @@ Currently, the web servers for embeddables I have deal with so far, are limited 
 a permanent AJAX connection, all further access would be blocked. Even separate page loads from the same browser. So, instead,
 we resort to regular polling for updates. An update poll is always included, automatically, when the client sends control
 changes to the server, so in most cases, the client would still appear to be refreshed, immediately.
+
+To avoid sending all states of all controls on each request from each client, the framework keeps track of the lastest "revision number"
+sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded.

@@ -29,10 +29,11 @@ public:
     /** serialize pending changes for the client. Virtual so you could customize it, completely, but
      *  instead you probably want to override ArduJAXControllable::valueProperty(), only, instead.
      *
+     *  @param since revision number last sent to the server. Send only changes that occured since this revision.
      *  @param first if false, @em and this object writes any update, it should write a ',', first.
      *  @returns true if anything has been written, false otherwise.
      */
-    virtual bool sendUpdates(bool first=true) {
+    virtual bool sendUpdates(uint16_t since, bool first=true) {
         return false;
     }
 protected:
@@ -44,9 +45,26 @@ protected:
  *  before using and ArduJAX classes. */
 class ArduJAXOutputDriverBase {
 public:
+    ArduJAXOutputDriverBase() {
+        _revision = 0;
+        next_revision = _revision;
+    }
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
     virtual String getArg(const char* name) = 0;
+    uint16_t revision() const {
+        return _revision;
+    }
+    uint16_t setChanged() {
+        next_revision = _revision+1;
+        return (next_revision);
+    }
+    void nextRevision() {
+        _revision = next_revision;
+    }
+private:
+    uint16_t _revision;
+    uint16_t next_revision;
 };
 
 #if defined (ESP8266)
@@ -103,9 +121,9 @@ public:
             _children.members[i]->print();
         }
     }
-    bool sendUpdates(bool first=true) override {
+    bool sendUpdates(uint16_t since, bool first=true) override {
         for (int i = 0; i < _children.count; ++i) {
-            first = first & !_children.members[i]->sendUpdates(first);
+            first = first & !_children.members[i]->sendUpdates(since, first);
         }
         return first;
     }
@@ -134,6 +152,7 @@ public:
         _id = id;
         _flags = StatusVisible;
         _value = "";
+        revision = 0;
     }
     void print() const override {
         _driver->printContent("<span id=\"");
@@ -142,8 +161,8 @@ public:
         _driver->printContent(_value);
         _driver->printContent("</span>\n");
     }
-    bool sendUpdates(bool first=true) override {
-        if (!changed()) return false;
+    bool sendUpdates(uint16_t since, bool first=true) override {
+        if (!changed(since)) return false;
          if (!first) _driver->printContent(",\n");
         _driver->printContent("{\n\"id\": \"");
         _driver->printContent(_id);
@@ -157,17 +176,18 @@ public:
            _driver->printContent("\"\n}");
         }
         _driver->printContent("]\n}");
-        setChanged(false);
+        setChanged();
         return true;
     }
     void setVisible(bool visible) {
-        setChanged(true);
+        if (visible == _flags & StatusVisible) return;
+        setChanged();
         if (visible) _flags |= StatusVisible;
         else _flags -= _flags & StatusVisible;
     }
     virtual void setValue(const char* new_value) {
         _value = new_value;
-        setChanged(true);
+        setChanged();
     }
     const char* value() const {
         return _value;
@@ -199,19 +219,20 @@ protected:
 friend class ArduJAXPage;
     const char* _id;
     const char* _value;
-    void setChanged(bool changed) {
-        if (changed) _flags |= StatusChanged;
-        else _flags -= _flags & StatusChanged;
+    void setChanged() {
+        revision = _driver->setChanged();
     }
-    bool changed() const {
-        return _flags & StatusChanged;
+    bool changed(uint16_t since) {
+        if ((revision + 20000) < since) revision = since + 1;    // basic overflow protection. Results in sending _all_ states at least every 20000 request cycles
+        return (revision > since);
     }
     enum {
         StatusVisible = 1,
         StatusChanged = 2
     };
 private:
-    byte _flags;  // TODO: actually the "changed" flag would have to be kept per client, but for now we focus on the single client use-case
+    byte _flags;
+    uint16_t revision;
 };
 
 class ArduJAXPage : public ArduJAXContainer {
@@ -224,16 +245,19 @@ public:
         _driver->printContent("<HTML><HEAD><TITLE>");
         _driver->printContent(_title);
         _driver->printContent("</TITLE>\n<SCRIPT>\n");
-        _driver->printContent("function doRequest(request='', id='', value='') {\n"
+        _driver->printContent("var serverrevision = 0;\n"
+                              "function doRequest(request='', id='', value='') {\n"
                               "    var req = new XMLHttpRequest();\n"
                               "    req.onload = function() {\n"
                               "       doUpdates(JSON.parse(req.responseText));\n"
                               "    }\n"
                               "    req.open('POST', document.URL, true);\n"
                               "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
-                              "    req.send('request=' + request + '&id=' + id + '&value=' + value);\n"
+                              "    req.send('request=' + request + '&id=' + id + '&value=' + value + '&revision=' + serverrevision);\n"
                               "}\n");
-        _driver->printContent("function doUpdates(updates) {\n"
+        _driver->printContent("function doUpdates(response) {\n"
+                              "    serverrevision = response.revision;\n"
+                              "    var updates = response.updates;\n"
                               "    for(i = 0; i < updates.length; i++) {\n"
                               "       element = document.getElementById(updates[i].id);\n"
                               "       changes = updates[i].changes;\n"
@@ -258,9 +282,14 @@ public:
     void handleRequest() {
         // ignore any parameters for now. TODO: actually handle the request other than poll
         _driver->printHeader(false);
-        _driver->printContent("[\n");
-        sendUpdates();
-        _driver->printContent("\n]\n");
+        _driver->printContent("{\"revision\": ");
+        String dummy(_driver->revision());
+        _driver->printContent(dummy.c_str());
+        _driver->printContent(",\n\"updates\": [\n");
+        uint16_t client_revision = atoi(_driver->getArg("revision").c_str());
+        sendUpdates(client_revision);
+        _driver->printContent("\n]}\n");
+        _driver->nextRevision();
     }
 protected:
     const char* _title;
