@@ -5,12 +5,12 @@ Simplistic framework for creating and handling displays and controls on a WebPag
 ## Overview
 
 In the Arduino world, it has become astonishingly easy to create a web server on a microprocessor. But at the same time there is a
-surprising lack of libraries to facilitat common tasks such as displaying some meter readings in textual or numeric displays, and
+surprising lack of libraries to facilitate common tasks such as displaying some meter readings in textual or numeric displays, and
 keeping those up-to-date on the client, or providing basic HTML controls such as sliders, radio buttons, and pushbuttons to control
 the operation of the microprocessor.
 
 While many, many projects are doing exactly this, each seems to have to implement the wheel anew. The goal of the present project is
-to provide a basic but extensible framework to facilitate these common tasks, so that you can focus on the actual functionality.
+to provide a basic but extensible framework to take care of these common tasks, so that you can focus on the actual functionality.
 
 I.e. the core features are:
 - Ability to "print" common controls to an HTML page 
@@ -40,7 +40,6 @@ page1 = ArduJAXPage(ArudJAX_makeList({
    new ArduJAXStatic("<h1>Hello world</h1><p>This is a static section of plain old HTML. Next up: A slider / range control</p>"),
    display1 = new ArduJAXDisplay("display1_id", "Some intial value")
 }));
-
 // Note ArduJAX-Objects could be allocated on the stack, too, but that would require more tedious writing, or some really fancy
 // macros. As ArduJAX objects will probably be alive for the entire runtime, heap fragmentation should not be an issue.
 
@@ -53,9 +52,11 @@ void handlePage() {
 }
 
 void setup() {
-// [...]  // usual web server setup
-  server.on("/", handleRoot);  // set handler
-  ArduJAXBase::setDriver(new ArduJAXOoutputDriverESP8266(&server));
+// Please fill in: Set up your WIFI connection
+[...]
+
+  new ArduJAXOoutputDriverESP8266(&server);
+  server.on("/", handlePage);  // set handler
 }
 
 void loop() {
@@ -65,7 +66,7 @@ void loop() {
 
 ```
 
-## And a less exciting, but somewhat convoluted show off of a test-case that actually works right now (on ESP8266)
+## And a less exciting off of a test-case that actually works right now (on ESP8266)
 
 ```
 #include <ESP8266WiFi.h>
@@ -75,19 +76,21 @@ void loop() {
 ESP8266WebServer server(80); //Server on port 80
 
 ArduJAXControllable tester("millis");
+ArduJAXControllable tester2("blinky");
 ArduJAXBase* elements[] = {
-  new ArduJAXStatic("<h1>This is a test</h1>"),
-  &tester
+  new ArduJAXStatic("<h1>This is a test</h1><p>"),
+  &tester,
+  new ArduJAXStatic("</p><p>"),
+  &tester2
 };
 ArduJAXPage page(ArduJAX_makeList(elements), "ArduJAXTest");
-ArduJAXOutputDriverESP8266 driver(&server);
 
-void handleRoot() {
-  page.print();
-}
-
-void handleReq() {
-  page.handleRequest();
+void handlePage() {
+  if(server.method() == HTTP_POST) { // AJAX request
+    page.handleRequest();
+  } else {  // Page load
+    page.print();
+  }
 }
 
 void setup() {
@@ -95,11 +98,11 @@ void setup() {
 // Please fill in: Set up your WIFI connection
 [...]
 
-  page.setDriver(&driver);
-  server.on("/", handleRoot);
-  server.on("/", HTTP_POST, handleRoot);
-  server.on("/ardujax", handleReq);
+  new ArduJAXOutputDriverESP8266 (&server);
+  server.on("/", handlePage);
   server.begin();
+
+  tester2.setValue("The server makes me blink");
 }
 
 String dummy;
@@ -107,5 +110,13 @@ void loop() {
   server.handleClient();
   dummy = String(millis ());
   tester.setValue (dummy.c_str ());
+  tester2.setVisible((millis() / 2000) % 2);
 }
 ```
+
+## Some implementation notes
+
+Currently, the web servers for embeddables I have deal with so far, are limited to one client at a time. Therefore, if using
+a permanent AJAX connection, all further access would be blocked. Even separate page loads from the same browser. So, instead,
+we resort to regular polling for updates. An update poll is always included, automatically, when the client sends control
+changes to the server, so in most cases, the client would still appear to be refreshed, immediately.

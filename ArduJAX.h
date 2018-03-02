@@ -19,18 +19,41 @@
  * 
 **/
 
-// Output driver as an abstraction over the server write commands.
-// This is to avoid having to serialize the whole reply at once.
+class ArduJAXOutputDriverBase;
+class ArduJAXBase {
+public:
+    virtual void print() const = 0;
+    static void setDriver(ArduJAXOutputDriverBase *driver) {
+        _driver = driver;
+    }
+    /** serialize pending changes for the client. Virtual so you could customize it, completely, but
+     *  instead you probably want to override ArduJAXControllable::valueProperty(), only, instead.
+     *
+     *  @param first if false, @em and this object writes any update, it should write a ',', first.
+     *  @returns true if anything has been written, false otherwise.
+     */
+    virtual bool sendUpdates(bool first=true) {
+        return false;
+    }
+protected:
+    static ArduJAXOutputDriverBase *_driver;
+};
+
+/** Output driver as an abstraction over the server read/write commands.
+ *  You will have to instantiate exactly one object of exactly one implementation,
+ *  before using and ArduJAX classes. */
 class ArduJAXOutputDriverBase {
 public:
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
+    virtual String getArg(const char* name) = 0;
 };
 
 #if defined (ESP8266)
 class ArduJAXOutputDriverESP8266 : public ArduJAXOutputDriverBase {
 public:
     ArduJAXOutputDriverESP8266(ESP8266WebServer *server) {
+        ArduJAXBase::setDriver(this);
         _server = server;
     }
     void printHeader(bool html) override {
@@ -44,24 +67,14 @@ public:
     void printContent(const char *content) override {
         _server->sendContent(content);
     }
-    const char* getArg (const char* name);
+    String getArg(const char* name) override {
+        return _server->arg(name);
+    };
 private:
     ESP8266WebServer *_server;
 };
 #endif
 
-class ArduJAXBase {
-public:
-    virtual void print() = 0;
-    static void setDriver(ArduJAXOutputDriverBase *driver) {
-        _driver = driver;
-    }
-    virtual bool sendUpdates() {
-        return false;
-    }
-protected:
-    static ArduJAXOutputDriverBase *_driver;
-};
 ArduJAXOutputDriverBase *ArduJAXBase::_driver;  // TODO: terrible HACK
 
 struct ArduJAXList {
@@ -79,73 +92,126 @@ template<size_t N> ArduJAXList ArduJAX_makeList (ArduJAXBase* (&list)[N]) {  // 
     return ret;
 }
 
+/** Base class for groups of objects */
 class ArduJAXContainer : public ArduJAXBase {
 public:
     ArduJAXContainer(ArduJAXList children) {
         _children = children;
     };
-    void printChildren() {
+    void printChildren() const {
         for (int i = 0; i < _children.count; ++i) {
             _children.members[i]->print();
         }
     }
-    bool sendUpdates() override {
-        bool sent = false;
+    bool sendUpdates(bool first=true) override {
         for (int i = 0; i < _children.count; ++i) {
-            if (sent) _driver->printContent(",\n");
-            sent = _children.members[i]->sendUpdates();
+            first = first & !_children.members[i]->sendUpdates(first);
         }
-        return sent;
+        return first;
     }
 protected:
     ArduJAXList _children;
 };
 
+/** This class represents a chunk of static HTML that will not be changed / cannot be interacted with. Neither from the client, nor from the server. */
 class ArduJAXStatic : public ArduJAXBase {
 public:
     ArduJAXStatic(const char* content) {
         _content = content;
     }
-    void print() override {
+    void print() const override {
         _driver->printContent(_content);
     }
 protected:
     const char* _content;
 };
 
+/** Base class for objects that can be changed, either from the client, or from the server, or both. The base class implements an HTML "span" element.
+ *  The inner content of that span can be changed using setValue(). */
 class ArduJAXControllable : public ArduJAXBase {
 public:
     ArduJAXControllable(const char* id) {
         _id = id;
-        changed = false;
+        _flags = StatusVisible;
         _value = "";
     }
-    void print() override {
-        _driver->printContent("<div id=\"");
+    void print() const override {
+        _driver->printContent("<span id=\"");
         _driver->printContent(_id);
         _driver->printContent("\">");
         _driver->printContent(_value);
-        _driver->printContent("</div>\n");
+        _driver->printContent("</span>\n");
     }
-    virtual bool sendUpdates()  {
-        if (!changed) return false;
+    bool sendUpdates(bool first=true) override {
+        if (!changed()) return false;
+         if (!first) _driver->printContent(",\n");
         _driver->printContent("{\n\"id\": \"");
         _driver->printContent(_id);
-        _driver->printContent("\",\n\"changes\": [{\n\"value\": \"");
-        _driver->printContent(_value);
-        _driver->printContent("\",\n\"set\": \"innerHTML\"\n}]\n}");
-        changed = false;
+        _driver->printContent("\",\n\"changes\": [");
+        for (int8_t i = -2; i < additionalPropertyCount(); ++i) {
+            if (i != -2) _driver->printContent(",");
+           _driver->printContent("{\n\"set\": \"");
+           _driver->printContent(properyId(i));
+           _driver->printContent("\",\n\"value\": \"");
+           _driver->printContent(properyValue(i));
+           _driver->printContent("\"\n}");
+        }
+        _driver->printContent("]\n}");
+        setChanged(false);
         return true;
     }
-    void setValue(const char* new_value) {
+    void setVisible(bool visible) {
+        setChanged(true);
+        if (visible) _flags |= StatusVisible;
+        else _flags -= _flags & StatusVisible;
+    }
+    virtual void setValue(const char* new_value) {
         _value = new_value;
-        changed = true;
+        setChanged(true);
+    }
+    const char* value() const {
+        return _value;
+    }
+    virtual const char* valueProperty() const {
+        return "innerHTML";
+    }
+    /** To allow addition of further properties to sync to the client, in derived classes */
+    virtual uint8_t additionalPropertyCount() const {
+        return 0;
+    }
+    /** To allow addition of further properties to sync to the client, in derived classes.
+     *  NOTE: do call the base implementation when overriding: It handles the built-in properties
+     *  with negative numbering; */
+    virtual const char* properyId(int8_t num) const {
+        if (num == -1) return (valueProperty());
+        if (num == -2) return ("style.display");
+        return "";
+    }
+    /** To allow addition of further properties to sync to the client, in derived classes.
+     *  NOTE: do call the base implementation when overriding: It handles the built-in properties
+     *  with negative numbering; */
+    virtual const char* properyValue(int8_t num) const {
+        if (num == -1) return (_value);
+        if (num == -2) return (_flags & StatusVisible ? "initial" : "none");
+        return "";
     }
 protected:
 friend class ArduJAXPage;
     const char* _id;
     const char* _value;
-    bool changed;  // Needs syncing to client? TODO: actually this would have to be per client, but for now we focus on the single client use-case
+    void setChanged(bool changed) {
+        if (changed) _flags |= StatusChanged;
+        else _flags -= _flags & StatusChanged;
+    }
+    bool changed() const {
+        return _flags & StatusChanged;
+    }
+    enum {
+        StatusVisible = 1,
+        StatusChanged = 2
+    };
+private:
+    byte _flags;  // TODO: actually the "changed" flag would have to be kept per client, but for now we focus on the single client use-case
 };
 
 class ArduJAXPage : public ArduJAXContainer {
@@ -153,7 +219,7 @@ public:
     ArduJAXPage(ArduJAXList children, const char* title) : ArduJAXContainer(children) {
         _title = title;
     }
-    void print() override {
+    void print() const override {
         _driver->printHeader(true);
         _driver->printContent("<HTML><HEAD><TITLE>");
         _driver->printContent(_title);
@@ -163,7 +229,7 @@ public:
                               "    req.onload = function() {\n"
                               "       doUpdates(JSON.parse(req.responseText));\n"
                               "    }\n"
-                              "    req.open('POST', 'ardujax', true);\n"
+                              "    req.open('POST', document.URL, true);\n"
                               "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                               "    req.send('request=' + request + '&id=' + id + '&value=' + value);\n"
                               "}\n");
@@ -172,7 +238,12 @@ public:
                               "       element = document.getElementById(updates[i].id);\n"
                               "       changes = updates[i].changes;\n"
                               "       for(j = 0; j < changes.length; ++j) {\n"
-                              "          element[changes[j].set] = changes[j].value;\n"
+                              "          var spec = changes[j].set.split('.');\n"
+                              "          var prop = element;\n"
+                              "          for(k = 0; k < (spec.length-1); ++k) {\n"   // resolve nested attributes such as style.display
+                              "              prop = prop[spec[k]];\n"
+                              "          }\n"
+                              "          prop[spec[spec.length-1]] = changes[j].value;\n"
                               "       }\n"
                               "    }\n"
                               "}\n");
@@ -185,7 +256,7 @@ public:
         _driver->printContent("\n</BODY></HTML>\n");
     }
     void handleRequest() {
-        // ignore any parameters for now. TODO: acutally handle the request
+        // ignore any parameters for now. TODO: actually handle the request other than poll
         _driver->printHeader(false);
         _driver->printContent("[\n");
         sendUpdates();
