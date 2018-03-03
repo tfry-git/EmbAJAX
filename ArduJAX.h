@@ -104,7 +104,7 @@ public:
         }
     }
     void printContent(const char *content) override {
-        _server->sendContent(content);
+        if (content[0] != '\0') _server->sendContent(content);  // NOTE: There seems to be a bug in the server when sending empty string.
     }
     const char* getArg(const char* name, char* buf, int buflen) override {
         _server->arg(name).toCharArray (buf, buflen);
@@ -177,7 +177,7 @@ protected:
  *  receive updates from the client side, you will a) have to include an appropriate onChange-call in print(), and b) provide
  *  a non-empty implementation of updateFromDriverArg().
  *
- *  Best look at a simple example such as ArduJAXActiveSpan or ArduJAXSlider for details.
+ *  Best look at a simple example such as ArduJAXMutableSpan or ArduJAXSlider for details.
  */
 class ArduJAXElement : public ArduJAXBase {
 public:
@@ -249,17 +249,10 @@ public:
         _value = 0;
     }
     void print() const override;
-    const char* value() override {
-        return _value;
-    }
-    const char* valueProperty() const override {
-        return "innerHTML";
-    }
+    const char* value() override;
+    const char* valueProperty() const override;
     /** Set the <span>s content to the given value. Note: The string is not copied, so don't make this a temporary. */
-    void setValue(const char* value) {
-        _value = value;
-        setChanged();
-    }
+    void setValue(const char* value);
 private:
     const char* _value;
 };
@@ -267,24 +260,61 @@ private:
 /** An HTML span element with content that can be updated from the server (not the client) */
 class ArduJAXSlider : public ArduJAXElement {
 public:
-    ArduJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial) : ArduJAXElement(id) {
-        _value = initial;
-        _min = min;
-        _max = max;
-    }
+    ArduJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial);
     void print() const override;
     const char* value() override;
-    const char* valueProperty() const override {
-        return "value";
-    }
-    void setValue(int16_t value) {
-        _value = value;
-        setChanged();
+    const char* valueProperty() const override;
+    void setValue(int16_t value);
+    int16_t intValue() const {
+        return _value;
     }
     void updateFromDriverArg(const char* argname) override;
 private:
     int16_t _min, _max, _value;
 };
+
+/** A checkable button / box */
+class ArduJAXCheckButton : public ArduJAXElement {
+public:
+    ArduJAXCheckButton(const char* id, const char* label, bool checked=false);
+    void print() const override;
+    const char* value() override;
+    const char* valueProperty() const override;
+    void setChecked(bool checked);
+    bool isChecked() const {
+        return _checked;
+    }
+    void updateFromDriverArg(const char* argname) override;
+private:
+    bool _checked;
+    const char* _label;
+};
+
+/** A set of radio button (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
+class ArduJAXRadio : public ArduJAXElement {
+public:
+    ArduJAXRadio(const char* id, const char** options, int8_t num_options, int8_t current_option = 0) : ArduJAXElement(id) {
+        _options = options;
+        _num_options = num_options;
+        _current_option = current_option;
+    }
+    void print() const override;
+    const char* value() override {
+        return _options[current_option];
+    }
+    const char* valueProperty() const override {
+        return "valuesetter";
+    }
+    void setOption(int8_t otion_num); {
+        _current_option = current_option;
+        setChanged();
+    }
+    void updateFromDriverArg(const char* argname) override;
+private:
+    int8_t _options;
+    int8_t _num_options;
+    int8_t _current_option;
+}; */  // TOOD: Need to re-think this. Probably something closer to the implementation in HTML, i.e. single buttons inside a dedicated container. ArduJAXCheckButton / ArduJAXButtonGroup
 
 /** This is the main interface class. Create a web-page with a list of elements on it, and arrange for
  *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,

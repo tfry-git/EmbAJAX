@@ -21,7 +21,7 @@ I.e. the core features are:
 - Allows multiple clients to interact with the same page, concurrently.
   - You can even pass information between two clients this way: Try loading the example, below, in two separate browsers!
 
-This framework _could_ be used indepently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
+This framework _could_ be used independently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
 and a focus on keeping things lean in memory.
 
 ## Status
@@ -33,7 +33,7 @@ library, _but_ many things will change, including in backwards-incompatible ways
 
 Not terribly useful, but you know what to really do with a slider, and a display, right?
 
-```
+```cpp
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ArduJAX.h>

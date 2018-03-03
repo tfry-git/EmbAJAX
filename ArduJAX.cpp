@@ -50,7 +50,7 @@ ArduJAXElement::ArduJAXElement(const char* id) : ArduJAXBase() {
 
 bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
     if (!changed(since)) return false;
-        if (!first) _driver->printContent(",\n");
+    if (!first) _driver->printContent(",\n");
     _driver->printContent("{\n\"id\": \"");
     _driver->printContent(_id);
     _driver->printContent("\",\n\"changes\": [");
@@ -84,6 +84,8 @@ bool ArduJAXElement::changed(uint16_t since) {
 }
 
 
+//////////////////////// ArduJAXMutableSpan /////////////////////////////
+
 void ArduJAXMutableSpan::print() const {
     _driver->printContent("<span id=\"");
     _driver->printContent(_id);
@@ -92,6 +94,27 @@ void ArduJAXMutableSpan::print() const {
     _driver->printContent("</span>\n");
 }
 
+const char* ArduJAXMutableSpan::value() {
+    return _value;
+}
+
+const char* ArduJAXMutableSpan::valueProperty() const {
+    return "innerHTML";
+}
+
+void ArduJAXMutableSpan::setValue(const char* value) {
+    _value = value;
+    setChanged();
+}
+
+
+//////////////////////// ArduJAXSlider /////////////////////////////
+
+ArduJAXSlider::ArduJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial) : ArduJAXElement(id) {
+    _value = initial;
+    _min = min;
+    _max = max;
+}
 
 void ArduJAXSlider::print() const {
     _driver->printContent("<input id=\"");
@@ -113,4 +136,52 @@ void ArduJAXSlider::updateFromDriverArg(const char* argname) {
     char buf[16];
     _driver->getArg(argname, buf, 16);
     _value = atoi(buf);
+}
+
+const char* ArduJAXSlider::valueProperty() const {
+    return "value";
+}
+
+void ArduJAXSlider::setValue(int16_t value) {
+    _value = value;
+    setChanged();
+}
+
+//////////////////////// ArduJAXCheckButton /////////////////////////////
+
+ArduJAXCheckButton::ArduJAXCheckButton(const char* id, const char* label, bool checked) : ArduJAXElement(id) {
+    _label = label;
+    _checked = checked;
+}
+
+void ArduJAXCheckButton::print() const {
+    _driver->printContent("<input id=\"");
+    _driver->printContent(_id);
+    _driver->printContent("\" type=\"checkbox\" autocomplete=\"off\" value=\"t\"");
+    if (_checked) _driver->printContent(" checked=\"true\"");
+    _driver->printContent(" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"/>");
+    _driver->printContent("<label for=\"");
+    _driver->printContent(_id);
+    _driver->printContent("\">");
+    _driver->printContent(_label);
+    _driver->printContent("</label>");
+}
+
+const char* ArduJAXCheckButton::value() {
+    return _checked ? "true" : "";
+}
+
+void ArduJAXCheckButton::updateFromDriverArg(const char* argname) {
+    char buf[16];
+    _driver->getArg(argname, buf, 16);
+    _checked = (buf[0] == 't');
+}
+
+const char* ArduJAXCheckButton::valueProperty() const {
+    return "checked";
+}
+
+void ArduJAXCheckButton::setChecked(bool checked) {
+    _checked = checked;
+    setChanged();
 }
