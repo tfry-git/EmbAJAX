@@ -320,10 +320,15 @@ friend class ArduJAXCheckButton;
 /** A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
  *
  *  You can insert either the whole group into an ArudJAXPage at once, or - for more flexbile
- *  layouting - access the individual buttons using() button, and insert them into the page
+ *  layouting - retrieve the individual buttons using() button, and insert them into the page
  *  as independent elements. */
 template<size_t NUM> class ArduJAXRadioGroup : public ArduJAXRadioGroupBase {
 public:
+    /** ctor.
+     *  @param id_base the "base" id. Internally, radio buttons with id_s id_base0, id_base1, etc. will be created.
+     *  @param options labels for the options.
+     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
+     *                         no option selected by default. */
     ArduJAXRadioGroup(const char* id_base, const char* options[NUM], uint8_t selected_option = 0) : ArduJAXRadioGroupBase() {
         for (uint8_t i = 0; i < NUM; ++i) {
             char* childid = childids[i];
@@ -338,19 +343,21 @@ public:
         _children.members = dummylist;
         _name = id_base;
     }
+    /** Select / check the option at the given index. All other options in this radio group will become deselected. */
     void selectOption(uint8_t num) {
         for (uint8_t i = 0; i < NUM; ++i) {
             buttons[i].setChecked(i == num);
         }
         _current_option = num;  // NOTE: might be outside of range, but that's ok, signifies "none selected"
     }
+    /** @returns the index of the currently selected option. May be > NUM, if no option is selected. */
     uint8_t selectedOption() const {
         return _current_option;
     }
+    /** @returns a representation of an individual option element. You can use this to insert the individual buttons
+     *           at arbitrary positions in the page layout. */
     ArduJAXBase* button(uint8_t num) {
-        if (num >= 0 && num < NUM) {
-            return (&buttons[num]);
-        }
+        if (num < NUM) return (&buttons[num]);
         return 0;
     }
 private:
@@ -367,7 +374,7 @@ private:
                 buttons[i].setChecked(false);
             }
         }
-        which->setChecked(true);  // TODO: In theory this should not be needed. Why is it needed, after all?
+//        which->setChhanged();  // TODO: In theory this should not be needed. Why is it needed, after all?
     }
 };
 
@@ -408,12 +415,12 @@ public:
                               "       element = document.getElementById(updates[i].id);\n"
                               "       changes = updates[i].changes;\n"
                               "       for(j = 0; j < changes.length; ++j) {\n"
-                              "          var spec = changes[j].set.split('.');\n"
+                              "          var spec = changes[j][0].split('.');\n"
                               "          var prop = element;\n"
                               "          for(k = 0; k < (spec.length-1); ++k) {\n"   // resolve nested attributes such as style.display
                               "              prop = prop[spec[k]];\n"
                               "          }\n"
-                              "          prop[spec[spec.length-1]] = changes[j].value;\n"
+                              "          prop[spec[spec.length-1]] = changes[j][1];\n"
                               "       }\n"
                               "    }\n"
                               "}\n");

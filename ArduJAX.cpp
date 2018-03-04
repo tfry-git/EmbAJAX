@@ -56,11 +56,11 @@ bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
     _driver->printContent("\",\n\"changes\": [");
     for (int8_t i = -2; i < additionalPropertyCount(); ++i) {
         if (i != -2) _driver->printContent(",");
-        _driver->printContent("{\n\"set\": \"");
+        _driver->printContent("[\"");
         _driver->printContent(propertyId(i));
-        _driver->printContent("\",\n\"value\": \"");
+        _driver->printContent("\", \"");
         _driver->printContent(propertyValue(i));  // TODO: This will need quote-escaping. Probably best implemented in a dedicated function of the driver.
-        _driver->printContent("\"\n}");
+        _driver->printContent("\"]");
     }
     _driver->printContent("]\n}");
     return true;
@@ -193,6 +193,6 @@ const char* ArduJAXCheckButton::valueProperty() const {
 void ArduJAXCheckButton::setChecked(bool checked) {
     if (_checked == checked) return;
     _checked = checked;
-    if (radiogroup) radiogroup->selectOption(this);
+    if (radiogroup && checked) radiogroup->selectOption(this);
     setChanged();
 }
