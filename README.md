@@ -20,6 +20,7 @@ I.e. the core features are:
   framework takes care of keeping information in sync with the client.
 - Allows multiple clients to interact with the same page, concurrently.
   - You can even pass information between two clients this way: Try loading the example, below, in two separate browsers!
+- Allows to insert your own custom CSS for styling (no styling in the lib)
 
 This framework _could_ be used independently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
 and a focus on keeping things lean in memory.
@@ -28,6 +29,16 @@ and a focus on keeping things lean in memory.
 
 A first crude example works (see below). This means you are invited to start playing with this
 library, _but_ many things will change, including in backwards-incompatible ways.
+
+### Supported elements
+
+The controls / elements are supported as of now:
+
+- Checkboxes
+- Radio buttons (mutually exclusive buttons)
+- Sliders
+- Text display
+- Static HTML blocks
 
 ## Example sketch (compilable on ESP8266)
 
@@ -70,7 +81,7 @@ void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig (IPAddress (192,168,4,1), IPAddress (0,0,0,0), IPAddress (255,255,255,0));
-  WiFi.softAP(ArduJAXTest, 12345678);
+  WiFi.softAP("ArduJAXTest", "12345678");
 
   // Tell the server to serve our ArduJAX test page on root
   server.on("/", handlePage);
@@ -107,8 +118,8 @@ sent to any client. The client pings back its current revision number on each re
 
 ## Some TODOs
 
-- More controls (obviously), importantly buttons, and text input
-- Ability to register callbacks on value changes, which will allow for cleaner code, and immediate reaction
+- More controls (obviously), importantly pushbuttons, and text input
+- Ability to register callback(s) on value changes, which will allow for cleaner code, and immediate reaction
 
 ## The beggar's line
 

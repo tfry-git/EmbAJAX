@@ -55,10 +55,25 @@ public:
     virtual ArduJAXContainer* toContainer() {
         return 0;
     }
+
     /** Set visibility of this element. Note not all ArduJAXBase-objects support this. Importantly,
-     *  and ArduJAXStatic does not. Provided in the base class for efficiency. */
-    virtual void setVisible(bool visible) {};
+     *  ArduJAXStatic does not. Provided in the base class for efficiency. */
+    void setVisible(bool visible) {
+        setBasicProperty(Visibility, visible);
+    }
+    void setEnabled(bool enabled) {
+        setBasicProperty(Enabledness, enabled);
+    }
+    enum Property {
+        Visibility=0,
+        Enabledness=1,
+        Value=2,
+        FirstElementSpecificProperty=3
+    };
 protected:
+friend class ArduJAXContainer;
+    virtual void setBasicProperty(uint8_t num, bool status) {};
+
     static ArduJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
 };
@@ -152,12 +167,12 @@ public:
     ArduJAXContainer *toContainer() override {
         return this;
     }
-    void setVisible(bool visible) override {
+protected:
+    void setBasicProperty(uint8_t num, bool status) override {
         for (int i = 0; i < _children.count; ++i) {
-            _children.members[i]->setVisible(visible);
+            _children.members[i]->setBasicProperty(num, status);
         }
     }
-protected:
     ArduJAXContainer() {};
     ArduJAXList _children;
 };
@@ -194,11 +209,24 @@ public:
         return _id;
     }
     bool sendUpdates(uint16_t since, bool first=true) override;
-    void setVisible(bool visible) override;
 
     /** const char representation of the current server side value. Must be implemented in derived class.
-     *  Note: deliberately not const, to allow for non-const conversion and caching. */
-    virtual const char* value() = 0;
+     *  This base class handles visibility and enabledness, only. Do call the base implementation for
+     *  any "which" that is _not_ handled in your derived class. */
+    virtual const char* value(uint8_t which = ArduJAXBase::Value) const {
+        if (which == ArduJAXBase::Visibility) return ((_flags & (1 << ArduJAXBase::Visibility)) ? "initial" : "none");
+        if (which == ArduJAXBase::Enabledness) return ((_flags & (1 << ArduJAXBase::Enabledness)) ? "" : "disabled");
+        return 0;
+    }
+
+     /** The JS property that will have to be set on the client. Must be implemented in derived class.
+      *  This base class handles visibility and enabledness, only. Do call the base implementation for
+      *  any "which" that is _not_ handled in your derived class. */
+    virtual const char* valueProperty(uint8_t which = ArduJAXBase::Value) const {
+        if (which == ArduJAXBase::Visibility) return ("style.display");
+        if (which == ArduJAXBase::Enabledness) return ("disabled");
+        return 0;
+    }
 
     /** override this in your derived class to allow updates to be propagated from client to server (if wanted).
      *  The implementation should _not_ call setChanged(). */
@@ -206,43 +234,15 @@ public:
         return;
     }
 
-    /** The JS property that will have to be set on the client */
-    virtual const char* valueProperty() const = 0;
-
-    /** To allow addition of further properties to sync to the client, in derived classes */
-    virtual uint8_t additionalPropertyCount() const {
-        return 0;
-    }
-
-    /** To allow addition of further properties to sync to the client, in derived classes.
-     *  NOTE: do call the base implementation when overriding: It handles the built-in properties
-     *  with negative numbering; */
-    virtual const char* propertyId(int8_t num) const {
-        if (num == -1) return (valueProperty());
-        if (num == -2) return ("style.display");
-        return "";
-    }
-
-    /** To allow addition of further properties to sync to the client, in derived classes.
-     *  NOTE: do call the base implementation when overriding: It handles the built-in properties
-     *  with negative numbering; */
-    virtual const char* propertyValue(int8_t num) {
-        if (num == -1) return (value());
-        if (num == -2) return (_flags & StatusVisible ? "initial" : "none");
-        return "";
-    }
     ArduJAXElement *toElement() override {
         return this;
     }
 protected:
+    void setBasicProperty(uint8_t num, bool status) override;
 friend class ArduJAXPage;
     const char* _id;
     void setChanged();
     bool changed(uint16_t since);
-    enum {
-        StatusVisible = 1,
-        StatusChanged = 2
-    };
 private:
     byte _flags;
     uint16_t revision;
@@ -255,8 +255,8 @@ public:
         _value = 0;
     }
     void print() const override;
-    const char* value() override;
-    const char* valueProperty() const override;
+    const char* value(uint8_t which = ArduJAXBase::Value) const override;
+    const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
     /** Set the <span>s content to the given value. Note: The string is not copied, so don't make this a temporary. */
     void setValue(const char* value);
 private:
@@ -268,8 +268,8 @@ class ArduJAXSlider : public ArduJAXElement {
 public:
     ArduJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial);
     void print() const override;
-    const char* value() override;
-    const char* valueProperty() const override;
+    const char* value(uint8_t which = ArduJAXBase::Value) const override;
+    const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
     void setValue(int16_t value);
     int16_t intValue() const {
         return _value;
@@ -287,8 +287,8 @@ class ArduJAXCheckButton : public ArduJAXElement {
 public:
     ArduJAXCheckButton(const char* id, const char* label, bool checked=false);
     void print() const override;
-    const char* value() override;
-    const char* valueProperty() const override;
+    const char* value(uint8_t which = ArduJAXBase::Value) const override;
+    const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
     void setChecked(bool checked);
     bool isChecked() const {
         return _checked;

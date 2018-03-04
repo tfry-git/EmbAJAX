@@ -30,7 +30,7 @@ char ArduJAXBase::itoa_buf[ITOA_BUFLEN];
 /** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
 ArduJAXElement::ArduJAXElement(const char* id) : ArduJAXBase() {
     _id = id;
-    _flags = StatusVisible;
+    _flags = 1 << ArduJAXBase::Visibility | 1 << ArduJAXBase::Enabledness;
     revision = 0;
 }
 
@@ -40,23 +40,31 @@ bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
     _driver->printContent("{\n\"id\": \"");
     _driver->printContent(_id);
     _driver->printContent("\",\n\"changes\": [");
-    for (int8_t i = -2; i < additionalPropertyCount(); ++i) {
-        if (i != -2) _driver->printContent(",");
+    uint8_t i = 0;
+    while (true) {
+        const char* pid = valueProperty(i);
+        const char* pval = value(i);
+        if (!pid || !pval) break;
+
+        if (i != 0) _driver->printContent(",");
         _driver->printContent("[\"");
-        _driver->printContent(propertyId(i));
+        _driver->printContent(pid);
         _driver->printContent("\", \"");
-        _driver->printContent(propertyValue(i));  // TODO: This will need quote-escaping. Probably best implemented in a dedicated function of the driver.
+        _driver->printContent(pval);  // TODO: This will need quote-escaping. Probably best implemented in a dedicated function of the driver.
         _driver->printContent("\"]");
+
+        ++i;
     }
     _driver->printContent("]\n}");
     return true;
 }
 
-void ArduJAXElement::setVisible(bool visible) {
-    if (visible == _flags & StatusVisible) return;
+void ArduJAXElement::setBasicProperty(uint8_t num, bool status) {
+    uint8_t status_bit = 1 << num;
+    if (status == _flags & status_bit) return;
+    if (status) _flags |= status_bit;
+    else _flags -= _flags & status_bit;
     setChanged();
-    if (visible) _flags |= StatusVisible;
-    else _flags -= _flags & StatusVisible;
 }
 
 void ArduJAXElement::setChanged() {
@@ -103,6 +111,7 @@ ArduJAXElement* ArduJAXContainer::findChild(const char*id) const {
             if (child) return child;
         }
     }
+    return 0;
 }
 
 //////////////////////// ArduJAXMutableSpan /////////////////////////////
@@ -115,12 +124,14 @@ void ArduJAXMutableSpan::print() const {
     _driver->printContent("</span>\n");
 }
 
-const char* ArduJAXMutableSpan::value() {
-    return _value;
+const char* ArduJAXMutableSpan::value(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return _value;
+    return ArduJAXElement::value(which);
 }
 
-const char* ArduJAXMutableSpan::valueProperty() const {
-    return "innerHTML";
+const char* ArduJAXMutableSpan::valueProperty(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return "innerHTML";
+    return ArduJAXElement::valueProperty(which);
 }
 
 void ArduJAXMutableSpan::setValue(const char* value) {
@@ -151,18 +162,20 @@ void ArduJAXSlider::print() const {
     _driver->printContent("\" onChange=\"doRequest(this.id, this.value);\"/>");
 }
 
-const char* ArduJAXSlider::value() {
-    itoa(_value, itoa_buf, 10);
+const char* ArduJAXSlider::value(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return itoa(_value, itoa_buf, 10);
+    return ArduJAXElement::value(which);
+}
+
+const char* ArduJAXSlider::valueProperty(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return "value";
+    return ArduJAXElement::valueProperty(which);
 }
 
 void ArduJAXSlider::updateFromDriverArg(const char* argname) {
     char buf[16];
     _driver->getArg(argname, buf, 16);
     _value = atoi(buf);
-}
-
-const char* ArduJAXSlider::valueProperty() const {
-    return "value";
 }
 
 void ArduJAXSlider::setValue(int16_t value) {
@@ -197,8 +210,9 @@ void ArduJAXCheckButton::print() const {
     _driver->printContent("</label>");
 }
 
-const char* ArduJAXCheckButton::value() {
-    return _checked ? "true" : "";
+const char* ArduJAXCheckButton::value(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return _checked ? "true" : "";
+    return ArduJAXElement::value(which);
 }
 
 void ArduJAXCheckButton::updateFromDriverArg(const char* argname) {
@@ -208,8 +222,9 @@ void ArduJAXCheckButton::updateFromDriverArg(const char* argname) {
     if (_checked && radiogroup) radiogroup->selectOption(this);
 }
 
-const char* ArduJAXCheckButton::valueProperty() const {
-    return "checked";
+const char* ArduJAXCheckButton::valueProperty(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return "checked";
+    return ArduJAXElement::valueProperty(which);
 }
 
 void ArduJAXCheckButton::setChecked(bool checked) {
