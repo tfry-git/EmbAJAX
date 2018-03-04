@@ -27,20 +27,6 @@
 ArduJAXOutputDriverBase *ArduJAXBase::_driver;
 char ArduJAXBase::itoa_buf[ITOA_BUFLEN];
 
-ArduJAXElement* ArduJAXContainer::findChild(const char*id) const {
-    for (int i = 0; i < _children.count; ++i) {
-        ArduJAXElement* child = _children.members[i]->toElement();
-        if (child) {
-            if (strcmp(id, child->id()) == 0) return child;
-        }
-        ArduJAXContainer* childlist = _children.members[i]->toContainer();
-        if (childlist) {
-            child = childlist->findChild(id);
-            if (child) return child;
-        }
-    }
-}
-
 /** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
 ArduJAXElement::ArduJAXElement(const char* id) : ArduJAXBase() {
     _id = id;
@@ -82,6 +68,42 @@ bool ArduJAXElement::changed(uint16_t since) {
     return (revision > since);
 }
 
+//////////////////////// ArduJAXContainer /////////////////////////////
+
+ArduJAXContainer::ArduJAXContainer(ArduJAXList children) {
+    _children = children;
+}
+
+void ArduJAXContainer::print() const {
+    printChildren();
+}
+
+void ArduJAXContainer::printChildren() const {
+    for (int i = 0; i < _children.count; ++i) {
+        _children.members[i]->print();
+    }
+}
+
+bool ArduJAXContainer::sendUpdates(uint16_t since, bool first) {
+    for (int i = 0; i < _children.count; ++i) {
+        first = first & !_children.members[i]->sendUpdates(since, first);
+    }
+    return first;
+}
+
+ArduJAXElement* ArduJAXContainer::findChild(const char*id) const {
+    for (int i = 0; i < _children.count; ++i) {
+        ArduJAXElement* child = _children.members[i]->toElement();
+        if (child) {
+            if (strcmp(id, child->id()) == 0) return child;
+        }
+        ArduJAXContainer* childlist = _children.members[i]->toContainer();
+        if (childlist) {
+            child = childlist->findChild(id);
+            if (child) return child;
+        }
+    }
+}
 
 //////////////////////// ArduJAXMutableSpan /////////////////////////////
 
@@ -195,4 +217,80 @@ void ArduJAXCheckButton::setChecked(bool checked) {
     _checked = checked;
     if (radiogroup && checked) radiogroup->selectOption(this);
     setChanged();
+}
+
+//////////////////////// ArduJAXPage /////////////////////////////
+
+ArduJAXPage::ArduJAXPage(ArduJAXList children, const char* title, const char* header_add) : ArduJAXContainer(children) {
+    _title = title;
+    _header_add = 0;
+}
+
+void ArduJAXPage::print() const {
+    _driver->printHeader(true);
+    _driver->printContent("<HTML><HEAD><TITLE>");
+    if (_title) _driver->printContent(_title);
+    _driver->printContent("</TITLE>\n<SCRIPT>\n");
+    _driver->printContent("var serverrevision = 0;\n"
+                            "function doRequest(id='', value='') {\n"
+                            "    var req = new XMLHttpRequest();\n"
+                            "    req.timeout = 10000;\n"   // probably disconnected. Don't stack up request objects forever.
+                            "    req.onload = function() {\n"
+                            "       doUpdates(JSON.parse(req.responseText));\n"
+                            "    }\n"
+                            "    req.open('POST', document.URL, true);\n"
+                            "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
+                            "    req.send('id=' + id + '&value=' + encodeURIComponent(value) + '&revision=' + serverrevision);\n"
+                            "}\n");
+    _driver->printContent("function doUpdates(response) {\n"
+                            "    serverrevision = response.revision;\n"
+                            "    var updates = response.updates;\n"
+                            "    for(i = 0; i < updates.length; i++) {\n"
+                            "       element = document.getElementById(updates[i].id);\n"
+                            "       changes = updates[i].changes;\n"
+                            "       for(j = 0; j < changes.length; ++j) {\n"
+                            "          var spec = changes[j][0].split('.');\n"
+                            "          var prop = element;\n"
+                            "          for(k = 0; k < (spec.length-1); ++k) {\n"   // resolve nested attributes such as style.display
+                            "              prop = prop[spec[k]];\n"
+                            "          }\n"
+                            "          prop[spec[spec.length-1]] = changes[j][1];\n"
+                            "       }\n"
+                            "    }\n"
+                            "}\n");
+    _driver->printContent("function doPoll() {\n"
+                            "    doRequest();\n"  // poll == request without id
+                            "}\n"
+                            "setInterval(doPoll,1000);\n");
+    _driver->printContent("</SCRIPT>\n");
+    if (_header_add) _driver->printContent(_header_add);
+    _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
+                                                                            // but also the "restore latest settings after client reload" is questionable in our use-case.
+    printChildren();
+    _driver->printContent("\n</FORM></BODY></HTML>\n");
+}
+
+void ArduJAXPage::handleRequest() {
+    char conversion_buf[ARDUJAX_MAX_ID_LEN];
+
+    // handle value changes sent from client
+    uint16_t client_revision = atoi(_driver->getArg("revision", conversion_buf, ARDUJAX_MAX_ID_LEN));
+    const char *id = _driver->getArg("id", conversion_buf, ARDUJAX_MAX_ID_LEN);
+    ArduJAXElement *element = (id[0] == '\0') ? 0 : findChild(id);
+    if (element) {
+        element->updateFromDriverArg("value");
+    }
+
+    // then relay value changes that have occured in the server (possibly in response to those sent)
+    _driver->printHeader(false);
+    _driver->printContent("{\"revision\": ");
+    _driver->printContent(itoa(_driver->revision(), conversion_buf, 10));
+    _driver->printContent(",\n\"updates\": [\n");
+    sendUpdates(client_revision);
+    _driver->printContent("\n]}\n");
+
+    if (element) {
+        element->setChanged(); // So changes sent from one client will be synced to the other clients
+    }
+    _driver->nextRevision();
 }

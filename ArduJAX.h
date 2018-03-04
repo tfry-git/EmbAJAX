@@ -65,16 +65,23 @@ protected:
 
 /** Output driver as an abstraction over the server read/write commands.
  *  You will have to instantiate exactly one object of exactly one implementation,
- *  before using and ArduJAX classes. */
+ *  before using any ArduJAX classes.
+ *
+ *  Providing your own driver is very easy. All you have to do it to wrap the
+ *  basic functions for writing to the server and retrieving (POST) arguments:
+ *  printHeader(), printContent(), and getArg().
+ */
 class ArduJAXOutputDriverBase {
 public:
     ArduJAXOutputDriverBase() {
         _revision = 0;
         next_revision = _revision;
     }
+
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
     virtual const char* getArg(const char* name, char* buf, int buflen) = 0;
+
     uint16_t revision() const {
         return _revision;
     }
@@ -136,23 +143,10 @@ template<size_t N> ArduJAXList ArduJAX_makeList (ArduJAXBase* (&list)[N]) {  // 
 /** Base class for groups of objects */
 class ArduJAXContainer : public ArduJAXBase {
 public:
-    ArduJAXContainer(ArduJAXList children) {
-        _children = children;
-    }
-    void print() const override {
-        printChildren();
-    }
-    void printChildren() const {
-        for (int i = 0; i < _children.count; ++i) {
-            _children.members[i]->print();
-        }
-    }
-    bool sendUpdates(uint16_t since, bool first=true) override {
-        for (int i = 0; i < _children.count; ++i) {
-            first = first & !_children.members[i]->sendUpdates(since, first);
-        }
-        return first;
-    }
+    ArduJAXContainer(ArduJAXList children);
+    void print() const;
+    void printChildren() const;
+    bool sendUpdates(uint16_t since, bool first=true);
     /** Recursively look for a child (hopefully, there is only one) of the given id, and return a pointer to it. */
     ArduJAXElement* findChild(const char*id) const;
     ArduJAXContainer *toContainer() override {
@@ -374,7 +368,6 @@ private:
                 buttons[i].setChecked(false);
             }
         }
-//        which->setChhanged();  // TODO: In theory this should not be needed. Why is it needed, after all?
     }
 };
 
@@ -388,79 +381,13 @@ public:
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
      *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
-    ArduJAXPage(ArduJAXList children, const char* title, const char* header_add = 0) : ArduJAXContainer(children) {
-        _title = title;
-        _header_add = 0;
-    }
-    void print() const override {
-        _driver->printHeader(true);
-        _driver->printContent("<HTML><HEAD><TITLE>");
-        if (_title) _driver->printContent(_title);
-        _driver->printContent("</TITLE>\n<SCRIPT>\n");
-        _driver->printContent("var serverrevision = 0;\n"
-                              "function doRequest(id='', value='') {\n"
-                              "    var req = new XMLHttpRequest();\n"
-                              "    req.timeout = 10000;\n"   // probably disconnected. Don't stack up request objects forever.
-                              "    req.onload = function() {\n"
-                              "       doUpdates(JSON.parse(req.responseText));\n"
-                              "    }\n"
-                              "    req.open('POST', document.URL, true);\n"
-                              "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
-                              "    req.send('id=' + id + '&value=' + encodeURIComponent(value) + '&revision=' + serverrevision);\n"
-                              "}\n");
-        _driver->printContent("function doUpdates(response) {\n"
-                              "    serverrevision = response.revision;\n"
-                              "    var updates = response.updates;\n"
-                              "    for(i = 0; i < updates.length; i++) {\n"
-                              "       element = document.getElementById(updates[i].id);\n"
-                              "       changes = updates[i].changes;\n"
-                              "       for(j = 0; j < changes.length; ++j) {\n"
-                              "          var spec = changes[j][0].split('.');\n"
-                              "          var prop = element;\n"
-                              "          for(k = 0; k < (spec.length-1); ++k) {\n"   // resolve nested attributes such as style.display
-                              "              prop = prop[spec[k]];\n"
-                              "          }\n"
-                              "          prop[spec[spec.length-1]] = changes[j][1];\n"
-                              "       }\n"
-                              "    }\n"
-                              "}\n");
-        _driver->printContent("function doPoll() {\n"
-                              "    doRequest();\n"  // poll == request without id
-                              "}\n"
-                              "setInterval(doPoll,1000);\n");
-        _driver->printContent("</SCRIPT>\n");
-        if (_header_add) _driver->printContent(_header_add);
-        _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
-                                                                                // but also the "restore latest settings after client reload" is questionable in our use-case.
-        printChildren();
-        _driver->printContent("\n</FORM></BODY></HTML>\n");
-    }
+    ArduJAXPage(ArduJAXList children, const char* title, const char* header_add = 0);
+    /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
+     *  there is a GET request to the desired URL. */
+    void print() const override;
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
      *  to whichever URL you served the page itself, from. */
-    void handleRequest() {
-        char conversion_buf[ARDUJAX_MAX_ID_LEN];
-
-        // handle value changes sent from client
-        uint16_t client_revision = atoi(_driver->getArg("revision", conversion_buf, ARDUJAX_MAX_ID_LEN));
-        const char *id = _driver->getArg("id", conversion_buf, ARDUJAX_MAX_ID_LEN);
-        ArduJAXElement *element = (id[0] == '\0') ? 0 : findChild(id);
-        if (element) {
-            element->updateFromDriverArg("value");
-        }
-
-        // then relay value changes that have occured in the server (possibly in response to those sent)
-        _driver->printHeader(false);
-        _driver->printContent("{\"revision\": ");
-        _driver->printContent(itoa(_driver->revision(), conversion_buf, 10));
-        _driver->printContent(",\n\"updates\": [\n");
-        sendUpdates(client_revision);
-        _driver->printContent("\n]}\n");
-
-        if (element) {
-            element->setChanged(); // So changes sent from one client will be synced to the other clients
-        }
-        _driver->nextRevision();
-    }
+    void handleRequest();
 protected:
     const char* _title;
     const char* _header_add;
