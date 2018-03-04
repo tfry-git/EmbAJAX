@@ -55,6 +55,9 @@ public:
     virtual ArduJAXContainer* toContainer() {
         return 0;
     }
+    /** Set visibility of this element. Note not all ArduJAXBase-objects support this. Importantly,
+     *  and ArduJAXStatic does not. Provided in the base class for efficiency. */
+    virtual void setVisible(bool visible) {};
 protected:
     static ArduJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
@@ -135,7 +138,10 @@ class ArduJAXContainer : public ArduJAXBase {
 public:
     ArduJAXContainer(ArduJAXList children) {
         _children = children;
-    };
+    }
+    void print() const override {
+        printChildren();
+    }
     void printChildren() const {
         for (int i = 0; i < _children.count; ++i) {
             _children.members[i]->print();
@@ -152,7 +158,13 @@ public:
     ArduJAXContainer *toContainer() override {
         return this;
     }
+    void setVisible(bool visible) override {
+        for (int i = 0; i < _children.count; ++i) {
+            _children.members[i]->setVisible(visible);
+        }
+    }
 protected:
+    ArduJAXContainer() {};
     ArduJAXList _children;
 };
 
@@ -188,7 +200,7 @@ public:
         return _id;
     }
     bool sendUpdates(uint16_t since, bool first=true) override;
-    void setVisible(bool visible);
+    void setVisible(bool visible) override;
 
     /** const char representation of the current server side value. Must be implemented in derived class.
      *  Note: deliberately not const, to allow for non-const conversion and caching. */
@@ -273,7 +285,10 @@ private:
     int16_t _min, _max, _value;
 };
 
-/** A checkable button / box */
+class ArduJAXRadioGroupBase;
+
+/** A checkable button / box (NOTE: _Internally_ this is also used for radio buttons, however
+ *  please do not rely on this implementation detail. */
 class ArduJAXCheckButton : public ArduJAXElement {
 public:
     ArduJAXCheckButton(const char* id, const char* label, bool checked=false);
@@ -288,33 +303,73 @@ public:
 private:
     bool _checked;
     const char* _label;
+template<size_t NUM> friend class ArduJAXRadioGroup;
+    ArduJAXCheckButton() : ArduJAXElement("") {};
+    ArduJAXRadioGroupBase* radiogroup;
 };
 
-/** A set of radio button (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
-class ArduJAXRadio : public ArduJAXElement {
+/** abstract base for ArduJAXRadioGroup, needed for internal reasons. */
+class ArduJAXRadioGroupBase : public ArduJAXContainer {
+protected:
+    ArduJAXRadioGroupBase() : ArduJAXContainer() {};
+friend class ArduJAXCheckButton;
+    virtual void selectOption(ArduJAXCheckButton* which) = 0;
+    const char* _name;
+};
+
+/** A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
+ *
+ *  You can insert either the whole group into an ArudJAXPage at once, or - for more flexbile
+ *  layouting - access the individual buttons using() button, and insert them into the page
+ *  as independent elements. */
+template<size_t NUM> class ArduJAXRadioGroup : public ArduJAXRadioGroupBase {
 public:
-    ArduJAXRadio(const char* id, const char** options, int8_t num_options, int8_t current_option = 0) : ArduJAXElement(id) {
-        _options = options;
-        _num_options = num_options;
-        _current_option = current_option;
+    ArduJAXRadioGroup(const char* id_base, const char* options[NUM], uint8_t selected_option = 0) : ArduJAXRadioGroupBase() {
+        for (uint8_t i = 0; i < NUM; ++i) {
+            char* childid = childids[i];
+            strncpy(childid, id_base, ARDUJAX_MAX_ID_LEN-4);
+            itoa(i, &(childid[strlen(childid)]), 10);
+            buttons[i] = ArduJAXCheckButton(childid, options[i], i == selected_option);
+            buttons[i].radiogroup = this;
+            dummylist[i] = &buttons[i];
+        }
+        _current_option = selected_option;
+        _children.count = NUM;
+        _children.members = dummylist;
+        _name = id_base;
     }
-    void print() const override;
-    const char* value() override {
-        return _options[current_option];
+    void selectOption(uint8_t num) {
+        for (uint8_t i = 0; i < NUM; ++i) {
+            buttons[i].setChecked(i == num);
+        }
+        _current_option = num;  // NOTE: might be outside of range, but that's ok, signifies "none selected"
     }
-    const char* valueProperty() const override {
-        return "valuesetter";
+    uint8_t selectedOption() const {
+        return _current_option;
     }
-    void setOption(int8_t otion_num); {
-        _current_option = current_option;
-        setChanged();
+    ArduJAXBase* button(uint8_t num) {
+        if (num >= 0 && num < NUM) {
+            return (&buttons[num]);
+        }
+        return 0;
     }
-    void updateFromDriverArg(const char* argname) override;
 private:
-    int8_t _options;
-    int8_t _num_options;
+    ArduJAXCheckButton buttons[NUM];
+    ArduJAXBase* dummylist[NUM];
+    char childids[NUM][ARDUJAX_MAX_ID_LEN];
     int8_t _current_option;
-}; */  // TOOD: Need to re-think this. Probably something closer to the implementation in HTML, i.e. single buttons inside a dedicated container. ArduJAXCheckButton / ArduJAXButtonGroup
+    void selectOption(ArduJAXCheckButton* which) override {
+        _current_option = -1;
+        for (uint8_t i = 0; i < NUM; ++i) {
+            if (which == &(buttons[i])) {
+                _current_option = i;
+            } else {
+                buttons[i].setChecked(false);
+            }
+        }
+        which->setChecked(true);  // TODO: In theory this should not be needed. Why is it needed, after all?
+    }
+};
 
 /** This is the main interface class. Create a web-page with a list of elements on it, and arrange for
  *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,
@@ -338,6 +393,7 @@ public:
         _driver->printContent("var serverrevision = 0;\n"
                               "function doRequest(id='', value='') {\n"
                               "    var req = new XMLHttpRequest();\n"
+                              "    req.timeout = 10000;\n"   // probably disconnected. Don't stack up request objects forever.
                               "    req.onload = function() {\n"
                               "       doUpdates(JSON.parse(req.responseText));\n"
                               "    }\n"
@@ -367,9 +423,10 @@ public:
                               "setInterval(doPoll,1000);\n");
         _driver->printContent("</SCRIPT>\n");
         if (_header_add) _driver->printContent(_header_add);
-        _driver->printContent("</HEAD>\n<BODY>\n");
+        _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
+                                                                                // but also the "restore latest settings after client reload" is questionable in our use-case.
         printChildren();
-        _driver->printContent("\n</BODY></HTML>\n");
+        _driver->printContent("\n</FORM></BODY></HTML>\n");
     }
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
      *  to whichever URL you served the page itself, from. */

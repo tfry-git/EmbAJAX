@@ -63,7 +63,6 @@ bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
         _driver->printContent("\"\n}");
     }
     _driver->printContent("]\n}");
-    setChanged();
     return true;
 }
 
@@ -103,6 +102,8 @@ const char* ArduJAXMutableSpan::valueProperty() const {
 }
 
 void ArduJAXMutableSpan::setValue(const char* value) {
+    // TODO: Ideally we'd special case setValue() with old value == new value (noop). However, since often both old and new values are kept in the same char buffer,
+    // we cannot really compare the strings - without keeping a copy, at least. Should we?
     _value = value;
     setChanged();
 }
@@ -152,15 +153,22 @@ void ArduJAXSlider::setValue(int16_t value) {
 ArduJAXCheckButton::ArduJAXCheckButton(const char* id, const char* label, bool checked) : ArduJAXElement(id) {
     _label = label;
     _checked = checked;
+    radiogroup = 0;
 }
 
 void ArduJAXCheckButton::print() const {
     _driver->printContent("<input id=\"");
     _driver->printContent(_id);
-    _driver->printContent("\" type=\"checkbox\" autocomplete=\"off\" value=\"t\"");
+    _driver->printContent("\" type=\"");
+    if (radiogroup) {
+        _driver->printContent("radio");
+        _driver->printContent("\" name=\"");
+        _driver->printContent(radiogroup->_name);
+    }
+    else _driver->printContent("checkbox");
+    _driver->printContent("\" value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"");
     if (_checked) _driver->printContent(" checked=\"true\"");
-    _driver->printContent(" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"/>");
-    _driver->printContent("<label for=\"");
+    _driver->printContent ("/><label for=\"");
     _driver->printContent(_id);
     _driver->printContent("\">");
     _driver->printContent(_label);
@@ -175,6 +183,7 @@ void ArduJAXCheckButton::updateFromDriverArg(const char* argname) {
     char buf[16];
     _driver->getArg(argname, buf, 16);
     _checked = (buf[0] == 't');
+    if (_checked && radiogroup) radiogroup->selectOption(this);
 }
 
 const char* ArduJAXCheckButton::valueProperty() const {
@@ -182,6 +191,8 @@ const char* ArduJAXCheckButton::valueProperty() const {
 }
 
 void ArduJAXCheckButton::setChecked(bool checked) {
+    if (_checked == checked) return;
     _checked = checked;
+    if (radiogroup) radiogroup->selectOption(this);
     setChanged();
 }
