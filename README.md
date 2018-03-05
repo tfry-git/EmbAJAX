@@ -20,7 +20,6 @@ I.e. the core features are:
   framework takes care of keeping information in sync with the client.
 - Allows multiple clients to interact with the same page, concurrently.
   - You can even pass information between two clients this way: Try loading the example, below, in two separate browsers!
-- Allows to insert your own custom CSS for styling (no styling in the lib)
 
 This framework _could_ be used independently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
 and a focus on keeping things lean in memory.
@@ -30,15 +29,20 @@ and a focus on keeping things lean in memory.
 A first crude example works (see below). This means you are invited to start playing with this
 library, _but_ many things will change, including in backwards-incompatible ways.
 
-### Supported elements
+### Supported elements / features
 
-The controls / elements are supported as of now:
+These controls / elements are supported as of now:
 
 - Checkboxes
 - Radio buttons (mutually exclusive buttons)
 - Sliders
 - Text display
 - Static HTML blocks
+
+The following additional features may be of interest (supported as of now):
+
+- Allows to insert your own custom CSS for styling (no styling in the lib).
+- Elements can be hidden, inputs can be disabled from the server.
 
 ## Example sketch (compilable on ESP8266)
 
@@ -53,20 +57,21 @@ Not terribly useful, but you know what to really do with a slider, and a display
 ESP8266WebServer server(80);
 ArduJAXOutputDriverESP8266 driver(&server);
 
-// I admit, the following isn't yet as elegant as what I'd have hoped, for,
-// but you'll admit, it's not too difficult to read and write, either:
+// Define the main elements of interest as variables, so we can access to them later in our sketch.
 ArduJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
 ArduJAXMutableSpan display("display");         // a plain text display
 ArduJAXMutableSpan blinky("blinky");           // another plain text display that we will show/hide from the server
-ArduJAXBase* elements[] = {
+
+// Define a page "page" with our elements of interest, above, interspersed by some uninteresting
+// static HTML. Note: MAKE_ArduJAXPage is just a convenience macro around the ArduJAXPage<>-class.
+MAKE_ArduJAXPage(page, "ArduJAXTest", "",
   new ArduJAXStatic("<h1>This is a test</h1><p>The value you set in the following slider: "),
   &slider,
   new ArduJAXStatic(" is sent to the server...</p><p>... which displays it here: <b>"),
   &display,
   new ArduJAXStatic("</b></p><p>And here's a totally useless element showing and hiding based on server time: "),
   &blinky
-};
-ArduJAXPage page(ArduJAX_makeList(elements), "ArduJAXTest");
+)
 
 // This is all you need to write for the page handler
 void handlePage() {

@@ -61,7 +61,7 @@ bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
 
 void ArduJAXElement::setBasicProperty(uint8_t num, bool status) {
     uint8_t status_bit = 1 << num;
-    if (status == _flags & status_bit) return;
+    if (status == (bool) (_flags & status_bit)) return;
     if (status) _flags |= status_bit;
     else _flags -= _flags & status_bit;
     setChanged();
@@ -76,36 +76,28 @@ bool ArduJAXElement::changed(uint16_t since) {
     return (revision > since);
 }
 
-//////////////////////// ArduJAXContainer /////////////////////////////
+//////////////////////// ArduJAXContainer(Base) /////////////////////////////
 
-ArduJAXContainer::ArduJAXContainer(ArduJAXList children) {
-    _children = children;
-}
-
-void ArduJAXContainer::print() const {
-    printChildren();
-}
-
-void ArduJAXContainer::printChildren() const {
-    for (int i = 0; i < _children.count; ++i) {
-        _children.members[i]->print();
+void ArduJAXContainerBase::printChildren(ArduJAXBase** _children, uint NUM) const {
+    for (uint i = 0; i < NUM; ++i) {
+        _children[i]->print();
     }
 }
 
-bool ArduJAXContainer::sendUpdates(uint16_t since, bool first) {
-    for (int i = 0; i < _children.count; ++i) {
-        first = first & !_children.members[i]->sendUpdates(since, first);
+bool ArduJAXContainerBase::sendUpdates(ArduJAXBase** _children, uint NUM, uint16_t since, bool first) {
+    for (uint i = 0; i < NUM; ++i) {
+        first = first && !_children[i]->sendUpdates(since, first);
     }
-    return first;
+    return !first;
 }
 
-ArduJAXElement* ArduJAXContainer::findChild(const char*id) const {
-    for (int i = 0; i < _children.count; ++i) {
-        ArduJAXElement* child = _children.members[i]->toElement();
+ArduJAXElement* ArduJAXContainerBase::findChild(ArduJAXBase** _children, uint NUM, const char*id) const {
+    for (uint i = 0; i < NUM; ++i) {
+        ArduJAXElement* child = _children[i]->toElement();
         if (child) {
             if (strcmp(id, child->id()) == 0) return child;
         }
-        ArduJAXContainer* childlist = _children.members[i]->toContainer();
+        ArduJAXContainerBase* childlist = _children[i]->toContainer();
         if (childlist) {
             child = childlist->findChild(id);
             if (child) return child;
@@ -236,12 +228,7 @@ void ArduJAXCheckButton::setChecked(bool checked) {
 
 //////////////////////// ArduJAXPage /////////////////////////////
 
-ArduJAXPage::ArduJAXPage(ArduJAXList children, const char* title, const char* header_add) : ArduJAXContainer(children) {
-    _title = title;
-    _header_add = 0;
-}
-
-void ArduJAXPage::print() const {
+void ArduJAXContainerBase::printPage(ArduJAXBase** _children, uint NUM, const char* _title, const char* _header_add) const {
     _driver->printHeader(true);
     _driver->printContent("<HTML><HEAD><TITLE>");
     if (_title) _driver->printContent(_title);
@@ -281,11 +268,12 @@ void ArduJAXPage::print() const {
     if (_header_add) _driver->printContent(_header_add);
     _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
                                                                             // but also the "restore latest settings after client reload" is questionable in our use-case.
-    printChildren();
+    printChildren(_children, NUM);
+
     _driver->printContent("\n</FORM></BODY></HTML>\n");
 }
 
-void ArduJAXPage::handleRequest() {
+void ArduJAXContainerBase::handleRequest(ArduJAXBase** _children, uint NUM) {
     char conversion_buf[ARDUJAX_MAX_ID_LEN];
 
     // handle value changes sent from client
@@ -301,7 +289,7 @@ void ArduJAXPage::handleRequest() {
     _driver->printContent("{\"revision\": ");
     _driver->printContent(itoa(_driver->revision(), conversion_buf, 10));
     _driver->printContent(",\n\"updates\": [\n");
-    sendUpdates(client_revision);
+    sendUpdates(_children, NUM, client_revision, true);
     _driver->printContent("\n]}\n");
 
     if (element) {

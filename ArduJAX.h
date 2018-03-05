@@ -27,7 +27,7 @@
 
 class ArduJAXOutputDriverBase;
 class ArduJAXElement;
-class ArduJAXContainer;
+class ArduJAXContainerBase;
 
 class ArduJAXBase {
 public:
@@ -42,7 +42,7 @@ public:
      *  @param first if false, @em and this object writes any update, it should write a ',', first.
      *  @returns true if anything has been written, false otherwise.
      */
-    virtual bool sendUpdates(uint16_t since, bool first=true) {
+    virtual bool sendUpdates(uint16_t since, bool first) {
         return false;
     }
     /** Cast this object to ArduJAXElement if it is a controllable element.
@@ -52,7 +52,7 @@ public:
     }
     /** Cast this object to ArduJAXContainer if it is a container.
      *  @return 0, if this is not a container. */
-    virtual ArduJAXContainer* toContainer() {
+    virtual ArduJAXContainerBase* toContainer() {
         return 0;
     }
 
@@ -71,7 +71,7 @@ public:
         FirstElementSpecificProperty=3
     };
 protected:
-friend class ArduJAXContainer;
+template<size_t NUM> friend class ArduJAXContainer;
     virtual void setBasicProperty(uint8_t num, bool status) {};
 
     static ArduJAXOutputDriverBase *_driver;
@@ -140,42 +140,9 @@ private:
 };
 #endif
 
-struct ArduJAXList {
-    uint8_t count;
-    ArduJAXBase** members;
-};
-
-template<size_t N> ArduJAXList ArduJAX_makeList (ArduJAXBase* (&list)[N]) {  // does constexpr. work?
-    ArduJAXList ret;
-    ret.count = N;
-    ret.members = new ArduJAXBase*[N]; // note: list passed by reference, as automatic size detection does not work, otherwise. Hence need to copy
-    for (int i = 0; i < N; ++i) {
-        ret.members[i] = list[i];
-    }
-    return ret;
-}
-
-/** Base class for groups of objects */
-class ArduJAXContainer : public ArduJAXBase {
-public:
-    ArduJAXContainer(ArduJAXList children);
-    void print() const;
-    void printChildren() const;
-    bool sendUpdates(uint16_t since, bool first=true);
-    /** Recursively look for a child (hopefully, there is only one) of the given id, and return a pointer to it. */
-    ArduJAXElement* findChild(const char*id) const;
-    ArduJAXContainer *toContainer() override {
-        return this;
-    }
-protected:
-    void setBasicProperty(uint8_t num, bool status) override {
-        for (int i = 0; i < _children.count; ++i) {
-            _children.members[i]->setBasicProperty(num, status);
-        }
-    }
-    ArduJAXContainer() {};
-    ArduJAXList _children;
-};
+#define MAKE_ArduJAXPage(name, title, header_add, ...) \
+    ArduJAXBase* name_elements[] = {__VA_ARGS__}; \
+    ArduJAXPage<sizeof(name_elements)/sizeof(ArduJAXBase*)> name(name_elements, title, header_add);
 
 /** This class represents a chunk of static HTML that will not be changed / cannot be interacted with. Neither from the client, nor from the server.
  *  This does not have to correspond to a complete HTML element, it can be any fragment. */
@@ -208,7 +175,7 @@ public:
     const char* id() const {
         return _id;
     }
-    bool sendUpdates(uint16_t since, bool first=true) override;
+    bool sendUpdates(uint16_t since, bool first) override;
 
     /** const char representation of the current server side value. Must be implemented in derived class.
      *  This base class handles visibility and enabledness, only. Do call the base implementation for
@@ -239,7 +206,8 @@ public:
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override;
-friend class ArduJAXPage;
+template<size_t NUM> friend class ArduJAXPage;
+friend class ArduJAXContainerBase;
     const char* _id;
     void setChanged();
     bool changed(uint16_t since);
@@ -303,12 +271,58 @@ template<size_t NUM> friend class ArduJAXRadioGroup;
 };
 
 /** abstract base for ArduJAXRadioGroup, needed for internal reasons. */
-class ArduJAXRadioGroupBase : public ArduJAXContainer {
+class ArduJAXRadioGroupBase {
 protected:
-    ArduJAXRadioGroupBase() : ArduJAXContainer() {};
+    ArduJAXRadioGroupBase() {};
 friend class ArduJAXCheckButton;
     virtual void selectOption(ArduJAXCheckButton* which) = 0;
     const char* _name;
+};
+
+/** Abstract base for ArduJAXContainer, needed for internal reasons */
+class ArduJAXContainerBase : public ArduJAXBase {
+public:
+    virtual ArduJAXElement* findChild(const char*id) const = 0;
+    ArduJAXContainerBase *toContainer() override {
+        return this;
+    }
+protected:
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::printChildren() */
+    void printChildren(ArduJAXBase** children, uint num) const;
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::sendUpdates() */
+    bool sendUpdates(ArduJAXBase** children, uint num, uint16_t since, bool first);
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::findChild() */
+    ArduJAXElement* findChild(ArduJAXBase** children, uint num, const char*id) const;
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::print() */
+    void printPage(ArduJAXBase** children, uint num, const char* _title, const char* _header) const;
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::handleRequest() */
+    void handleRequest(ArduJAXBase** children, uint num);
+};
+
+/** Base class for groups of objects */
+template<size_t NUM> class ArduJAXContainer : public ArduJAXContainerBase {
+public:
+    ArduJAXContainer(ArduJAXBase *children[NUM]) : ArduJAXContainerBase() {
+        _children = children;
+    }
+    void print() const {
+        ArduJAXContainerBase::printChildren(_children, NUM);
+    }
+    bool sendUpdates(uint16_t since, bool first) {
+        return ArduJAXContainerBase::sendUpdates(_children, NUM, since, first);
+    }
+    /** Recursively look for a child (hopefully, there is only one) of the given id, and return a pointer to it. */
+    ArduJAXElement* findChild(const char*id) const override final {
+        return ArduJAXContainerBase::findChild(_children, NUM, id);
+    }
+protected:
+    void setBasicProperty(uint8_t num, bool status) override {
+        for (int i = 0; i < NUM; ++i) {
+            _children[i]->setBasicProperty(num, status);
+        }
+    }
+    ArduJAXContainer() {};
+    ArduJAXBase** _children;
 };
 
 /** A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
@@ -316,25 +330,24 @@ friend class ArduJAXCheckButton;
  *  You can insert either the whole group into an ArudJAXPage at once, or - for more flexbile
  *  layouting - retrieve the individual buttons using() button, and insert them into the page
  *  as independent elements. */
-template<size_t NUM> class ArduJAXRadioGroup : public ArduJAXRadioGroupBase {
+template<size_t NUM> class ArduJAXRadioGroup : public ArduJAXContainer<NUM>, public ArduJAXRadioGroupBase {
 public:
     /** ctor.
      *  @param id_base the "base" id. Internally, radio buttons with id_s id_base0, id_base1, etc. will be created.
      *  @param options labels for the options.
      *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
      *                         no option selected by default. */
-    ArduJAXRadioGroup(const char* id_base, const char* options[NUM], uint8_t selected_option = 0) : ArduJAXRadioGroupBase() {
+    ArduJAXRadioGroup(const char* id_base, const char* options[NUM], uint8_t selected_option = 0) : ArduJAXContainer<NUM>(), ArduJAXRadioGroupBase() {
         for (uint8_t i = 0; i < NUM; ++i) {
             char* childid = childids[i];
             strncpy(childid, id_base, ARDUJAX_MAX_ID_LEN-4);
             itoa(i, &(childid[strlen(childid)]), 10);
             buttons[i] = ArduJAXCheckButton(childid, options[i], i == selected_option);
             buttons[i].radiogroup = this;
-            dummylist[i] = &buttons[i];
+            buttonpointers[i] = &buttons[i];
         }
         _current_option = selected_option;
-        _children.count = NUM;
-        _children.members = dummylist;
+         ArduJAXContainer<NUM>::_children = buttonpointers;  // Hm, do I need to specify ArduJAXContainer<NUM>::, explicitly?
         _name = id_base;
     }
     /** Select / check the option at the given index. All other options in this radio group will become deselected. */
@@ -355,8 +368,8 @@ public:
         return 0;
     }
 private:
-    ArduJAXCheckButton buttons[NUM];
-    ArduJAXBase* dummylist[NUM];
+    ArduJAXCheckButton buttons[NUM]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
+    ArduJAXBase* buttonpointers[NUM];
     char childids[NUM][ARDUJAX_MAX_ID_LEN];
     int8_t _current_option;
     void selectOption(ArduJAXCheckButton* which) override {
@@ -375,19 +388,26 @@ private:
  *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,
  *  both page loads, and AJAX are handled on the same URL, but the first via GET, and the second
  *  via POST. */
-class ArduJAXPage : public ArduJAXContainer {
+template<size_t NUM> class ArduJAXPage : public ArduJAXContainer<NUM> {
 public:
     /** Create a web page.
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
      *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
-    ArduJAXPage(ArduJAXList children, const char* title, const char* header_add = 0);
+    ArduJAXPage(ArduJAXBase* children[NUM], const char* title, const char* header_add = 0) : ArduJAXContainer<NUM>(children) {
+        _title = title;
+        _header_add = 0;
+    }
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
      *  there is a GET request to the desired URL. */
-    void print() const override;
+    void print() const override {
+        ArduJAXContainerBase::printPage(ArduJAXContainer<NUM>::_children, NUM, _title, _header_add);
+    }
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
      *  to whichever URL you served the page itself, from. */
-    void handleRequest();
+    void handleRequest() {
+        ArduJAXContainerBase::handleRequest(ArduJAXContainer<NUM>::_children, NUM);
+    }
 protected:
     const char* _title;
     const char* _header_add;
