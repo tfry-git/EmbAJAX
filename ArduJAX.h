@@ -196,7 +196,7 @@ public:
     }
 
     /** override this in your derived class to allow updates to be propagated from client to server (if wanted).
-     *  The implementation should _not_ call setChanged(). */
+     *  The implementation need not call setChanged(). */
     virtual void updateFromDriverArg(const char* argname) {
         return;
     }
@@ -296,7 +296,7 @@ protected:
     /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::print() */
     void printPage(ArduJAXBase** children, uint num, const char* _title, const char* _header) const;
     /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::handleRequest() */
-    void handleRequest(ArduJAXBase** children, uint num);
+    void handleRequest(ArduJAXBase** children, uint num, void (*change_callback)());
 };
 
 /** Base class for groups of objects */
@@ -351,7 +351,7 @@ public:
         _name = id_base;
     }
     /** Select / check the option at the given index. All other options in this radio group will become deselected. */
-    void selectOption(uint8_t num) {
+    void selectOptionN(uint8_t num) {
         for (uint8_t i = 0; i < NUM; ++i) {
             buttons[i].setChecked(i == num);
         }
@@ -375,7 +375,7 @@ private:
     void selectOption(ArduJAXCheckButton* which) override {
         _current_option = -1;
         for (uint8_t i = 0; i < NUM; ++i) {
-            if (which == &(buttons[i])) {
+            if (which == buttonpointers[i]) {
                 _current_option = i;
             } else {
                 buttons[i].setChecked(false);
@@ -404,9 +404,15 @@ public:
         ArduJAXContainerBase::printPage(ArduJAXContainer<NUM>::_children, NUM, _title, _header_add);
     }
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
-     *  to whichever URL you served the page itself, from. */
-    void handleRequest() {
-        ArduJAXContainerBase::handleRequest(ArduJAXContainer<NUM>::_children, NUM);
+     *  to whichever URL you served the page itself, from.
+     *
+     *  @param change_callback If some value has changed in the client, this function will be called. While it is optional
+     *                         to specify this, if there are any changes that may need to be sent back to the client in
+     *                         response to the change, you should specify this function, and handle the change inside it.
+     *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
+     *                         (Otherwise the client will be updated on the next poll). */
+    void handleRequest(void (*change_callback)()=0) {
+        ArduJAXContainerBase::handleRequest(ArduJAXContainer<NUM>::_children, NUM, change_callback);
     }
 protected:
     const char* _title;

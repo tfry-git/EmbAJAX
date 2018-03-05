@@ -86,7 +86,8 @@ void ArduJAXContainerBase::printChildren(ArduJAXBase** _children, uint NUM) cons
 
 bool ArduJAXContainerBase::sendUpdates(ArduJAXBase** _children, uint NUM, uint16_t since, bool first) {
     for (uint i = 0; i < NUM; ++i) {
-        first = first && !_children[i]->sendUpdates(since, first);
+        bool sent = _children[i]->sendUpdates(since, first);
+        if (sent) first = false;
     }
     return !first;
 }
@@ -273,7 +274,7 @@ void ArduJAXContainerBase::printPage(ArduJAXBase** _children, uint NUM, const ch
     _driver->printContent("\n</FORM></BODY></HTML>\n");
 }
 
-void ArduJAXContainerBase::handleRequest(ArduJAXBase** _children, uint NUM) {
+void ArduJAXContainerBase::handleRequest(ArduJAXBase** _children, uint NUM, void (*change_callback)()) {
     char conversion_buf[ARDUJAX_MAX_ID_LEN];
 
     // handle value changes sent from client
@@ -282,7 +283,10 @@ void ArduJAXContainerBase::handleRequest(ArduJAXBase** _children, uint NUM) {
     ArduJAXElement *element = (id[0] == '\0') ? 0 : findChild(id);
     if (element) {
         element->updateFromDriverArg("value");
+        element->setChanged(); // So changes sent from one client will be synced to the other clients
+        if (change_callback) change_callback();
     }
+    _driver->nextRevision();
 
     // then relay value changes that have occured in the server (possibly in response to those sent)
     _driver->printHeader(false);
@@ -291,9 +295,4 @@ void ArduJAXContainerBase::handleRequest(ArduJAXBase** _children, uint NUM) {
     _driver->printContent(",\n\"updates\": [\n");
     sendUpdates(_children, NUM, client_revision, true);
     _driver->printContent("\n]}\n");
-
-    if (element) {
-        element->setChanged(); // So changes sent from one client will be synced to the other clients
-    }
-    _driver->nextRevision();
 }
