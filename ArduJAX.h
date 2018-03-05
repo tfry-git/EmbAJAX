@@ -140,6 +140,10 @@ private:
 };
 #endif
 
+/** Convenience macro to set up an ArduJAXPage, without counting the number of elements for the template. See ArduJAXPage::ArduJAXPage()
+ *  @param name Variable name of the page instance
+ *  @param title HTML Title
+ *  @param header_add a custom string to add to the HTML header section, e.g. a CSS definition. */
 #define MAKE_ArduJAXPage(name, title, header_add, ...) \
     ArduJAXBase* name_elements[] = {__VA_ARGS__}; \
     ArduJAXPage<sizeof(name_elements)/sizeof(ArduJAXBase*)> name(name_elements, title, header_add);
@@ -247,6 +251,22 @@ private:
     int16_t _min, _max, _value;
 };
 
+/** A push-button. When clicked a custom callback function will be called on the server. */
+class ArduJAXPushButton : public ArduJAXElement {
+public:
+    /** @param callback Called when the button was clicked in the UI (with a pointer to the button as parameter) */
+    ArduJAXPushButton(const char* id, const char* label, void (*callback)(ArduJAXPushButton*));
+    void print() const override;
+    /** Change the button text */
+    void setText(const char* label);
+    const char* value(uint8_t which = ArduJAXBase::Value) const override;
+    const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
+    void updateFromDriverArg(const char* argname) override;
+private:
+    void (*_callback)(ArduJAXPushButton*);
+    const char* _label;
+};
+
 class ArduJAXRadioGroupBase;
 
 /** A checkable button / box (NOTE: _Internally_ this is also used for radio buttons, however
@@ -347,7 +367,7 @@ public:
             buttonpointers[i] = &buttons[i];
         }
         _current_option = selected_option;
-         ArduJAXContainer<NUM>::_children = buttonpointers;  // Hm, do I need to specify ArduJAXContainer<NUM>::, explicitly?
+         ArduJAXContainer<NUM>::_children = buttonpointers;  // Hm, why do I need to specify ArduJAXContainer<NUM>::, explicitly?
         _name = id_base;
     }
     /** Select / check the option at the given index. All other options in this radio group will become deselected. */

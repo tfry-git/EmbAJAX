@@ -35,6 +35,7 @@ These controls / elements are supported as of now:
 
 - Checkboxes
 - Radio buttons (mutually exclusive buttons)
+- Push buttons
 - Sliders
 - Text display
 - Static HTML blocks
@@ -62,7 +63,7 @@ ArduJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial
 ArduJAXMutableSpan display("display");         // a plain text display
 ArduJAXMutableSpan blinky("blinky");           // another plain text display that we will show/hide from the server
 
-// Define a page "page" with our elements of interest, above, interspersed by some uninteresting
+// Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_ArduJAXPage is just a convenience macro around the ArduJAXPage<>-class.
 MAKE_ArduJAXPage(page, "ArduJAXTest", "",
   new ArduJAXStatic("<h1>This is a test</h1><p>The value you set in the following slider: "),
@@ -118,13 +119,17 @@ changes to the server, so in most cases, the client would still appear to be ref
 To avoid sending all states of all controls on each request from each client, the framework keeps track of the lastest "revision number"
 sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded.
 
-- Explain why avoidance of String, and future directions
-- Explain reason for updateFromDriverArg
+You may have noted that the framework avoids the use of the String class, even though that would make some things easier. The reason
+for this design choice is that the overhead of using char*, here, in a sketch that may be using String, already, is lot. However, if this
+framework were to rely on String, while nothing else in the sketch uses String, that would incur a significant overhead. Further, it should
+be noted, that the risk of memory-fragmentation is relatively real in the present use-case, as arbitrary strings are regularly coming in
+"from the outside". Nonetheless, using Strings would relieve the use from having to worry about the lifetime of strings passed in to the
+framework, and thus, in the future, it may make sense to support String *optionally*.
 
 ## Some TODOs
 
-- More controls (obviously), importantly pushbuttons, and text input
-- Ability to register callback(s) on value changes, which will allow for cleaner code, and immediate reaction
+- More controls (obviously), importantly text input
+- Examples
 
 ## The beggar's line
 

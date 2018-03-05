@@ -176,6 +176,40 @@ void ArduJAXSlider::setValue(int16_t value) {
     setChanged();
 }
 
+//////////////////////// ArduJAXPushButton /////////////////////////////
+
+ArduJAXPushButton::ArduJAXPushButton(const char* id, const char* label, void (*callback)(ArduJAXPushButton*)) : ArduJAXElement (id) {
+    _label = label;
+    _callback = callback;
+}
+
+void ArduJAXPushButton::print() const {
+    _driver->printContent("<button type=\"button\" id=\"");
+    _driver->printContent(_id);
+    _driver->printContent("\" onClick=\"doRequest(this.id, 'p');\">");
+    _driver->printContent(_label);
+    _driver->printContent("</button>");
+}
+
+void ArduJAXPushButton::setText(const char* label) {
+    _label = label;
+    setChanged();
+}
+
+const char* ArduJAXPushButton::value(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return _label;
+    return ArduJAXElement::value(which);
+}
+
+const char* ArduJAXPushButton::valueProperty(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return "innerHTML";
+    return ArduJAXElement::valueProperty(which);
+}
+
+void ArduJAXPushButton::updateFromDriverArg(const char* argname) {
+    _callback(this);
+}
+
 //////////////////////// ArduJAXCheckButton /////////////////////////////
 
 ArduJAXCheckButton::ArduJAXCheckButton(const char* id, const char* label, bool checked) : ArduJAXElement(id) {
