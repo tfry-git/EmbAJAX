@@ -115,6 +115,13 @@ void loop() {
 
 ```
 
+## Installation
+
+For now the installation routine is:
+- Download a ZIP of the current development version: https://github.com/tfry-git/ArduJAX/archive/master.zip
+- In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the downloaded .zip for installation
+- You may need to restart your IDE for the library an its examples to show up
+
 ## Some implementation notes
 
 Currently, the web servers for embeddables I have dealt with so far, are limited to one client at a time. Therefore, if using
@@ -132,18 +139,24 @@ be noted, that the risk of memory-fragmentation is relatively real in the presen
 "from the outside". Nonetheless, using Strings would relieve the use from having to worry about the lifetime of strings passed in to the
 framework, and thus, in the future, it may make sense to support String *optionally*.
 
+Another thing you will notice is that the framework avoids any sort of dynamic list. Instead, template classes with a size parameter are
+used to keep lists of elements (such as the ArduJAXPage\<SIZE>). The reason is again, memory efficiency, and fear of fragmentation. Also,
+the vast majority of use cases should be perfectly fine with a statically defined setup of elements. However, should the need arise, it
+would be very easily possible to create a dynamically allocated analogon to ArduJAXContainer<SIZE>. An instance of that could simply be
+inserted into a page, and serve as a straight-forward wrapper around elements that are created dynamically. (A different question is how to
+keep this in sync with the client, of course, if that is also a requirement...)
+
 ## Some TODOs
 
 - Cannot ever have enough controls: drop-down (\<select>), div (esp. to show/hide static elements in a group)
+- A server status element would be nice, to show any connectivity problems
 - More drivers
 - API docs
 - More examples
-- Installation instructions
-
 
 ## The beggar's line
 
-So far everbody else has been rolling their own piece of AJAX for their own little project, and that's what I could have done, too, in a
-tenth of the time spent on this framework, including its docs. But I chose to write all this, instead. Because I believe in re-usable solutions
+So far everbody else has been rolling their own piece of AJAX for their own little project, and that's what I could have done, too, in a tiny
+fraction of the time spent on this framework, including its docs. But I chose to write all this, instead. Because I believe in re-usable solutions
 and shared efforts. If you do too, and this framework is useful to you, consider dropping a micro-donation via PayPal to thomas.friedrichsmeier@gmx.de .
 Thanks!
