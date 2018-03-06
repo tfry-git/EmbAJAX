@@ -122,6 +122,10 @@ For now the installation routine is:
 - In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the downloaded .zip for installation
 - You may need to restart your IDE for the library an its examples to show up
 
+## Further readings
+
+API documentation is at https://tfry-git.github.io/ArduJAX/api/annotated.html .
+
 ## Some implementation notes
 
 Currently, the web servers for embeddables I have dealt with so far, are limited to one client at a time. Therefore, if using
