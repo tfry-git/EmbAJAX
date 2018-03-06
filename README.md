@@ -111,7 +111,7 @@ void loop() {
 
 ## Some implementation notes
 
-Currently, the web servers for embeddables I have deal with so far, are limited to one client at a time. Therefore, if using
+Currently, the web servers for embeddables I have dealt with so far, are limited to one client at a time. Therefore, if using
 a permanent AJAX connection, all further access would be blocked. Even separate page loads from the same browser. So, instead,
 we resort to regular polling for updates. An update poll is always included, automatically, when the client sends control
 changes to the server, so in most cases, the client would still appear to be refreshed, immediately.
@@ -128,8 +128,11 @@ framework, and thus, in the future, it may make sense to support String *optiona
 
 ## Some TODOs
 
-- More controls (obviously), importantly text input
+- Cannot ever have enough controls: drop-down (<select>)
+- More drivers
+- API docs
 - Examples
+- Installation instructions
 
 ## The beggar's line
 

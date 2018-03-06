@@ -107,6 +107,8 @@ public:
     void nextRevision() {
         _revision = next_revision;
     }
+    /** Print the given value in double quotes. Any quotes within the value will be escaped, properly. */
+    void printQuoted(const char* value);
 private:
     uint16_t _revision;
     uint16_t next_revision;
@@ -215,6 +217,8 @@ friend class ArduJAXContainerBase;
     const char* _id;
     void setChanged();
     bool changed(uint16_t since);
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXTextInput::print() */
+    void printTextInput(uint size, const char* value) const;
 private:
     byte _flags;
     uint16_t revision;
@@ -233,6 +237,39 @@ public:
     void setValue(const char* value);
 private:
     const char* _value;
+};
+
+/** A text input field. The template parameter specifies the size (i.e. maximum number of chars)
+ *  of the input field.
+ *
+ *  @note To limit the rate, and avoid conflicting update-conditions, when typing into the text field in the client,
+ *        changes are sent to the server one second after the last key was pressed. This worked for me, best. */
+template<size_t SIZE> class ArduJAXTextInput : public ArduJAXElement {
+public:
+    ArduJAXTextInput(const char* id) : ArduJAXElement(id) {
+        _value[0] = '\0';
+    }
+    void print() const override {
+        ArduJAXElement::printTextInput(SIZE, _value);
+    }
+    const char* value(uint8_t which = ArduJAXBase::Value) const override {
+        if (which == ArduJAXBase::Value) return _value;
+        return ArduJAXElement::value(which);
+    }
+    const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override {
+        if (which == ArduJAXBase::Value) return "value";
+        return ArduJAXElement::valueProperty(which);
+    }
+    /** Set the text inputs content to the given value. Note: In this particular case, the value passed _is_ copied,
+     *  you can safely pass a temporary string. */
+    void setValue(const char* value) {
+        strncpy(_value, value, SIZE);
+    }
+    void updateFromDriverArg(const char* argname) override {
+        _driver->getArg(argname, _value, SIZE);
+    }
+private:
+    char _value[SIZE];
 };
 
 /** An HTML span element with content that can be updated from the server (not the client) */

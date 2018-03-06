@@ -27,6 +27,33 @@
 ArduJAXOutputDriverBase *ArduJAXBase::_driver;
 char ArduJAXBase::itoa_buf[ITOA_BUFLEN];
 
+////////////////////////////// ArduJAXOutputDriverBase ////////////////////
+
+void ArduJAXOutputDriverBase::printQuoted(const char* value) {
+    // NOTE: The assumption, here is that frequent (char-by-char) calls to printContent() _could_ be expensive, depending on the server
+    //       implementation. Thus, a buffer is used to enable printing in larger chunks.
+    char buf[20];
+    buf[0] = '"';
+    uint bufpos = 1;
+    const char *pos = value;
+    while(*pos != '\0') {
+        if (bufpos > 16) {  // == Not enough room for escape+char+quote-end+terminating '\0'
+            buf[bufpos] = '\0';
+            printContent(buf);
+            bufpos = 0;
+            continue;
+        }
+        if (*pos == '"') buf[bufpos++] = '\\';
+        buf[bufpos++] = *pos;
+        ++pos;
+    }
+    buf[bufpos++] = '"';
+    buf[bufpos++] = '\0';
+    printContent(buf);
+}
+
+////////////////////////////// ArduJAXElement /////////////////////////////
+
 /** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
 ArduJAXElement::ArduJAXElement(const char* id) : ArduJAXBase() {
     _id = id;
@@ -37,9 +64,9 @@ ArduJAXElement::ArduJAXElement(const char* id) : ArduJAXBase() {
 bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
     if (!changed(since)) return false;
     if (!first) _driver->printContent(",\n");
-    _driver->printContent("{\n\"id\": \"");
-    _driver->printContent(_id);
-    _driver->printContent("\",\n\"changes\": [");
+    _driver->printContent("{\n\"id\": ");
+    _driver->printQuoted(_id);
+    _driver->printContent(",\n\"changes\": [");
     uint8_t i = 0;
     while (true) {
         const char* pid = valueProperty(i);
@@ -47,11 +74,11 @@ bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
         if (!pid || !pval) break;
 
         if (i != 0) _driver->printContent(",");
-        _driver->printContent("[\"");
-        _driver->printContent(pid);
-        _driver->printContent("\", \"");
-        _driver->printContent(pval);  // TODO: This will need quote-escaping. Probably best implemented in a dedicated function of the driver.
-        _driver->printContent("\"]");
+        _driver->printContent("[");
+        _driver->printQuoted(pid);
+        _driver->printContent(", ");
+        _driver->printQuoted(pval);
+        _driver->printContent("]");
 
         ++i;
     }
@@ -74,6 +101,20 @@ void ArduJAXElement::setChanged() {
 bool ArduJAXElement::changed(uint16_t since) {
     if ((revision + 40000) < since) revision = since + 1;    // basic overflow protection. Results in sending _all_ states at least every 40000 request cycles
     return (revision > since);
+}
+
+void ArduJAXElement::printTextInput(uint SIZE, const char* _value) const {
+    _driver->printContent("<input id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(" type=\"text\" maxLength=\"");
+    _driver->printContent(itoa(SIZE-1, itoa_buf, 10));
+    _driver->printContent("\" size=");
+    _driver->printContent(itoa(min(max(abs(SIZE-1), 10),40), itoa_buf, 10));  // Arbitray limit for rendered width of text fields: 10..40 chars
+    _driver->printContent("\" value=");
+    _driver->printQuoted(_value);
+    // Using onChange to update is too awkward. Using plain onInput would generate too may requests (and often result in "eaten" characters). Instead,
+    // as a compromise, we arrange for an update one second after the last key was pressed.
+    _driver->printContent(" onInput=\"var that=this; clearTimeout(that.debouncer); that.debouncer=setTimeout(function() {doRequest(that.id, that.value);},1000);\"/>");
 }
 
 //////////////////////// ArduJAXContainer(Base) /////////////////////////////
@@ -110,10 +151,10 @@ ArduJAXElement* ArduJAXContainerBase::findChild(ArduJAXBase** _children, uint NU
 //////////////////////// ArduJAXMutableSpan /////////////////////////////
 
 void ArduJAXMutableSpan::print() const {
-    _driver->printContent("<span id=\"");
-    _driver->printContent(_id);
-    _driver->printContent("\">");
-    if (_value) _driver->printContent(_value);  // TODO: quoting
+    _driver->printContent("<span id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(">");
+    if (_value) _driver->printContent(_value);  // NOTE: Not escaping anything, so user can insert HTML.
     _driver->printContent("</span>\n");
 }
 
@@ -144,9 +185,9 @@ ArduJAXSlider::ArduJAXSlider(const char* id, int16_t min, int16_t max, int16_t i
 }
 
 void ArduJAXSlider::print() const {
-    _driver->printContent("<input id=\"");
-    _driver->printContent(_id);
-    _driver->printContent("\" type=\"range\" min=\"");
+    _driver->printContent("<input id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(" type=\"range\" min=\"");
     _driver->printContent(itoa(_min, itoa_buf, 10));
     _driver->printContent("\" max=\"");
     _driver->printContent(itoa(_max, itoa_buf, 10));
@@ -184,10 +225,10 @@ ArduJAXPushButton::ArduJAXPushButton(const char* id, const char* label, void (*c
 }
 
 void ArduJAXPushButton::print() const {
-    _driver->printContent("<button type=\"button\" id=\"");
-    _driver->printContent(_id);
-    _driver->printContent("\" onClick=\"doRequest(this.id, 'p');\">");
-    _driver->printContent(_label);
+    _driver->printContent("<button type=\"button\" id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(" onClick=\"doRequest(this.id, 'p');\">");
+    _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
     _driver->printContent("</button>");
 }
 
@@ -219,21 +260,21 @@ ArduJAXCheckButton::ArduJAXCheckButton(const char* id, const char* label, bool c
 }
 
 void ArduJAXCheckButton::print() const {
-    _driver->printContent("<input id=\"");
-    _driver->printContent(_id);
-    _driver->printContent("\" type=\"");
+    _driver->printContent("<input id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(" type=");
     if (radiogroup) {
-        _driver->printContent("radio");
-        _driver->printContent("\" name=\"");
-        _driver->printContent(radiogroup->_name);
+        _driver->printContent("\"radio\"");
+        _driver->printContent("\" name=");
+        _driver->printQuoted(radiogroup->_name);
     }
-    else _driver->printContent("checkbox");
-    _driver->printContent("\" value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"");
+    else _driver->printContent("\"checkbox\"");
+    _driver->printContent(" value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"");
     if (_checked) _driver->printContent(" checked=\"true\"");
     _driver->printContent ("/><label for=\"");
-    _driver->printContent(_id);
+    _driver->printQuoted(_id);
     _driver->printContent("\">");
-    _driver->printContent(_label);
+    _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
     _driver->printContent("</label>");
 }
 
