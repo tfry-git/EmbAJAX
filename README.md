@@ -26,8 +26,9 @@ and a focus on keeping things lean in memory.
 
 ## Status
 
-A first crude example works (see below). This means you are invited to start playing with this
-library, _but_ many things will change, including in backwards-incompatible ways.
+The library is still pretty new, but quite functional, and stabilizing. This means you can start using the library right now.
+However, please note, that there is _no_ guarantee that upcoming versions of this library remain 100% compatible with the current
+version. I'll try not to break things _except_ when there is a good reason to.
 
 ### Supported elements / features
 
@@ -38,16 +39,18 @@ These controls / elements are supported as of now:
 - Push buttons
 - Sliders
 - Text display
+- Text input
 - Static HTML blocks
 
 The following additional features may be of interest (supported as of now):
 
 - Allows to insert your own custom CSS for styling (no styling in the lib).
-- Elements can be hidden, inputs can be disabled from the server.
+- Elements can be hidden, inputs can be disabled from the server (ArduJAXBase::setVisible(), setEnabled()).
 
 ## Example sketch (compilable on ESP8266)
 
-Not terribly useful, but you know what to really do with a slider, and a display, right?
+Not really useful, but you know what to really do with a slider, and a display, right?
+Some further examples can be found in the examples folder.
 
 ```cpp
 #include <ESP8266WiFi.h>
@@ -61,7 +64,6 @@ ArduJAXOutputDriverESP8266 driver(&server);
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 ArduJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
 ArduJAXMutableSpan display("display");         // a plain text display
-ArduJAXMutableSpan blinky("blinky");           // another plain text display that we will show/hide from the server
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_ArduJAXPage is just a convenience macro around the ArduJAXPage<>-class.
@@ -70,14 +72,13 @@ MAKE_ArduJAXPage(page, "ArduJAXTest", "",
   &slider,
   new ArduJAXStatic(" is sent to the server...</p><p>... which displays it here: <b>"),
   &display,
-  new ArduJAXStatic("</b></p><p>And here's a totally useless element showing and hiding based on server time: "),
-  &blinky
+  new ArduJAXStatic("</b></p>")
 )
 
 // This is all you need to write for the page handler
 void handlePage() {
   if(server.method() == HTTP_POST) { // AJAX request
-    page.handleRequest();
+    page.handleRequest(updateUI);
   } else {  // Page load
     page.print();
   }
@@ -93,18 +94,23 @@ void setup() {
   server.on("/", handlePage);
   server.begin();
 
-  // Just a dummy text. You could change this at any time during loop, too!
-  blinky.setValue("Server makes me blink");
+  updateUI();  // initialize display
+}
+
+char buf[16];
+void updateUI() {
+  // And the following line is all that is needed to read the slider value, convert to a string, and send it
+  // back to the client for display:
+  display.setValue(itoa(slider.intValue(), buf, 10));
+
+  // NOTE: Instead of in this separate function, you could also place the above line in loop(). However, having
+  // it here allows the library to send back the updated display, immediately, resulting in a snappier UI on
+  // the client.
 }
 
 void loop() {
   // handle network
   server.handleClient();
-
-  // And these two lines are all you have to write for the logic: Read slider value, write it to display,
-  // and toggle the blinky every three seconds.
-  display.setValue (slider.value());
-  blinky.setVisible((millis() / 3000) % 2);
 }
 
 ```
@@ -128,10 +134,10 @@ framework, and thus, in the future, it may make sense to support String *optiona
 
 ## Some TODOs
 
-- Cannot ever have enough controls: drop-down (<select>)
+- Cannot ever have enough controls: drop-down (<select>), div (esp. to show/hide static elements in a group)
 - More drivers
 - API docs
-- Examples
+- More examples
 - Installation instructions
 
 ## The beggar's line
