@@ -21,6 +21,7 @@ I.e. the core features are:
 - Allows multiple clients to interact with the same page, concurrently.
   - You can even pass information between two clients this way: Try loading the example, below, in two separate browsers!
 - Supports arbitrary number of pages, and elements can be shared across pages.
+- Simple but effective error handling for unreliable connections and server reboots
 
 This framework _could_ be used independently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
 and a focus on keeping things lean in memory.
@@ -153,16 +154,18 @@ would be very easily possible to create a dynamically allocated analogon to Ardu
 inserted into a page, and serve as a straight-forward wrapper around elements that are created dynamically. (A different question is how to
 keep this in sync with the client, of course, if that is also a requirement...)
 
+Connection error handling, despite asynchronous requests: Both server and client keep track of the "revision" number of their state. This is
+used for keeping several clients in sync, but also for error handling: If the server detects that it has a lower revision than the client, it
+will know that it has rebooted (while the client has not), and will re-send all current states. If the client tries to send a UI change, but
+the network request fails, it will discard its revision, and thereby ask the server to also re-send all states. Thus, the latest user input
+may get lost on a network error, but the state of the controls shown in the client will remain in sync with the state as known to the server.
+
 ## Some TODOs
 
 - Cannot ever have enough controls, but basic ones should now be covered
 - div-element (esp. to show/hide static elements in a group)
 - More drivers
 - More examples
-- In the case of fragile, but not totally broken connections, we may want to re-send change notifications on failure
-  - This would mean keeping a map of "id->value in need of syncing" in the client.
-  - Then whenever sending a new request (e.g. when polling), that list would be checked, first, for anything in need of attention.
-  - Perhaps also limit things to one pending request at a time?
 
 ## The beggar's line
 

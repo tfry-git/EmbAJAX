@@ -371,6 +371,11 @@ void ArduJAXContainerBase::printPage(ArduJAXBase** _children, uint NUM, const ch
                             "       doUpdates(JSON.parse(req.responseText));\n"
                             "       if(window.ardujaxsh) window.ardujaxsh.in();\n"
                             "    }\n"
+                            "    if(id) {\n"  // if we fail to transmit a UI change to the server, for whatever reason, we will be out of sync
+                            "       req.onerror = req.ontimeout = function() {\n"
+                            "          serverrevision = 0;\n" // this will cause the server to re-send _all_ element states on the next poll()
+                            "       }\n"
+                            "    }\n"
                             "    req.open('POST', document.URL, true);\n"
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                             "    req.send('id=' + id + '&value=' + encodeURIComponent(value) + '&revision=' + serverrevision);\n"
