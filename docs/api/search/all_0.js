@@ -15,5 +15,5 @@ var searchData=
   ['ardujaxslider',['ArduJAXSlider',['../classArduJAXSlider.html',1,'']]],
   ['ardujaxstatic',['ArduJAXStatic',['../classArduJAXStatic.html',1,'ArduJAXStatic'],['../classArduJAXStatic.html#a3af006ba245243b6818a0a8a0df15604',1,'ArduJAXStatic::ArduJAXStatic()']]],
   ['ardujaxtextinput',['ArduJAXTextInput',['../classArduJAXTextInput.html',1,'']]],
-  ['ardujax',['ArduJAX',['../md_README.html',1,'']]]
+  ['ardujax',['ArduJAX',['../index.html',1,'']]]
 ];

@@ -20,6 +20,7 @@ I.e. the core features are:
   framework takes care of keeping information in sync with the client.
 - Allows multiple clients to interact with the same page, concurrently.
   - You can even pass information between two clients this way: Try loading the example, below, in two separate browsers!
+- Supports arbitrary number of pages, and elements can be shared across pages.
 
 This framework _could_ be used independently of the Arduino environment, but Arduino is the main target, thus the C++ implementation,
 and a focus on keeping things lean in memory.
@@ -41,6 +42,7 @@ These controls / elements are supported as of now:
 - Text display
 - Text input
 - Static HTML blocks
+- Connection status indicator
 
 The following additional features may be of interest (supported as of now):
 
