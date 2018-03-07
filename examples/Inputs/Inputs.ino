@@ -65,6 +65,10 @@ MAKE_ArduJAXPage(page, "ArduJAX example - Inputs", "",
     &button,
     &nextCell,
     &button_d,
+    &nextRow,
+    new ArduJAXStatic("Server status:"),
+    &nextCell,
+    new ArduJAXConnectionIndicator(),
     new ArduJAXStatic("</b></td></tr></table>")
 )
 

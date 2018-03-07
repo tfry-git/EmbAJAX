@@ -158,6 +158,10 @@ keep this in sync with the client, of course, if that is also a requirement...)
 - More drivers
 - API docs
 - More examples
+- In the case of fragile, but not totally broken connections, we may want to re-send change notifications on failure
+  - This would mean keeping a map of "id->value in need of syncing" in the client.
+  - Then whenever sending a new request (e.g. when polling), that list would be checked, first, for anything in need of attention.
+  - Perhaps also limit things to one pending request at a time?
 
 ## The beggar's line
 
