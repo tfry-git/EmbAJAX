@@ -52,6 +52,21 @@ void ArduJAXOutputDriverBase::printQuoted(const char* value) {
     printContent(buf);
 }
 
+//////////////////////// ArduJAXConnectionIndicator ///////////////////////
+
+void ArduJAXConnectionIndicator::print() const {
+    _driver->printContent("<div><script>\n"
+                          "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
+                          "'misses': 0,\n"
+                          "'in': function() { if(this.misses) { this.misses = 0; this.div.innerHTML=");
+    _driver->printQuoted(_content_ok ? _content_ok : "<span class=\"ArduJAXStatusOK\" style=\"background-color:green;\">OK</span>");
+    _driver->printContent (";}},\n"
+                           "'out': function() {if (this.misses < 5) { if(++(this.misses) >= 5) this.div.innerHTML=");
+    _driver->printQuoted(_content_fail ? _content_fail : "<span class=\"ArduJAXStatusOK\" style=\"background-color:red;\">FAIL</span>");
+    _driver->printContent(";}}\n"
+                          "}\n</script></div>");
+}
+
 ////////////////////////////// ArduJAXElement /////////////////////////////
 
 /** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
@@ -174,7 +189,6 @@ void ArduJAXMutableSpan::setValue(const char* value) {
     _value = value;
     setChanged();
 }
-
 
 //////////////////////// ArduJAXSlider /////////////////////////////
 
@@ -313,8 +327,10 @@ void ArduJAXContainerBase::printPage(ArduJAXBase** _children, uint NUM, const ch
                             "function doRequest(id='', value='') {\n"
                             "    var req = new XMLHttpRequest();\n"
                             "    req.timeout = 10000;\n"   // probably disconnected. Don't stack up request objects forever.
+                            "    if(window.ardujaxsh) window.ardujaxsh.out();\n"
                             "    req.onload = function() {\n"
                             "       doUpdates(JSON.parse(req.responseText));\n"
+                            "       if(window.ardujaxsh) window.ardujaxsh.in();\n"
                             "    }\n"
                             "    req.open('POST', document.URL, true);\n"
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"

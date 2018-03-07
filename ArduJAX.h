@@ -29,9 +29,15 @@ class ArduJAXOutputDriverBase;
 class ArduJAXElement;
 class ArduJAXContainerBase;
 
+/** @brief Abstract base class for anything shown on an ArduJAXPage
+ *
+ *  Anything that can be displayed on an ArduJAXPage will have to inherit from this class
+ *  (or be wrapped in something inherited from this class @see ArduJAXStatic). */
 class ArduJAXBase {
 public:
     virtual void print() const = 0;
+    /** Set the driver. You do _not_ have to call this, except if you actually want to switch
+     *  between several drivers at runtime. */
     static void setDriver(ArduJAXOutputDriverBase *driver) {
         _driver = driver;
     }
@@ -55,12 +61,13 @@ public:
     virtual ArduJAXContainerBase* toContainer() {
         return 0;
     }
-
     /** Set visibility of this element. Note not all ArduJAXBase-objects support this. Importantly,
      *  ArduJAXStatic does not. Provided in the base class for efficiency. */
     void setVisible(bool visible) {
         setBasicProperty(Visibility, visible);
     }
+    /** Set enabledness state of this element. Note not all ArduJAXBase-objects support this. Importantly,
+     *  ArduJAXStatic does not. Provided in the base class for efficiency. */
     void setEnabled(bool enabled) {
         setBasicProperty(Enabledness, enabled);
     }
@@ -78,7 +85,9 @@ template<size_t NUM> friend class ArduJAXContainer;
     static char itoa_buf[8];
 };
 
-/** Output driver as an abstraction over the server read/write commands.
+/** @brief Abstract base class for output drivers/server implementations
+ *
+ *  Output driver as an abstraction over the server read/write commands.
  *  You will have to instantiate exactly one object of exactly one implementation,
  *  before using any ArduJAX classes.
  *
@@ -116,8 +125,10 @@ private:
 
 #if defined (ESP8266)  // TODO: Move this to extra header
 #include <ESP8266WebServer.h>
+/**  @brief Output driver implementation for ESP8266WebServer */
 class ArduJAXOutputDriverESP8266 : public ArduJAXOutputDriverBase {
 public:
+    /** To register an ESP8266WebServer with ArduJAX, simply create a (globaL) instance of this class. */
     ArduJAXOutputDriverESP8266(ESP8266WebServer *server) {
         ArduJAXBase::setDriver(this);
         _server = server;
@@ -150,7 +161,9 @@ private:
     ArduJAXBase* name_elements[] = {__VA_ARGS__}; \
     ArduJAXPage<sizeof(name_elements)/sizeof(ArduJAXBase*)> name(name_elements, title, header_add);
 
-/** This class represents a chunk of static HTML that will not be changed / cannot be interacted with. Neither from the client, nor from the server.
+/** @brief A static chunk of HTML
+ *
+ * This class represents a chunk of static HTML that will not be changed / cannot be interacted with. Neither from the client, nor from the server.
  *  This does not have to correspond to a complete HTML element, it can be any fragment. */
 class ArduJAXStatic : public ArduJAXBase {
 public:
@@ -165,7 +178,29 @@ protected:
     const char* _content;
 };
 
-/** Abstract Base class for objects that can be changed, either from the server, or from both the client and the server both.
+/** @brief connection status indicator
+ *
+ *  This passive element can be inserted into a page to indicate the connection status: If more than 5 client requests go unanswered, in a row
+ *  the connection to the server is assumed to be broken.
+ *
+ *  @note While this is a "dynamic" display, the entire logic is implemented on the client, for obvious reasons. From the point of view of the
+ *        server, this is a static element. */
+class ArduJAXConnectionIndicator : public ArduJAXBase {
+public:
+    /** c'tor. If you don't like the default status indications, you can pass the HTML to be shown for "ok" and "fail" states. */
+    ArduJAXConnectionIndicator(const char* content_ok = 0, const char* content_fail = 0) {
+        _content_ok = content_ok;
+        _content_fail = content_fail;
+    }
+    void print() const override;
+private:
+    const char* _content_ok;
+    const char* _content_fail;
+};
+
+/** @brief Abstract base class for modifiable elements.
+ *
+ *  Abstract Base class for objects that can be changed, either from the server, or from both the client and the server.
  *  To create a derived class, you will need to provide appropriate implementations of print(), value(), and valueProperty().
  *  Further, you will most likely want to add a function like setValue() for control from the server. If the element is to
  *  receive updates from the client side, you will a) have to include an appropriate onChange-call in print(), and b) provide
@@ -224,7 +259,7 @@ private:
     uint16_t revision;
 };
 
-/** An HTML span element with content that can be updated from the server (not the client) */
+/** @brief An HTML span element with content that can be updated from the server (not the client) */
 class ArduJAXMutableSpan : public ArduJAXElement {
 public:
     ArduJAXMutableSpan(const char* id) : ArduJAXElement(id) {
@@ -239,7 +274,9 @@ private:
     const char* _value;
 };
 
-/** A text input field. The template parameter specifies the size (i.e. maximum number of chars)
+/** @brief A text input field.
+ *
+ *  A text input field. The template parameter specifies the size (i.e. maximum number of chars)
  *  of the input field.
  *
  *  @note To limit the rate, and avoid conflicting update-conditions, when typing into the text field in the client,
@@ -272,7 +309,7 @@ private:
     char _value[SIZE];
 };
 
-/** An HTML span element with content that can be updated from the server (not the client) */
+/** @brief An HTML span element with content that can be updated from the server (not the client) */
 class ArduJAXSlider : public ArduJAXElement {
 public:
     ArduJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial);
@@ -288,7 +325,9 @@ private:
     int16_t _min, _max, _value;
 };
 
-/** A push-button. When clicked a custom callback function will be called on the server. */
+/** @brief A push-button.
+ *
+ *  When clicked a custom callback function will be called on the server. */
 class ArduJAXPushButton : public ArduJAXElement {
 public:
     /** @param callback Called when the button was clicked in the UI (with a pointer to the button as parameter) */
@@ -306,7 +345,9 @@ private:
 
 class ArduJAXRadioGroupBase;
 
-/** A checkable button / box (NOTE: _Internally_ this is also used for radio buttons, however
+/** @brief A checkable (option) button.
+ *
+ *  A checkable button / box (NOTE: _Internally_ this is also used for radio buttons, however
  *  please do not rely on this implementation detail. */
 class ArduJAXCheckButton : public ArduJAXElement {
 public:
@@ -327,7 +368,7 @@ template<size_t NUM> friend class ArduJAXRadioGroup;
     ArduJAXRadioGroupBase* radiogroup;
 };
 
-/** abstract base for ArduJAXRadioGroup, needed for internal reasons. */
+/** @brief abstract base for ArduJAXRadioGroup, needed for internal reasons. */
 class ArduJAXRadioGroupBase {
 protected:
     ArduJAXRadioGroupBase() {};
@@ -336,7 +377,7 @@ friend class ArduJAXCheckButton;
     const char* _name;
 };
 
-/** Abstract base for ArduJAXContainer, needed for internal reasons */
+/** @brief Abstract base for ArduJAXContainer, needed for internal reasons */
 class ArduJAXContainerBase : public ArduJAXBase {
 public:
     virtual ArduJAXElement* findChild(const char*id) const = 0;
@@ -356,7 +397,7 @@ protected:
     void handleRequest(ArduJAXBase** children, uint num, void (*change_callback)());
 };
 
-/** Base class for groups of objects */
+/** @brief Base class for groups of objects */
 template<size_t NUM> class ArduJAXContainer : public ArduJAXContainerBase {
 public:
     ArduJAXContainer(ArduJAXBase *children[NUM]) : ArduJAXContainerBase() {
@@ -382,7 +423,7 @@ protected:
     ArduJAXBase** _children;
 };
 
-/** A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
+/** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
  *
  *  You can insert either the whole group into an ArudJAXPage at once, or - for more flexbile
  *  layouting - retrieve the individual buttons using() button, and insert them into the page
@@ -441,7 +482,9 @@ private:
     }
 };
 
-/** This is the main interface class. Create a web-page with a list of elements on it, and arrange for
+/** @brief The main interface class
+ *
+ *  This is the main interface class. Create a web-page with a list of elements on it, and arrange for
  *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,
  *  both page loads, and AJAX are handled on the same URL, but the first via GET, and the second
  *  via POST. */

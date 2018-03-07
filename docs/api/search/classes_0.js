@@ -2,6 +2,7 @@ var searchData=
 [
   ['ardujaxbase',['ArduJAXBase',['../classArduJAXBase.html',1,'']]],
   ['ardujaxcheckbutton',['ArduJAXCheckButton',['../classArduJAXCheckButton.html',1,'']]],
+  ['ardujaxconnectionindicator',['ArduJAXConnectionIndicator',['../classArduJAXConnectionIndicator.html',1,'']]],
   ['ardujaxcontainer',['ArduJAXContainer',['../classArduJAXContainer.html',1,'']]],
   ['ardujaxcontainerbase',['ArduJAXContainerBase',['../classArduJAXContainerBase.html',1,'']]],
   ['ardujaxelement',['ArduJAXElement',['../classArduJAXElement.html',1,'']]],

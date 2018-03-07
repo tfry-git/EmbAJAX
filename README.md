@@ -153,7 +153,6 @@ keep this in sync with the client, of course, if that is also a requirement...)
 ## Some TODOs
 
 - Cannot ever have enough controls: drop-down (\<select>), div (esp. to show/hide static elements in a group)
-- A server status element would be nice, to show any connectivity problems
 - More drivers
 - API docs
 - More examples
