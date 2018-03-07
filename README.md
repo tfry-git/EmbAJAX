@@ -41,6 +41,7 @@ These controls / elements are supported as of now:
 - Sliders
 - Text display
 - Text input
+- Drop down option select
 - Static HTML blocks
 - Connection status indicator
 
@@ -154,9 +155,9 @@ keep this in sync with the client, of course, if that is also a requirement...)
 
 ## Some TODOs
 
-- Cannot ever have enough controls: drop-down (\<select>), div (esp. to show/hide static elements in a group)
+- Cannot ever have enough controls, but basic ones should now be covered
+- div-element (esp. to show/hide static elements in a group)
 - More drivers
-- API docs
 - More examples
 - In the case of fragile, but not totally broken connections, we may want to re-send change notifications on failure
   - This would mean keeping a map of "id->value in need of syncing" in the client.

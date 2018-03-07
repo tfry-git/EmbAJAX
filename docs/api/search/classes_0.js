@@ -7,6 +7,8 @@ var searchData=
   ['ardujaxcontainerbase',['ArduJAXContainerBase',['../classArduJAXContainerBase.html',1,'']]],
   ['ardujaxelement',['ArduJAXElement',['../classArduJAXElement.html',1,'']]],
   ['ardujaxmutablespan',['ArduJAXMutableSpan',['../classArduJAXMutableSpan.html',1,'']]],
+  ['ardujaxoptionselect',['ArduJAXOptionSelect',['../classArduJAXOptionSelect.html',1,'']]],
+  ['ardujaxoptionselectbase',['ArduJAXOptionSelectBase',['../classArduJAXOptionSelectBase.html',1,'']]],
   ['ardujaxoutputdriverbase',['ArduJAXOutputDriverBase',['../classArduJAXOutputDriverBase.html',1,'']]],
   ['ardujaxpage',['ArduJAXPage',['../classArduJAXPage.html',1,'']]],
   ['ardujaxpushbutton',['ArduJAXPushButton',['../classArduJAXPushButton.html',1,'']]],

@@ -105,6 +105,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>Sliders</li>
 <li>Text display</li>
 <li>Text input</li>
+<li>Drop down option select</li>
 <li>Static HTML blocks</li>
 <li>Connection status indicator</li>
 </ul>
@@ -130,10 +131,16 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>Another thing you will notice is that the framework avoids any sort of dynamic list. Instead, template classes with a size parameter are used to keep lists of elements (such as the <a class="el" href="classArduJAXPage.html" title="The main interface class. ">ArduJAXPage</a>&lt;SIZE&gt;). The reason is again, memory efficiency, and fear of fragmentation. Also, the vast majority of use cases should be perfectly fine with a statically defined setup of elements. However, should the need arise, it would be very easily possible to create a dynamically allocated analogon to ArduJAXContainer&lt;SIZE&gt;. An instance of that could simply be inserted into a page, and serve as a straight-forward wrapper around elements that are created dynamically. (A different question is how to keep this in sync with the client, of course, if that is also a requirement...)</p>
 <h2>Some TODOs</h2>
 <ul>
-<li>Cannot ever have enough controls: drop-down (&lt;select&gt;), div (esp. to show/hide static elements in a group)</li>
+<li>Cannot ever have enough controls, but basic ones should now be covered</li>
+<li>div-element (esp. to show/hide static elements in a group)</li>
 <li>More drivers</li>
-<li>API docs</li>
 <li>More examples</li>
+<li>In the case of fragile, but not totally broken connections, we may want to re-send change notifications on failure<ul>
+<li>This would mean keeping a map of "id-&gt;value in need of syncing" in the client.</li>
+<li>Then whenever sending a new request (e.g. when polling), that list would be checked, first, for anything in need of attention.</li>
+<li>Perhaps also limit things to one pending request at a time?</li>
+</ul>
+</li>
 </ul>
 <h2>The beggar's line</h2>
 <p>So far everbody else has been rolling their own piece of AJAX for their own little project, and that's what I could have done, too, in a tiny fraction of the time spent on this framework, including its docs. But I chose to write all this, instead. Because I believe in re-usable solutions and shared efforts. If you do too, and this framework is useful to you, consider dropping a micro-donation via PayPal to <a href="#" onclick="location.href='mai'+'lto:'+'tho'+'ma'+'s.f'+'ri'+'edr'+'ic'+'hsm'+'ei'+'er@'+'gm'+'x.d'+'e'; return false;">thoma<span style="display: none;">.nosp@m.</span>s.fr<span style="display: none;">.nosp@m.</span>iedri<span style="display: none;">.nosp@m.</span>chsm<span style="display: none;">.nosp@m.</span>eier@<span style="display: none;">.nosp@m.</span>gmx.<span style="display: none;">.nosp@m.</span>de</a> . Thanks! </p>

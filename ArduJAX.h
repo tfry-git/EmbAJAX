@@ -98,7 +98,7 @@ template<size_t NUM> friend class ArduJAXContainer;
 class ArduJAXOutputDriverBase {
 public:
     ArduJAXOutputDriverBase() {
-        _revision = 0;
+        _revision = 1;
         next_revision = _revision;
     }
 
@@ -432,7 +432,7 @@ template<size_t NUM> class ArduJAXRadioGroup : public ArduJAXContainer<NUM>, pub
 public:
     /** ctor.
      *  @param id_base the "base" id. Internally, radio buttons with id_s id_base0, id_base1, etc. will be created.
-     *  @param options labels for the options.
+     *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
      *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
      *                         no option selected by default. */
     ArduJAXRadioGroup(const char* id_base, const char* options[NUM], uint8_t selected_option = 0) : ArduJAXContainer<NUM>(), ArduJAXRadioGroupBase() {
@@ -449,7 +449,7 @@ public:
         _name = id_base;
     }
     /** Select / check the option at the given index. All other options in this radio group will become deselected. */
-    void selectOptionN(uint8_t num) {
+    void selectOption(uint8_t num) {
         for (uint8_t i = 0; i < NUM; ++i) {
             buttons[i].setChecked(i == num);
         }
@@ -480,6 +480,46 @@ private:
             }
         }
     }
+};
+
+/** @brief Abstract base class for ArduJAXOptionSelect. */
+class ArduJAXOptionSelectBase : public ArduJAXElement {
+public:
+    /** Select the option specified by index. */
+    void selectOption(uint8_t num);
+    /** @return the index of the currently selected option */
+    uint8_t selectedOption() const;
+    const char* value(uint8_t which = ArduJAXBase::Value) const override;
+    const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
+    void updateFromDriverArg(const char* argname) override;
+protected:
+    ArduJAXOptionSelectBase(const char*id, uint8_t current_option) : ArduJAXElement(id) {
+        _current_option = current_option;
+    };
+    void print(const char* const* _labels, uint8_t NUM) const;
+    uint8_t _current_option;
+};
+
+/** @brief Drop-down list of selectable options
+ *
+ *  Drop-down list of selectable options. Most functions of interest are implemented in the base class ArduJAXOptionSelectBase,
+ *  you'll only use this class for the constructor. */
+template<size_t NUM> class ArduJAXOptionSelect : public ArduJAXOptionSelectBase {
+public:
+    /** ctor.
+     *  @param id id for the element
+     *  @param labels labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
+     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for no option selected by default. */
+    ArduJAXOptionSelect(const char* id, const char* labels[NUM], uint8_t selected_option = 0) : ArduJAXOptionSelectBase(id, selected_option) {
+        for (uint8_t i = 0; i < NUM; ++i) {
+            _labels[i] = labels[i];
+        }
+    }
+    void print() const override {
+        ArduJAXOptionSelectBase::print(_labels, NUM);
+    }
+private:
+    const char* _labels[NUM];
 };
 
 /** @brief The main interface class

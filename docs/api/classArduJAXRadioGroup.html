@@ -122,8 +122,8 @@ Collaboration diagram for ArduJAXRadioGroup&lt; NUM &gt;:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa57cc23dfe6e24c872375856dcf9afb2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXRadioGroup.html#aa57cc23dfe6e24c872375856dcf9afb2">ArduJAXRadioGroup</a> (const char *id_base, const char *options[NUM], uint8_t selected_option=0)</td></tr>
 <tr class="separator:aa57cc23dfe6e24c872375856dcf9afb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3af455d4cc2c154d846ec1b714352250"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXRadioGroup.html#a3af455d4cc2c154d846ec1b714352250">selectOptionN</a> (uint8_t num)</td></tr>
-<tr class="separator:a3af455d4cc2c154d846ec1b714352250"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a666f680891bb645573563691b9a07ea2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXRadioGroup.html#a666f680891bb645573563691b9a07ea2">selectOption</a> (uint8_t num)</td></tr>
+<tr class="separator:a666f680891bb645573563691b9a07ea2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac772ec06e26abb793312c9ccdefc22f9"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXRadioGroup.html#ac772ec06e26abb793312c9ccdefc22f9">selectedOption</a> () const </td></tr>
 <tr class="separator:ac772ec06e26abb793312c9ccdefc22f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d9f2239b8157c1b83952a1b5ab6085a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classArduJAXBase.html">ArduJAXBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXRadioGroup.html#a2d9f2239b8157c1b83952a1b5ab6085a">button</a> (uint8_t num)</td></tr>
@@ -242,7 +242,7 @@ template&lt;size_t NUM&gt; </div>
 <p>ctor. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">id_base</td><td>the "base" id. Internally, radio buttons with id_s id_base0, id_base1, etc. will be created. </td></tr>
-    <tr><td class="paramname">options</td><td>labels for the options. </td></tr>
+    <tr><td class="paramname">options</td><td>labels for the options. Note: The <em>array</em> of options may be a temporary, but the option-strings themselves will have to be persistent! </td></tr>
     <tr><td class="paramname">selected_option</td><td>index of the default option. 0 by default, for the first option, may be &gt; NUM, for no option selected by default. </td></tr>
   </table>
   </dd>
@@ -304,7 +304,7 @@ template&lt;size_t NUM&gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a3af455d4cc2c154d846ec1b714352250"></a>
+<a class="anchor" id="a666f680891bb645573563691b9a07ea2"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -314,7 +314,7 @@ template&lt;size_t NUM&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="classArduJAXRadioGroup.html">ArduJAXRadioGroup</a>&lt; NUM &gt;::selectOptionN </td>
+          <td class="memname">void <a class="el" href="classArduJAXRadioGroup.html">ArduJAXRadioGroup</a>&lt; NUM &gt;::selectOption </td>
           <td>(</td>
           <td class="paramtype">uint8_t&#160;</td>
           <td class="paramname"><em>num</em></td><td>)</td>

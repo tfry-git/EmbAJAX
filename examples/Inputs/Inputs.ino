@@ -25,6 +25,9 @@ const char* radio_opts[] = {"Option1", "Option2", "Option3"};
 ArduJAXRadioGroup<3> radio("radio", radio_opts);
 ArduJAXMutableSpan radio_d("radio_d");
 
+ArduJAXOptionSelect<3> select("select", radio_opts);
+ArduJAXMutableSpan select_d("select_d");
+
 ArduJAXSlider slider("slider", 0, 1000, 500);
 ArduJAXMutableSpan slider_d("slider_d");
 char slider_d_buf[BUFLEN];
@@ -53,6 +56,10 @@ MAKE_ArduJAXPage(page, "ArduJAX example - Inputs", "",
     &radio,
     &nextCell,
     &radio_d,
+    &nextRow,
+    &select,
+    &nextCell,
+    &select_d,
     &nextRow,
     &slider,
     &nextCell,
@@ -99,6 +106,7 @@ void updateUI() {
     // placing it here makes the client UI more responsive (try it).
     check_d.setValue(check.isChecked() ? "checked" : "not checked");
     radio_d.setValue(radio_opts[radio.selectedOption()]);
+    select_d.setValue(radio_opts[select.selectedOption()]);
     slider_d.setValue(itoa(slider.intValue(), slider_d_buf, 10));
     text_d.setValue(strncpy(text_d_buf, text.value(), BUFLEN));
     button_d.setValue(itoa(button_count, button_d_buf, 10));

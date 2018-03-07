@@ -73,7 +73,7 @@ void ArduJAXConnectionIndicator::print() const {
 ArduJAXElement::ArduJAXElement(const char* id) : ArduJAXBase() {
     _id = id;
     _flags = 1 << ArduJAXBase::Visibility | 1 << ArduJAXBase::Enabledness;
-    revision = 0;
+    revision = 1;
 }
 
 bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
@@ -316,6 +316,45 @@ void ArduJAXCheckButton::setChecked(bool checked) {
     setChanged();
 }
 
+//////////////////////// ArduJAXOptionSelect(Base) ///////////////
+
+void ArduJAXOptionSelectBase::print(const char* const* _labels, uint8_t NUM) const {
+    _driver->printContent("<select id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(" onChange=\"doRequest(this.id, this.value)\">\n");
+    for(uint8_t i = 0; i < NUM; ++i) {
+        _driver->printContent("<option value=\"");
+        _driver->printContent(itoa(i, itoa_buf, 10));
+        _driver->printContent("\">");
+        _driver->printContent(_labels[i]);
+        _driver->printContent("</option>\n");
+    }
+    _driver->printContent("</select>");
+}
+
+void ArduJAXOptionSelectBase::selectOption(uint8_t num) {
+    _current_option = num;
+    setChanged();
+}
+
+uint8_t ArduJAXOptionSelectBase::selectedOption() const {
+    return _current_option;
+}
+
+const char* ArduJAXOptionSelectBase::value(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return (itoa(_current_option, itoa_buf, 10));
+    return ArduJAXElement::value(which);
+}
+
+const char* ArduJAXOptionSelectBase::valueProperty(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return ("value");
+    return ArduJAXElement::valueProperty(which);
+}
+
+void ArduJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
+    _current_option = atoi(_driver->getArg(argname, itoa_buf, ITOA_BUFLEN));
+}
+
 //////////////////////// ArduJAXPage /////////////////////////////
 
 void ArduJAXContainerBase::printPage(ArduJAXBase** _children, uint NUM, const char* _title, const char* _header_add) const {
@@ -370,7 +409,12 @@ void ArduJAXContainerBase::handleRequest(ArduJAXBase** _children, uint NUM, void
 
     // handle value changes sent from client
     uint16_t client_revision = atoi(_driver->getArg("revision", conversion_buf, ARDUJAX_MAX_ID_LEN));
-    if (client_revision > _driver->revision()) client_revision = _driver->revision();  // This could happen on overflow, or if the server has rebooted, but not the client.
+    if (client_revision > _driver->revision()) {
+        // This could happen on overflow, or if the server has rebooted, but not the client.
+        // Setting revision to 0, here, means that all elements are considered changed, and will be
+        // synced to the client.
+        client_revision = 0;
+    }
     const char *id = _driver->getArg("id", conversion_buf, ARDUJAX_MAX_ID_LEN);
     ArduJAXElement *element = (id[0] == '\0') ? 0 : findChild(id);
     if (element) {
