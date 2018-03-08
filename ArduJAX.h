@@ -56,11 +56,6 @@ public:
     virtual ArduJAXElement* toElement() {
         return 0;
     }
-    /** Cast this object to ArduJAXContainer if it is a container.
-     *  @return 0, if this is not a container. */
-    virtual ArduJAXContainerBase* toContainer() {
-        return 0;
-    }
     /** Set visibility of this element. Note not all ArduJAXBase-objects support this. Importantly,
      *  ArduJAXStatic does not. Provided in the base class for efficiency. */
     void setVisible(bool visible) {
@@ -77,12 +72,28 @@ public:
         Value=2,
         FirstElementSpecificProperty=3
     };
+    /** Find child element of this one, with the given id. Returns 0, if this is not a container, or
+     *  does not have such a child. @see ArduJAXContainer, and @see ArduJAXHideableContainer. */
+    virtual ArduJAXElement* findChild(const char*id) const {
+        return 0;
+    }
 protected:
 template<size_t NUM> friend class ArduJAXContainer;
     virtual void setBasicProperty(uint8_t num, bool status) {};
 
     static ArduJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
+
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::printChildren() */
+    void printChildren(ArduJAXBase** children, uint num) const;
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::sendUpdates() */
+    bool sendUpdates(ArduJAXBase** children, uint num, uint16_t since, bool first);
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::findChild() */
+    ArduJAXElement* findChild(ArduJAXBase** children, uint num, const char*id) const;
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::print() */
+    void printPage(ArduJAXBase** children, uint num, const char* _title, const char* _header) const;
+    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::handleRequest() */
+    void handleRequest(ArduJAXBase** children, uint num, void (*change_callback)());
 };
 
 /** @brief Abstract base class for output drivers/server implementations
@@ -242,13 +253,13 @@ public:
         return;
     }
 
-    ArduJAXElement *toElement() override {
+    ArduJAXElement *toElement() override final {
         return this;
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override;
 template<size_t NUM> friend class ArduJAXPage;
-friend class ArduJAXContainerBase;
+friend class ArduJAXBase;
     const char* _id;
     void setChanged();
     bool changed(uint16_t since);
@@ -377,41 +388,21 @@ friend class ArduJAXCheckButton;
     const char* _name;
 };
 
-/** @brief Abstract base for ArduJAXContainer, needed for internal reasons */
-class ArduJAXContainerBase : public ArduJAXBase {
-public:
-    virtual ArduJAXElement* findChild(const char*id) const = 0;
-    ArduJAXContainerBase *toContainer() override {
-        return this;
-    }
-protected:
-    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::printChildren() */
-    void printChildren(ArduJAXBase** children, uint num) const;
-    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::sendUpdates() */
-    bool sendUpdates(ArduJAXBase** children, uint num, uint16_t since, bool first);
-    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXContainer::findChild() */
-    ArduJAXElement* findChild(ArduJAXBase** children, uint num, const char*id) const;
-    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::print() */
-    void printPage(ArduJAXBase** children, uint num, const char* _title, const char* _header) const;
-    /** Filthy trick to keep (template) implementation out of the header. See ArduJAXPage::handleRequest() */
-    void handleRequest(ArduJAXBase** children, uint num, void (*change_callback)());
-};
-
 /** @brief Base class for groups of objects */
-template<size_t NUM> class ArduJAXContainer : public ArduJAXContainerBase {
+template<size_t NUM> class ArduJAXContainer : public ArduJAXBase {
 public:
-    ArduJAXContainer(ArduJAXBase *children[NUM]) : ArduJAXContainerBase() {
+    ArduJAXContainer(ArduJAXBase *children[NUM]) : ArduJAXBase() {
         _children = children;
     }
-    void print() const {
-        ArduJAXContainerBase::printChildren(_children, NUM);
+    void print() const override {
+        ArduJAXBase::printChildren(_children, NUM);
     }
-    bool sendUpdates(uint16_t since, bool first) {
-        return ArduJAXContainerBase::sendUpdates(_children, NUM, since, first);
+    bool sendUpdates(uint16_t since, bool first) override {
+        return ArduJAXBase::sendUpdates(_children, NUM, since, first);
     }
     /** Recursively look for a child (hopefully, there is only one) of the given id, and return a pointer to it. */
     ArduJAXElement* findChild(const char*id) const override final {
-        return ArduJAXContainerBase::findChild(_children, NUM, id);
+        return ArduJAXBase::findChild(_children, NUM, id);
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override {
@@ -442,18 +433,20 @@ public:
     ArduJAXHideableContainer(const char* id, ArduJAXBase *children[NUM]) : ArduJAXElement(id) {
         _childlist = ArduJAXContainer<NUM>(children);
     }
-    void print() const {
+    void print() const override {
         _driver->printContent("<div id=");
         _driver->printQuoted(_id);
         _driver->printContent(">");
         _childlist.print();
         _driver->printContent("</div>");
     }
-    /** Return a pointer to the container inside this class. Not == to this! */
-    ArduJAXContainerBase* toContainer() { return _childlist.toContainer(); };
-    bool sendUpdates(uint16_t since, bool first) {
+    ArduJAXElement* findChild(const char* id) const override {
+        return _childlist.findChild(id);
+    }
+    bool sendUpdates(uint16_t since, bool first) override {
         bool sent = ArduJAXElement::sendUpdates(since, first);
-        return _childlist.sendUpdates(since, first && !sent);
+        bool sent2 = _childlist.sendUpdates(since, first && !sent);
+        return sent || sent2;
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override {
@@ -581,7 +574,7 @@ public:
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
      *  there is a GET request to the desired URL. */
     void print() const override {
-        ArduJAXContainerBase::printPage(ArduJAXContainer<NUM>::_children, NUM, _title, _header_add);
+        ArduJAXBase::printPage(ArduJAXContainer<NUM>::_children, NUM, _title, _header_add);
     }
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
      *  to whichever URL you served the page itself, from.
@@ -592,7 +585,7 @@ public:
      *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
      *                         (Otherwise the client will be updated on the next poll). */
     void handleRequest(void (*change_callback)()=0) {
-        ArduJAXContainerBase::handleRequest(ArduJAXContainer<NUM>::_children, NUM, change_callback);
+        ArduJAXBase::handleRequest(ArduJAXContainer<NUM>::_children, NUM, change_callback);
     }
 protected:
     const char* _title;

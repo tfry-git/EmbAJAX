@@ -170,7 +170,6 @@ may get lost on a network error, but the state of the controls shown in the clie
   - As an even more sophisticated idea: A sort of "touch-screen", reporting clicks, and releases with exact position, continuous reporting of
     mouse position (optional: always, never, while button pressed).
     - Bonus points: With position marker ("cursor"), with ability to load arbitrary background image.
-- div-element (esp. to show/hide static elements in a group)
 - More drivers
 - More examples
 - The effect of setVisible(false) on an element with a label (checkbox, radio option) is not quite convincing, yet...

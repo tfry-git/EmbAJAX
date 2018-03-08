@@ -132,15 +132,15 @@ void ArduJAXElement::printTextInput(uint SIZE, const char* _value) const {
     _driver->printContent(" onInput=\"var that=this; clearTimeout(that.debouncer); that.debouncer=setTimeout(function() {doRequest(that.id, that.value);},1000);\"/>");
 }
 
-//////////////////////// ArduJAXContainer(Base) /////////////////////////////
+//////////////////////// ArduJAXContainer ////////////////////////////////////
 
-void ArduJAXContainerBase::printChildren(ArduJAXBase** _children, uint NUM) const {
+void ArduJAXBase::printChildren(ArduJAXBase** _children, uint NUM) const {
     for (uint i = 0; i < NUM; ++i) {
         _children[i]->print();
     }
 }
 
-bool ArduJAXContainerBase::sendUpdates(ArduJAXBase** _children, uint NUM, uint16_t since, bool first) {
+bool ArduJAXBase::sendUpdates(ArduJAXBase** _children, uint NUM, uint16_t since, bool first) {
     for (uint i = 0; i < NUM; ++i) {
         bool sent = _children[i]->sendUpdates(since, first);
         if (sent) first = false;
@@ -148,17 +148,14 @@ bool ArduJAXContainerBase::sendUpdates(ArduJAXBase** _children, uint NUM, uint16
     return !first;
 }
 
-ArduJAXElement* ArduJAXContainerBase::findChild(ArduJAXBase** _children, uint NUM, const char*id) const {
+ArduJAXElement* ArduJAXBase::findChild(ArduJAXBase** _children, uint NUM, const char*id) const {
     for (uint i = 0; i < NUM; ++i) {
         ArduJAXElement* child = _children[i]->toElement();
         if (child) {
             if (strcmp(id, child->id()) == 0) return child;
         }
-        ArduJAXContainerBase* childlist = _children[i]->toContainer();
-        if (childlist) {
-            child = childlist->findChild(id);
-            if (child) return child;
-        }
+        child = _children[i]->findChild (id);
+        if (child) return child;
     }
     return 0;
 }
@@ -357,7 +354,7 @@ void ArduJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 //////////////////////// ArduJAXPage /////////////////////////////
 
-void ArduJAXContainerBase::printPage(ArduJAXBase** _children, uint NUM, const char* _title, const char* _header_add) const {
+void ArduJAXBase::printPage(ArduJAXBase** _children, uint NUM, const char* _title, const char* _header_add) const {
     _driver->printHeader(true);
     _driver->printContent("<HTML><HEAD><TITLE>");
     if (_title) _driver->printContent(_title);
@@ -409,7 +406,7 @@ void ArduJAXContainerBase::printPage(ArduJAXBase** _children, uint NUM, const ch
     _driver->printContent("\n</FORM></BODY></HTML>\n");
 }
 
-void ArduJAXContainerBase::handleRequest(ArduJAXBase** _children, uint NUM, void (*change_callback)()) {
+void ArduJAXBase::handleRequest(ArduJAXBase** _children, uint NUM, void (*change_callback)()) {
     char conversion_buf[ARDUJAX_MAX_ID_LEN];
 
     // handle value changes sent from client
