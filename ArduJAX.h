@@ -419,8 +419,48 @@ protected:
             _children[i]->setBasicProperty(num, status);
         }
     }
+template<size_t> friend class ArduJAXHideableContainer;
     ArduJAXContainer() {};
     ArduJAXBase** _children;
+};
+
+/** @brief A list of objects that can be hidden, completely
+ *
+ *  This is _essentially_ an ArduJAXContainer with an id. The one advantage that this
+ *  class has other ArduJAXContainer, is that it can be hidden _completely_, including
+ *  any ArduJAXStatic objects inside it. On the client, the children of this element
+ *  are encapsulated in a \<div> element. Other than this, it should behave identical
+ *  to ArduJAXContainer.
+ *
+ *  You do _not_ need this class to hide an ArduJAXContainer that contains only ArduJAXElement
+ *  derived objects, or standalone ArduJAXElement objects.
+ *
+ *  @note This is _not_ a derived class of ArduJAXContainer, to avoid adding virtual
+ *        inheritance just for this. */
+template<size_t NUM> class ArduJAXHideableContainer : public ArduJAXElement {
+public:
+    ArduJAXHideableContainer(const char* id, ArduJAXBase *children[NUM]) : ArduJAXElement(id) {
+        _childlist = ArduJAXContainer<NUM>(children);
+    }
+    void print() const {
+        _driver->printContent("<div id=");
+        _driver->printQuoted(_id);
+        _driver->printContent(">");
+        _childlist.print();
+        _driver->printContent("</div>");
+    }
+    /** Return a pointer to the container inside this class. Not == to this! */
+    ArduJAXContainerBase* toContainer() { return _childlist.toContainer(); };
+    bool sendUpdates(uint16_t since, bool first) {
+        bool sent = ArduJAXElement::sendUpdates(since, first);
+        return _childlist.sendUpdates(since, first && !sent);
+    }
+protected:
+    void setBasicProperty(uint8_t num, bool status) override {
+        ArduJAXElement::setBasicProperty(num, status);
+        _childlist.setBasicProperty(num, status);
+    }
+    ArduJAXContainer<NUM> _childlist;
 };
 
 /** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.

@@ -162,10 +162,18 @@ may get lost on a network error, but the state of the controls shown in the clie
 
 ## Some TODOs
 
-- Cannot ever have enough controls, but basic ones should now be covered
+- More controls:
+  - One nice-to-have feature would be a button-variant used for steering applications (think: an RC car). Instead of click, this would
+    have to report "pressed" and "released". Importantly, it would have to include a mechanism to cope with connection errors. Probably, while
+    pressed, it would have to send frequent "pings", and if the server-side does not receive such a ping after - say - 500ms, it will asuume
+    the button _may_ have been released (tri-state, so the client can select the best safe behavior in this state of uncertainty).
+  - As an even more sophisticated idea: A sort of "touch-screen", reporting clicks, and releases with exact position, continuous reporting of
+    mouse position (optional: always, never, while button pressed).
+    - Bonus points: With position marker ("cursor"), with ability to load arbitrary background image.
 - div-element (esp. to show/hide static elements in a group)
 - More drivers
 - More examples
+- The effect of setVisible(false) on an element with a label (checkbox, radio option) is not quite convincing, yet...
 
 ## The beggar's line
 
