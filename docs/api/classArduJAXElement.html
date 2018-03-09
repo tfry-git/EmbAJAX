@@ -134,6 +134,8 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> () con
 <tr class="separator:a125b9066afad5a18b695eeb38f8ea8bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af067fc9d4a3311bce2ce2f08673bb92b"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXElement.html#af067fc9d4a3311bce2ce2f08673bb92b">value</a> (uint8_t which=ArduJAXBase::Value) const </td></tr>
 <tr class="separator:af067fc9d4a3311bce2ce2f08673bb92b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af12fb9c8b9c63263ddc171bf96c471e9"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXElement.html#af12fb9c8b9c63263ddc171bf96c471e9">valueNeedsEscaping</a> (uint8_t which=ArduJAXBase::Value) const </td></tr>
+<tr class="separator:af12fb9c8b9c63263ddc171bf96c471e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2193d81c4fdd9ef6004e58cba84f8a10"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXElement.html#a2193d81c4fdd9ef6004e58cba84f8a10">valueProperty</a> (uint8_t which=ArduJAXBase::Value) const </td></tr>
 <tr class="separator:a2193d81c4fdd9ef6004e58cba84f8a10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a45ab433a8fac6f2805b22d3d314619"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXElement.html#a6a45ab433a8fac6f2805b22d3d314619">updateFromDriverArg</a> (const char *argname)</td></tr>
@@ -156,6 +158,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a3f02e27c4a29dd19616b0e0197d52b25"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f02e27c4a29dd19616b0e0197d52b25"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setBasicProperty</b> (uint8_t num, bool status) override</td></tr>
 <tr class="separator:a3f02e27c4a29dd19616b0e0197d52b25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1136bb70f5bbb23e197b8ff0f67fc98"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa1136bb70f5bbb23e197b8ff0f67fc98"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>basicProperty</b> (uint8_t num) const </td></tr>
+<tr class="separator:aa1136bb70f5bbb23e197b8ff0f67fc98"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9958c7b1272a5e0bf74e6fe03bb44166"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9958c7b1272a5e0bf74e6fe03bb44166"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setChanged</b> ()</td></tr>
 <tr class="separator:a9958c7b1272a5e0bf74e6fe03bb44166"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -195,10 +200,14 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>ArduJAXBase</b></td>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classArduJAXBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classArduJAXBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classArduJAXBase.html">ArduJAXBase</a></td></tr>
-<tr class="memitem:a59d7b79c31f9e154311f57606c794d8f inherit pub_types_classArduJAXBase"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a59d7b79c31f9e154311f57606c794d8f"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><b>Property</b> { <b>Visibility</b> =0, 
+<tr class="memitem:a59d7b79c31f9e154311f57606c794d8f inherit pub_types_classArduJAXBase"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a59d7b79c31f9e154311f57606c794d8f"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><b>Property</b> { <br />
+&#160;&#160;<b>Visibility</b> =0, 
 <b>Enabledness</b> =1, 
 <b>Value</b> =2, 
-<b>FirstElementSpecificProperty</b> =3
+<b>FirstElementSpecificProperty</b> =3, 
+<br />
+&#160;&#160;<b>HTMLAllowed</b> =7
+<br />
  }</td></tr>
 <tr class="separator:a59d7b79c31f9e154311f57606c794d8f inherit pub_types_classArduJAXBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classArduJAXBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classArduJAXBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classArduJAXBase.html">ArduJAXBase</a></td></tr>
@@ -399,6 +408,33 @@ static char&#160;</td><td class="memItemRight" valign="bottom"><b>itoa_buf</b> [
 <p>const char representation of the current server side value. Must be implemented in derived class. This base class handles visibility and enabledness, only. Do call the base implementation for any "which" that is <em>not</em> handled in your derived class. </p>
 
 <p>Reimplemented in <a class="el" href="classArduJAXOptionSelectBase.html#a68d1eb7ca5d55ae70f57130a7aef41e6">ArduJAXOptionSelectBase</a>, <a class="el" href="classArduJAXCheckButton.html#afa6ca276dcad52c2d9fe68cda5a0f840">ArduJAXCheckButton</a>, <a class="el" href="classArduJAXPushButton.html#a357fa47d58d866aafe40e8ad2eded026">ArduJAXPushButton</a>, <a class="el" href="classArduJAXSlider.html#a3b1e2f7a037414256eeed9de56044adb">ArduJAXSlider</a>, <a class="el" href="classArduJAXTextInput.html#abfe0d4d557c8dcab47e3929442004560">ArduJAXTextInput&lt; SIZE &gt;</a>, and <a class="el" href="classArduJAXMutableSpan.html#a4a2fad933d2f9893d7b9f0df3bdabc5f">ArduJAXMutableSpan</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="af12fb9c8b9c63263ddc171bf96c471e9"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool ArduJAXElement::valueNeedsEscaping </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>which</em> = <code>ArduJAXBase::Value</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns true, if the value may contain HTML, and needs HTML escaping when passed to the client. Base implementation simply returns false. </p>
+
+<p>Reimplemented in <a class="el" href="classArduJAXPushButton.html#aef99e7b4af5196b818e23b679e2aa407">ArduJAXPushButton</a>, and <a class="el" href="classArduJAXMutableSpan.html#a43611d29d78ae0e64f97eec61e9927c4">ArduJAXMutableSpan</a>.</p>
 
 </div>
 </div>

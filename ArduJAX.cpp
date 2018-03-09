@@ -29,25 +29,40 @@ char ArduJAXBase::itoa_buf[ITOA_BUFLEN];
 
 ////////////////////////////// ArduJAXOutputDriverBase ////////////////////
 
-void ArduJAXOutputDriverBase::printQuoted(const char* value) {
+void ArduJAXOutputDriverBase::printFiltered(const char* value, bool quoted, bool HTMLescaped) {
     // NOTE: The assumption, here is that frequent (char-by-char) calls to printContent() _could_ be expensive, depending on the server
     //       implementation. Thus, a buffer is used to enable printing in larger chunks.
-    char buf[20];
-    buf[0] = '"';
-    uint bufpos = 1;
+    char buf[32];
+    uint bufpos = 0;
+    if (quoted) buf[bufpos++] = '"';
     const char *pos = value;
     while(*pos != '\0') {
-        if (bufpos > 16) {  // == Not enough room for escape+char+quote-end+terminating '\0'
+        if (bufpos > 24) {  // == Not enough room for the worst case, i.e. "&amp;" + quote-end + terminating '\0'
             buf[bufpos] = '\0';
             printContent(buf);
             bufpos = 0;
             continue;
         }
-        if (*pos == '"') buf[bufpos++] = '\\';
-        buf[bufpos++] = *pos;
+        if (quoted && (*pos == '"' || *pos == '\\')) {
+            buf[bufpos++] = '\\';
+            buf[bufpos++] = *pos;
+        } else if (HTMLescaped && (*pos == '<')) {
+            buf[bufpos++] = '&';
+            buf[bufpos++] = 'l';
+            buf[bufpos++] = 't';
+            buf[bufpos++] = ';';
+        } else if (HTMLescaped && (*pos == '&')) {
+            buf[bufpos++] = '&';
+            buf[bufpos++] = 'a';
+            buf[bufpos++] = 'm';
+            buf[bufpos++] = 'p';
+            buf[bufpos++] = ';';
+        } else {
+            buf[bufpos++] = *pos;
+        }
         ++pos;
     }
-    buf[bufpos++] = '"';
+    if (quoted) buf[bufpos++] = '"';
     buf[bufpos++] = '\0';
     printContent(buf);
 }
@@ -92,7 +107,7 @@ bool ArduJAXElement::sendUpdates(uint16_t since, bool first) {
         _driver->printContent("[");
         _driver->printQuoted(pid);
         _driver->printContent(", ");
-        _driver->printQuoted(pval);
+        _driver->printFiltered(pval, true, valueNeedsEscaping(i));
         _driver->printContent("]");
 
         ++i;
@@ -166,7 +181,7 @@ void ArduJAXMutableSpan::print() const {
     _driver->printContent("<span id=");
     _driver->printQuoted(_id);
     _driver->printContent(">");
-    if (_value) _driver->printContent(_value);  // NOTE: Not escaping anything, so user can insert HTML.
+    if (_value) _driver->printFiltered(_value, false, valueNeedsEscaping());
     _driver->printContent("</span>\n");
 }
 
@@ -175,15 +190,21 @@ const char* ArduJAXMutableSpan::value(uint8_t which) const {
     return ArduJAXElement::value(which);
 }
 
+bool ArduJAXMutableSpan::valueNeedsEscaping(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return !basicProperty(ArduJAXBase::HTMLAllowed);
+    return ArduJAXElement::valueNeedsEscaping(which);
+}
+
 const char* ArduJAXMutableSpan::valueProperty(uint8_t which) const {
     if (which == ArduJAXBase::Value) return "innerHTML";
     return ArduJAXElement::valueProperty(which);
 }
 
-void ArduJAXMutableSpan::setValue(const char* value) {
+void ArduJAXMutableSpan::setValue(const char* value, bool allowHTML) {
     // TODO: Ideally we'd special case setValue() with old value == new value (noop). However, since often both old and new values are kept in the same char buffer,
     // we cannot really compare the strings - without keeping a copy, at least. Should we?
     _value = value;
+    setBasicProperty(ArduJAXBase::HTMLAllowed, allowHTML);
     setChanged();
 }
 
@@ -233,24 +254,31 @@ void ArduJAXSlider::setValue(int16_t value) {
 ArduJAXPushButton::ArduJAXPushButton(const char* id, const char* label, void (*callback)(ArduJAXPushButton*)) : ArduJAXElement (id) {
     _label = label;
     _callback = callback;
+    setBasicProperty(ArduJAXBase::HTMLAllowed, true);
 }
 
 void ArduJAXPushButton::print() const {
     _driver->printContent("<button type=\"button\" id=");
     _driver->printQuoted(_id);
     _driver->printContent(" onClick=\"doRequest(this.id, 'p');\">");
-    _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
+    _driver->printFiltered(_label, false, valueNeedsEscaping());
     _driver->printContent("</button>");
 }
 
-void ArduJAXPushButton::setText(const char* label) {
+void ArduJAXPushButton::setText(const char* label, bool allowHTML) {
     _label = label;
+    setBasicProperty(ArduJAXBase::HTMLAllowed, allowHTML);
     setChanged();
 }
 
 const char* ArduJAXPushButton::value(uint8_t which) const {
     if (which == ArduJAXBase::Value) return _label;
     return ArduJAXElement::value(which);
+}
+
+bool ArduJAXPushButton::valueNeedsEscaping(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return !basicProperty(ArduJAXBase::HTMLAllowed);
+    return ArduJAXElement::valueNeedsEscaping(which);
 }
 
 const char* ArduJAXPushButton::valueProperty(uint8_t which) const {

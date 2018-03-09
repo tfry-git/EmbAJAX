@@ -115,6 +115,8 @@ uint16_t&#160;</td><td class="memItemRight" valign="bottom"><b>setChanged</b> ()
 <tr class="memitem:aa1f12ce06e287d7fc566e5d0afeb256c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa1f12ce06e287d7fc566e5d0afeb256c"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</td></tr>
 <tr class="separator:aa1f12ce06e287d7fc566e5d0afeb256c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad823b5aaf7ac6b12578801fa37f8324e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXOutputDriverBase.html#ad823b5aaf7ac6b12578801fa37f8324e">printFiltered</a> (const char *value, bool quoted, bool HTMLescaped)</td></tr>
+<tr class="separator:ad823b5aaf7ac6b12578801fa37f8324e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade412760500a8505f76c20cc1e645f91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classArduJAXOutputDriverBase.html#ade412760500a8505f76c20cc1e645f91">printQuoted</a> (const char *value)</td></tr>
 <tr class="separator:ade412760500a8505f76c20cc1e645f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -123,9 +125,52 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</
 <p>Output driver as an abstraction over the server read/write commands. You will have to instantiate exactly one object of exactly one implementation, before using any ArduJAX classes.</p>
 <p>Providing your own driver is very easy. All you have to do it to wrap the basic functions for writing to the server and retrieving (POST) arguments: printHeader(), printContent(), and getArg(). </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="ad823b5aaf7ac6b12578801fa37f8324e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ArduJAXOutputDriverBase::printFiltered </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>quoted</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>HTMLescaped</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Print the given value filtered according to the parameters:</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">quoted</td><td>If true, add double-quotes around the string, and esacpe any double quotes within the string. </td></tr>
+    <tr><td class="paramname">HTMLescaped</td><td>If true, escape any "&lt;" and "&amp;" in the input as "\&amp;lt;" and "\&amp;amp;" such that it will appear as plain text if rendered as HTML (safe for untrusted user input). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ade412760500a8505f76c20cc1e645f91"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void ArduJAXOutputDriverBase::printQuoted </td>
@@ -135,8 +180,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<p>Print the given value in double quotes. Any quotes within the value will be escaped, properly. </p>
+<p>Shorthand for printFiltered(value, true, false); </p>
 
 </div>
 </div>

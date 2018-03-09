@@ -70,7 +70,8 @@ public:
         Visibility=0,
         Enabledness=1,
         Value=2,
-        FirstElementSpecificProperty=3
+        FirstElementSpecificProperty=3,
+        HTMLAllowed=7
     };
     /** Find child element of this one, with the given id. Returns 0, if this is not a container, or
      *  does not have such a child. @see ArduJAXContainer, and @see ArduJAXHideableContainer. */
@@ -127,8 +128,16 @@ public:
     void nextRevision() {
         _revision = next_revision;
     }
-    /** Print the given value in double quotes. Any quotes within the value will be escaped, properly. */
-    void printQuoted(const char* value);
+    /** Print the given value filtered according to the parameters:
+     *
+     *  @param quoted If true, add double-quotes around the string, and esacpe any double
+     *                quotes within the string.
+     *  @param HTMLescaped If true, escape any "<" and "&" in the input as "\&lt;" and "\&amp;"
+     *                     such that it will appear as plain text if rendered as HTML
+     *                     (safe for untrusted user input). */
+    void printFiltered(const char* value, bool quoted, bool HTMLescaped);
+    /** Shorthand for printFiltered(value, true, false); */
+    inline void printQuoted (const char* value) { printFiltered (value, true, false); }
 private:
     uint16_t _revision;
     uint16_t next_revision;
@@ -191,14 +200,17 @@ protected:
 
 /** @brief connection status indicator
  *
- *  This passive element can be inserted into a page to indicate the connection status: If more than 5 client requests go unanswered, in a row
+ *  This passive element can be inserted into a page to indicate the connection status: If more than 5 client requests go unanswered, in a row,
  *  the connection to the server is assumed to be broken.
  *
  *  @note While this is a "dynamic" display, the entire logic is implemented on the client, for obvious reasons. From the point of view of the
  *        server, this is a static element. */
 class ArduJAXConnectionIndicator : public ArduJAXBase {
 public:
-    /** c'tor. If you don't like the default status indications, you can pass the HTML to be shown for "ok" and "fail" states. */
+    /** c'tor. If you don't like the default status indications, you can pass the HTML to be shown for "ok" and "fail" states.
+     *
+     *  @param content_ok Value to show for OK state. May contain HTML markup. Leave as 0 for default.
+     *  @param content_ok Value to show for broken state. May contain HTML markup. Leave as 0 for default. */
     ArduJAXConnectionIndicator(const char* content_ok = 0, const char* content_fail = 0) {
         _content_ok = content_ok;
         _content_fail = content_fail;
@@ -233,9 +245,15 @@ public:
      *  This base class handles visibility and enabledness, only. Do call the base implementation for
      *  any "which" that is _not_ handled in your derived class. */
     virtual const char* value(uint8_t which = ArduJAXBase::Value) const {
-        if (which == ArduJAXBase::Visibility) return ((_flags & (1 << ArduJAXBase::Visibility)) ? "initial" : "none");
-        if (which == ArduJAXBase::Enabledness) return ((_flags & (1 << ArduJAXBase::Enabledness)) ? "" : "disabled");
+        if (which == ArduJAXBase::Visibility) return (basicProperty (ArduJAXBase::Visibility) ? "initial" : "none");
+        if (which == ArduJAXBase::Enabledness) return (basicProperty (ArduJAXBase::Enabledness) ? "" : "disabled");
         return 0;
+    }
+
+    /** Returns true, if the value may contain HTML, and needs HTML escaping when passed to the client.
+     *  Base implementation simply returns false. */
+    virtual bool valueNeedsEscaping(uint8_t which = ArduJAXBase::Value) const {
+        return false;
     }
 
      /** The JS property that will have to be set on the client. Must be implemented in derived class.
@@ -258,6 +276,9 @@ public:
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override;
+    bool basicProperty(uint8_t num) const {
+        return (_flags & (1 << num));
+    }
 template<size_t NUM> friend class ArduJAXPage;
 friend class ArduJAXBase;
     const char* _id;
@@ -279,8 +300,16 @@ public:
     void print() const override;
     const char* value(uint8_t which = ArduJAXBase::Value) const override;
     const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
-    /** Set the <span>s content to the given value. Note: The string is not copied, so don't make this a temporary. */
-    void setValue(const char* value);
+    /** Set the <span>s content to the given value.
+     *
+     *  @param value: Note: The string is not copied, so don't make this a temporary.
+     *  @param allowHTML: if true, you can set the content to any valid HTML string, which
+     *                    allows for much flexibility, but is @em not safe when value is
+     *                    untrusted user input.
+     *                    if false (the default), any "<" and "&" in value will be escaped,
+     *                    before rendering on the client, making the string plain but safe. */
+    void setValue(const char* value, bool allowHTML = false);
+    bool valueNeedsEscaping(uint8_t which=ArduJAXBase::Value) const override;
 private:
     const char* _value;
 };
@@ -341,13 +370,22 @@ private:
  *  When clicked a custom callback function will be called on the server. */
 class ArduJAXPushButton : public ArduJAXElement {
 public:
-    /** @param callback Called when the button was clicked in the UI (with a pointer to the button as parameter) */
+    /** @param text: @see setText(). HTML is allowed, here.
+     *  @param callback Called when the button was clicked in the UI (with a pointer to the button as parameter) */
     ArduJAXPushButton(const char* id, const char* label, void (*callback)(ArduJAXPushButton*));
     void print() const override;
-    /** Change the button text */
-    void setText(const char* label);
+    /** Change the button text
+     *
+     *  @param value: Note: The string is not copied, so don't make this a temporary.
+     *  @param allowHTML: if true, you can set the text to any valid HTML string, which
+     *                    allows for much flexibility, but is @em not safe when value is
+     *                    untrusted user input.
+     *                    if false (the default), any "<" and "&" in value will be escaped,
+     *                    before rendering on the client, making the string plain but safe. */
+    void setText(const char* label, bool allowHTML = false);
     const char* value(uint8_t which = ArduJAXBase::Value) const override;
     const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
+    bool valueNeedsEscaping(uint8_t which=ArduJAXBase::Value) const override;
     void updateFromDriverArg(const char* argname) override;
 private:
     void (*_callback)(ArduJAXPushButton*);
