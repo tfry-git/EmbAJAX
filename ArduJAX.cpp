@@ -299,7 +299,7 @@ ArduJAXCheckButton::ArduJAXCheckButton(const char* id, const char* label, bool c
 }
 
 void ArduJAXCheckButton::print() const {
-    _driver->printContent("<input id=");
+    _driver->printContent("<span><input id=");  // <input> and <label> inside a common span to support hiding, better
     _driver->printQuoted(_id);
     _driver->printContent(" type=");
     if (radiogroup) {
@@ -314,7 +314,7 @@ void ArduJAXCheckButton::print() const {
     _driver->printQuoted(_id);
     _driver->printContent("\">");
     _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
-    _driver->printContent("</label>");
+    _driver->printContent("</label></span>");
 }
 
 const char* ArduJAXCheckButton::value(uint8_t which) const {
@@ -330,6 +330,7 @@ void ArduJAXCheckButton::updateFromDriverArg(const char* argname) {
 }
 
 const char* ArduJAXCheckButton::valueProperty(uint8_t which) const {
+    if (which == ArduJAXBase::Visibility) return "parentNode.style.display";
     if (which == ArduJAXBase::Value) return "checked";
     return ArduJAXElement::valueProperty(which);
 }

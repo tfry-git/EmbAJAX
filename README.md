@@ -172,7 +172,6 @@ may get lost on a network error, but the state of the controls shown in the clie
     - Bonus points: With position marker ("cursor"), with ability to load arbitrary background image.
 - More drivers
 - More examples
-- The effect of setVisible(false) on an element with a label (checkbox, radio option) is not quite convincing, yet...
 
 ## The beggar's line
 
