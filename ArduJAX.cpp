@@ -144,7 +144,7 @@ void ArduJAXElement::printTextInput(uint SIZE, const char* _value) const {
     _driver->printQuoted(_value);
     // Using onChange to update is too awkward. Using plain onInput would generate too may requests (and often result in "eaten" characters). Instead,
     // as a compromise, we arrange for an update one second after the last key was pressed.
-    _driver->printContent(" onInput=\"var that=this; clearTimeout(that.debouncer); that.debouncer=setTimeout(function() {doRequest(that.id, that.value);},1000);\"/>");
+    _driver->printContent(" onInput=\"clearTimeout(this.debouncer); this.debouncer=setTimeout(function() {doRequest(this.id, this.value);}.bind(this),1000);\"/>");
 }
 
 //////////////////////// ArduJAXContainer ////////////////////////////////////

@@ -65,7 +65,7 @@ Some further examples can be found in the examples folder.
 ESP8266WebServer server(80);
 ArduJAXOutputDriverESP8266 driver(&server);
 
-// Define the main elements of interest as variables, so we can access to them later in our sketch.
+// Define the main elements of interest as variables, so we can access them later in our sketch.
 ArduJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
 ArduJAXMutableSpan display("display");         // a plain text display
 
@@ -124,7 +124,7 @@ void loop() {
 For now the installation routine is:
 - Download a ZIP of the current development version: https://github.com/tfry-git/ArduJAX/archive/master.zip
 - In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the downloaded .zip for installation
-- You may need to restart your IDE for the library an its examples to show up
+- You may need to restart your IDE for the library and its examples to show up
 
 ## Further readings
 
@@ -137,11 +137,11 @@ a permanent AJAX connection, all further access would be blocked. Even separate 
 we resort to regular polling for updates. An update poll is always included, automatically, when the client sends control
 changes to the server, so in most cases, the client would still appear to be refreshed, immediately.
 
-To avoid sending all states of all controls on each request from each client, the framework keeps track of the lastest "revision number"
+To avoid sending all states of all controls on each request from each client, the framework keeps track of the latest "revision number"
 sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded.
 
 You may have noted that the framework avoids the use of the String class, even though that would make some things easier. The reason
-for this design choice is that the overhead of using char*, here, in a sketch that may be using String, already, is lot. However, if this
+for this design choice is that the overhead of using char*, here, in a sketch that may be using String, already, is low. However, if this
 framework were to rely on String, while nothing else in the sketch uses String, that would incur a significant overhead. Further, it should
 be noted, that the risk of memory-fragmentation is relatively real in the present use-case, as arbitrary strings are regularly coming in
 "from the outside". Nonetheless, using Strings would relieve the use from having to worry about the lifetime of strings passed in to the
@@ -172,6 +172,12 @@ may get lost on a network error, but the state of the controls shown in the clie
     - Bonus points: With position marker ("cursor"), with ability to load arbitrary background image.
 - More drivers
 - More examples
+- Basic authentication features
+  - For now, ArduJAX makes no attempt at implementing any security features. If you need security, you will have to implement it at the network
+    level. However, it would be nice, if there was at least a rudimentary mechanism besides this. One complication is that HTTPS is out of reach
+    for present MCUs, so whatever method implemented should keep MITM attacks and plain text snooping in mind. Perhaps some short-lived
+    authentication token handed out by the server + hash of parameters + password + cryptographic hash could be used to protect sensitive "write"
+    operations. As for read operations: No idea, yet.
 
 ## The beggar's line
 
