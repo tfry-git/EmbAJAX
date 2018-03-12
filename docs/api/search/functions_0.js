@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['ardujaxcolorpicker',['ArduJAXColorPicker',['../classArduJAXColorPicker.html#a4472a8c5050fa6a54ba85814cdd023a1',1,'ArduJAXColorPicker']]],
   ['ardujaxconnectionindicator',['ArduJAXConnectionIndicator',['../classArduJAXConnectionIndicator.html#aa5254e823344574f7f3346adbd2fb19f',1,'ArduJAXConnectionIndicator']]],
   ['ardujaxelement',['ArduJAXElement',['../classArduJAXElement.html#aa08cc695ffb7b4f093025459a65f639c',1,'ArduJAXElement']]],
   ['ardujaxoptionselect',['ArduJAXOptionSelect',['../classArduJAXOptionSelect.html#a06ebb9826315a9e7c800597219342ff7',1,'ArduJAXOptionSelect']]],

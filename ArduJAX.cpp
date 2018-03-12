@@ -249,6 +249,83 @@ void ArduJAXSlider::setValue(int16_t value) {
     setChanged();
 }
 
+//////////////////////// ArduJAXColorPicker /////////////////////////
+
+ArduJAXColorPicker::ArduJAXColorPicker(const char* id, uint8_t r, uint8_t g, uint8_t b) : ArduJAXElement(id) {
+    _r = r;
+    _g = g;
+    _b = b;
+}
+
+void ArduJAXColorPicker::print() const {
+    _driver->printContent("<input id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(" type=\"color\" value=");
+    _driver->printQuoted(value());
+    // see ArduJAXTextInput::print(): Use onInput(), instead of onChange().
+    _driver->printContent(" onInput=\"clearTimeout(this.debouncer); this.debouncer=setTimeout(function() {doRequest(this.id, this.value);}.bind(this),1000);\"/>");
+}
+
+// helper to make sure we get exactly two hex digits for any input
+char* color_itoa(uint8_t c, char* buf) {
+    itoa(c >> 4, buf, 16);
+    itoa(c & 0x0F, buf + sizeof(char), 16);
+    return buf;
+}
+
+const char* ArduJAXColorPicker::value(uint8_t which) const {
+    if (which != ArduJAXBase::Value) return ArduJAXElement::value(which);
+
+    itoa_buf[0] = '#';
+    color_itoa(_r, &itoa_buf[1]);
+    color_itoa(_g, &itoa_buf[3]);
+    color_itoa(_b, &itoa_buf[5]);
+    return itoa_buf;
+}
+
+const char* ArduJAXColorPicker::valueProperty(uint8_t which) const {
+    if (which == ArduJAXBase::Value) return "value";
+    return ArduJAXElement::value(which);
+}
+
+void ArduJAXColorPicker::setColor(uint8_t r, uint8_t g, uint8_t b) {
+    _r = r;
+    _g = g;
+    _b = b;
+    setChanged();
+}
+
+uint8_t ArduJAXColorPicker::red() const {
+    return _r;
+}
+
+uint8_t ArduJAXColorPicker::green() const {
+    return _g;
+}
+
+uint8_t ArduJAXColorPicker::blue() const {
+    return _b;
+}
+
+// simple helper, because I don't want to pull in strtol
+uint8_t single_hex_atoi(char c) {
+    if (c >= '0' && c <= '9') return (c - '0');
+    if (c >= 'a' && c <= 'f') return (c - 'a' + 10);
+    if (c >= 'A' && c <= 'F') return (c - 'A' + 10);
+    return 0;
+}
+
+void ArduJAXColorPicker::updateFromDriverArg(const char* argname)  {
+    char buf[9];
+    _driver->getArg(argname, buf, 8);
+    if ((strlen (buf) != 7) || (buf[0] != '#')) { // format error. Set changed in order to sync back to client
+        setChanged();
+    }
+    _r = (single_hex_atoi(buf[1]) << 4) + single_hex_atoi(buf[2]);
+    _g = (single_hex_atoi(buf[3]) << 4) + single_hex_atoi(buf[4]);
+    _b = (single_hex_atoi(buf[5]) << 4) + single_hex_atoi(buf[6]);
+}
+
 //////////////////////// ArduJAXPushButton /////////////////////////////
 
 ArduJAXPushButton::ArduJAXPushButton(const char* id, const char* label, void (*callback)(ArduJAXPushButton*)) : ArduJAXElement (id) {

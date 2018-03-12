@@ -103,14 +103,15 @@ Inheritance diagram for ArduJAXElement:</div>
 <div class="center"><img src="classArduJAXElement__inherit__graph.png" border="0" usemap="#ArduJAXElement_inherit__map" alt="Inheritance graph"/></div>
 <map name="ArduJAXElement_inherit__map" id="ArduJAXElement_inherit__map">
 <area shape="rect" id="node3" href="classArduJAXCheckButton.html" title="A checkable (option) button. " alt="" coords="344,5,495,32"/>
-<area shape="rect" id="node4" href="classArduJAXHideableContainer.html" title="A list of objects that can be hidden, completely. " alt="" coords="329,57,510,98"/>
-<area shape="rect" id="node5" href="classArduJAXMutableSpan.html" title="An HTML span element with content that can be updated from the server (not the client) ..." alt="" coords="344,123,495,149"/>
-<area shape="rect" id="node6" href="classArduJAXOptionSelectBase.html" title="Abstract base class for ArduJAXOptionSelect. " alt="" coords="330,173,509,200"/>
-<area shape="rect" id="node8" href="classArduJAXPushButton.html" title="A push&#45;button. " alt="" coords="348,224,491,251"/>
-<area shape="rect" id="node9" href="classArduJAXSlider.html" title="An HTML span element with content that can be updated from the server (not the client) ..." alt="" coords="366,275,473,301"/>
-<area shape="rect" id="node10" href="classArduJAXTextInput.html" title="A text input field. " alt="" coords="328,325,511,352"/>
-<area shape="rect" id="node2" href="classArduJAXBase.html" title="Abstract base class for anything shown on an ArduJAXPage. " alt="" coords="5,173,109,200"/>
-<area shape="rect" id="node7" href="classArduJAXOptionSelect.html" title="Drop&#45;down list of selectable options. " alt="" coords="559,166,708,207"/>
+<area shape="rect" id="node4" href="classArduJAXColorPicker.html" title="A color picker element (&lt;input type=&quot;color&quot;&gt;) " alt="" coords="348,56,491,83"/>
+<area shape="rect" id="node5" href="classArduJAXHideableContainer.html" title="A list of objects that can be hidden, completely. " alt="" coords="329,107,510,149"/>
+<area shape="rect" id="node6" href="classArduJAXMutableSpan.html" title="An HTML span element with content that can be updated from the server (not the client) ..." alt="" coords="344,173,495,200"/>
+<area shape="rect" id="node7" href="classArduJAXOptionSelectBase.html" title="Abstract base class for ArduJAXOptionSelect. " alt="" coords="330,224,509,251"/>
+<area shape="rect" id="node9" href="classArduJAXPushButton.html" title="A push&#45;button. " alt="" coords="348,275,491,301"/>
+<area shape="rect" id="node10" href="classArduJAXSlider.html" title="An HTML span element with content that can be updated from the server (not the client) ..." alt="" coords="366,325,473,352"/>
+<area shape="rect" id="node11" href="classArduJAXTextInput.html" title="A text input field. " alt="" coords="328,376,511,403"/>
+<area shape="rect" id="node2" href="classArduJAXBase.html" title="Abstract base class for anything shown on an ArduJAXPage. " alt="" coords="5,199,109,225"/>
+<area shape="rect" id="node8" href="classArduJAXOptionSelect.html" title="Drop&#45;down list of selectable options. " alt="" coords="559,217,708,258"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -380,7 +381,7 @@ static char&#160;</td><td class="memItemRight" valign="bottom"><b>itoa_buf</b> [
 </div><div class="memdoc">
 <p>override this in your derived class to allow updates to be propagated from client to server (if wanted). The implementation need not call setChanged(). </p>
 
-<p>Reimplemented in <a class="el" href="classArduJAXOptionSelectBase.html#a2a5d2d97f39cf2c4645a1879f0b59a9e">ArduJAXOptionSelectBase</a>, <a class="el" href="classArduJAXCheckButton.html#abf3969756c53c28c31b533bbb6ed9b4f">ArduJAXCheckButton</a>, <a class="el" href="classArduJAXPushButton.html#a485ab081adda68e01fa30da4cb4f9d8e">ArduJAXPushButton</a>, <a class="el" href="classArduJAXSlider.html#ae70ca3ae96ef275b3563abb08a9ea2ac">ArduJAXSlider</a>, and <a class="el" href="classArduJAXTextInput.html#a539c532d6116cf2e877f3126c9ad4403">ArduJAXTextInput&lt; SIZE &gt;</a>.</p>
+<p>Reimplemented in <a class="el" href="classArduJAXOptionSelectBase.html#a2a5d2d97f39cf2c4645a1879f0b59a9e">ArduJAXOptionSelectBase</a>, <a class="el" href="classArduJAXCheckButton.html#abf3969756c53c28c31b533bbb6ed9b4f">ArduJAXCheckButton</a>, <a class="el" href="classArduJAXPushButton.html#a485ab081adda68e01fa30da4cb4f9d8e">ArduJAXPushButton</a>, <a class="el" href="classArduJAXColorPicker.html#a03834a54852bec4318132e069f94f1d4">ArduJAXColorPicker</a>, <a class="el" href="classArduJAXSlider.html#ae70ca3ae96ef275b3563abb08a9ea2ac">ArduJAXSlider</a>, and <a class="el" href="classArduJAXTextInput.html#a539c532d6116cf2e877f3126c9ad4403">ArduJAXTextInput&lt; SIZE &gt;</a>.</p>
 
 </div>
 </div>
@@ -407,7 +408,7 @@ static char&#160;</td><td class="memItemRight" valign="bottom"><b>itoa_buf</b> [
 </div><div class="memdoc">
 <p>const char representation of the current server side value. Must be implemented in derived class. This base class handles visibility and enabledness, only. Do call the base implementation for any "which" that is <em>not</em> handled in your derived class. </p>
 
-<p>Reimplemented in <a class="el" href="classArduJAXOptionSelectBase.html#a68d1eb7ca5d55ae70f57130a7aef41e6">ArduJAXOptionSelectBase</a>, <a class="el" href="classArduJAXCheckButton.html#afa6ca276dcad52c2d9fe68cda5a0f840">ArduJAXCheckButton</a>, <a class="el" href="classArduJAXPushButton.html#a357fa47d58d866aafe40e8ad2eded026">ArduJAXPushButton</a>, <a class="el" href="classArduJAXSlider.html#a3b1e2f7a037414256eeed9de56044adb">ArduJAXSlider</a>, <a class="el" href="classArduJAXTextInput.html#abfe0d4d557c8dcab47e3929442004560">ArduJAXTextInput&lt; SIZE &gt;</a>, and <a class="el" href="classArduJAXMutableSpan.html#a4a2fad933d2f9893d7b9f0df3bdabc5f">ArduJAXMutableSpan</a>.</p>
+<p>Reimplemented in <a class="el" href="classArduJAXOptionSelectBase.html#a68d1eb7ca5d55ae70f57130a7aef41e6">ArduJAXOptionSelectBase</a>, <a class="el" href="classArduJAXCheckButton.html#afa6ca276dcad52c2d9fe68cda5a0f840">ArduJAXCheckButton</a>, <a class="el" href="classArduJAXPushButton.html#a357fa47d58d866aafe40e8ad2eded026">ArduJAXPushButton</a>, <a class="el" href="classArduJAXColorPicker.html#a92894b6f5c2ffd41f83f6d8a43665bd8">ArduJAXColorPicker</a>, <a class="el" href="classArduJAXSlider.html#a3b1e2f7a037414256eeed9de56044adb">ArduJAXSlider</a>, <a class="el" href="classArduJAXTextInput.html#abfe0d4d557c8dcab47e3929442004560">ArduJAXTextInput&lt; SIZE &gt;</a>, and <a class="el" href="classArduJAXMutableSpan.html#a4a2fad933d2f9893d7b9f0df3bdabc5f">ArduJAXMutableSpan</a>.</p>
 
 </div>
 </div>
@@ -461,7 +462,7 @@ static char&#160;</td><td class="memItemRight" valign="bottom"><b>itoa_buf</b> [
 </div><div class="memdoc">
 <p>The JS property that will have to be set on the client. Must be implemented in derived class. This base class handles visibility and enabledness, only. Do call the base implementation for any "which" that is <em>not</em> handled in your derived class. </p>
 
-<p>Reimplemented in <a class="el" href="classArduJAXOptionSelectBase.html#ab55639bb32b967e3b5385a6a90e7d1b3">ArduJAXOptionSelectBase</a>, <a class="el" href="classArduJAXCheckButton.html#af6c30f53457ce20b18a9d6bd02165183">ArduJAXCheckButton</a>, <a class="el" href="classArduJAXPushButton.html#ade29d5ac7804a4facd6997dc3cf2b062">ArduJAXPushButton</a>, <a class="el" href="classArduJAXSlider.html#abd78df84661c62378a85ee96dd2465d8">ArduJAXSlider</a>, <a class="el" href="classArduJAXTextInput.html#ab17912e8d06a9e5e567f273bc1fe93a1">ArduJAXTextInput&lt; SIZE &gt;</a>, and <a class="el" href="classArduJAXMutableSpan.html#a68b847bcf97305d009e8c92a5b63b5b4">ArduJAXMutableSpan</a>.</p>
+<p>Reimplemented in <a class="el" href="classArduJAXOptionSelectBase.html#ab55639bb32b967e3b5385a6a90e7d1b3">ArduJAXOptionSelectBase</a>, <a class="el" href="classArduJAXCheckButton.html#af6c30f53457ce20b18a9d6bd02165183">ArduJAXCheckButton</a>, <a class="el" href="classArduJAXPushButton.html#ade29d5ac7804a4facd6997dc3cf2b062">ArduJAXPushButton</a>, <a class="el" href="classArduJAXColorPicker.html#af3bdda727f3bb481cd5e7a5f997ea85f">ArduJAXColorPicker</a>, <a class="el" href="classArduJAXSlider.html#abd78df84661c62378a85ee96dd2465d8">ArduJAXSlider</a>, <a class="el" href="classArduJAXTextInput.html#ab17912e8d06a9e5e567f273bc1fe93a1">ArduJAXTextInput&lt; SIZE &gt;</a>, and <a class="el" href="classArduJAXMutableSpan.html#a68b847bcf97305d009e8c92a5b63b5b4">ArduJAXMutableSpan</a>.</p>
 
 </div>
 </div>

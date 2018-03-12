@@ -43,6 +43,7 @@ These controls / elements are supported as of now:
 - Text display
 - Text input
 - Drop down option select
+- RGB Color picker
 - Static HTML blocks
 - Connection status indicator
 

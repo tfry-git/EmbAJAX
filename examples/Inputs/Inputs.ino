@@ -32,6 +32,10 @@ ArduJAXSlider slider("slider", 0, 1000, 500);
 ArduJAXMutableSpan slider_d("slider_d");
 char slider_d_buf[BUFLEN];
 
+ArduJAXColorPicker color("color", 0, 255, 255);
+ArduJAXMutableSpan color_d("color_d");
+char color_d_buf[BUFLEN];
+
 ArduJAXTextInput<BUFLEN> text("text");  // Text input, width BUFLEN
 ArduJAXMutableSpan text_d("text_d");
 char text_d_buf[BUFLEN];
@@ -64,6 +68,10 @@ MAKE_ArduJAXPage(page, "ArduJAX example - Inputs", "",
     &slider,
     &nextCell,
     &slider_d,
+    &nextRow,
+    &color,
+    &nextCell,
+    &color_d,
     &nextRow,
     &text,
     &nextCell,
@@ -108,6 +116,7 @@ void updateUI() {
     radio_d.setValue(radio_opts[radio.selectedOption()]);
     select_d.setValue(radio_opts[select.selectedOption()]);
     slider_d.setValue(itoa(slider.intValue(), slider_d_buf, 10));
+    color_d.setValue(strncpy(color_d_buf, color.value(), BUFLEN));  // r, g, b, are also available, numerically.
     text_d.setValue(strncpy(text_d_buf, text.value(), BUFLEN));
     button_d.setValue(itoa(button_count, button_d_buf, 10));
 }

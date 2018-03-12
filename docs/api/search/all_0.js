@@ -2,6 +2,7 @@ var searchData=
 [
   ['ardujaxbase',['ArduJAXBase',['../classArduJAXBase.html',1,'']]],
   ['ardujaxcheckbutton',['ArduJAXCheckButton',['../classArduJAXCheckButton.html',1,'']]],
+  ['ardujaxcolorpicker',['ArduJAXColorPicker',['../classArduJAXColorPicker.html',1,'ArduJAXColorPicker'],['../classArduJAXColorPicker.html#a4472a8c5050fa6a54ba85814cdd023a1',1,'ArduJAXColorPicker::ArduJAXColorPicker()']]],
   ['ardujaxconnectionindicator',['ArduJAXConnectionIndicator',['../classArduJAXConnectionIndicator.html',1,'ArduJAXConnectionIndicator'],['../classArduJAXConnectionIndicator.html#aa5254e823344574f7f3346adbd2fb19f',1,'ArduJAXConnectionIndicator::ArduJAXConnectionIndicator()']]],
   ['ardujaxcontainer',['ArduJAXContainer',['../classArduJAXContainer.html',1,'']]],
   ['ardujaxelement',['ArduJAXElement',['../classArduJAXElement.html',1,'ArduJAXElement'],['../classArduJAXElement.html#aa08cc695ffb7b4f093025459a65f639c',1,'ArduJAXElement::ArduJAXElement()']]],

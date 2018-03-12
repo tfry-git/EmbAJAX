@@ -365,6 +365,26 @@ private:
     int16_t _min, _max, _value;
 };
 
+/** @brief A color picker element (\<input type="color">) */
+class ArduJAXColorPicker : public ArduJAXElement {
+public:
+    /** c'tor.
+     *  @param r Initial value for red
+     *  @param g Initial value for green
+     *  @param b Initial value for blue */
+    ArduJAXColorPicker(const char* id, uint8_t r, uint8_t g, uint8_t b);
+    void print() const override;
+    const char* value(uint8_t which = ArduJAXBase::Value) const override;
+    const char* valueProperty(uint8_t which = ArduJAXBase::Value) const override;
+    void setColor(uint8_t r, uint8_t g, uint8_t b);
+    uint8_t red() const;
+    uint8_t green() const;
+    uint8_t blue() const;
+    void updateFromDriverArg(const char* argname) override;
+private:
+    uint8_t _r, _g, _b;
+};
+
 /** @brief A push-button.
  *
  *  When clicked a custom callback function will be called on the server. */
