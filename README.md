@@ -175,10 +175,10 @@ may get lost on a network error, but the state of the controls shown in the clie
 - More examples
 - Basic authentication features
   - For now, ArduJAX makes no attempt at implementing any security features. If you need security, you will have to implement it at the network
-    level. However, it would be nice, if there was at least a rudimentary mechanism besides this. One complication is that HTTPS is out of reach
-    for present MCUs, so whatever method implemented should keep MITM attacks and plain text snooping in mind. Perhaps some short-lived
-    authentication token handed out by the server + hash of parameters + password + cryptographic hash could be used to protect sensitive "write"
-    operations. As for read operations: No idea, yet.
+    level. However, it would be nice, if there was at least a rudimentary mechanism besides this, so there can be differential permissions
+    on the same network (e.g. view vs. control), and controlled access beyond a single subnet. Making a go at this makes relatively little sense
+    with plain text communication, of course. One exciting news in this regard is that an HTTPS server implementation is about to be added to the
+    ESP8266 arduino core. Once that is a bit more accessible, this should be revisited.
 
 ## The beggar's line
 
