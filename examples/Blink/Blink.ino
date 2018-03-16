@@ -1,4 +1,4 @@
-/* Basic usage example for ArduJAX library:
+/* Basic usage example for Ajane library:
  * Provide a web interface to set built-in LED on, off, or blinking.
  * 
  * This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
@@ -12,27 +12,27 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <ArduJAX.h>
+#include <Ajane.h>
 
 #define LEDPIN LED_BUILTIN
 
-// Set up web server, and register it with ArduJAX
+// Set up web server, and register it with Ajane
 ESP8266WebServer server(80);
-ArduJAXOutputDriverESP8266 driver(&server);
+AjaneOutputDriverESP8266 driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 const char* modes[] = {"On", "Blink", "Off"};
-ArduJAXRadioGroup<3> mode("mode", modes);
-ArduJAXSlider blinkfreq("blfreq", 0, 1000, 100);   // slider, from 0 to 500, initial value 400
+AjaneRadioGroup<3> mode("mode", modes);
+AjaneSlider blinkfreq("blfreq", 0, 1000, 100);   // slider, from 0 to 500, initial value 400
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
-// static HTML. Note: MAKE_ArduJAXPage is just a convenience macro around the ArduJAXPage<>-class.
-MAKE_ArduJAXPage(page, "ArduJAX example - Blink", "",
-  new ArduJAXStatic("<h1>Control the builtin LED</h1><p>Set the LED to: "),
+// static HTML. Note: MAKE_AjanePage is just a convenience macro around the AjanePage<>-class.
+MAKE_AjanePage(page, "Ajane example - Blink", "",
+  new AjaneStatic("<h1>Control the builtin LED</h1><p>Set the LED to: "),
   &mode,
-  new ArduJAXStatic("</p><p>Blink frequency: <i>SLOW</i>"),
+  new AjaneStatic("</p><p>Blink frequency: <i>SLOW</i>"),
   &blinkfreq,
-  new ArduJAXStatic("<i>FAST</i></p>")
+  new AjaneStatic("<i>FAST</i></p>")
 )
 
 // This is all you need to write for the page handler
@@ -48,9 +48,9 @@ void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig (IPAddress (192,168,4,1), IPAddress (0,0,0,0), IPAddress (255,255,255,0));
-  WiFi.softAP("ArduJAXTest", "12345678");
+  WiFi.softAP("AjaneTest", "12345678");
 
-  // Tell the server to serve our ArduJAX test page on root
+  // Tell the server to serve our Ajane test page on root
   server.on("/", handlePage);
   server.begin();
 

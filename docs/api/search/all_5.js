@@ -1,11 +1,11 @@
 var searchData=
 [
-  ['selectedoption',['selectedOption',['../classArduJAXRadioGroup.html#ac772ec06e26abb793312c9ccdefc22f9',1,'ArduJAXRadioGroup::selectedOption()'],['../classArduJAXOptionSelectBase.html#abca47ae7aff8ae426c593c5ba2d0c240',1,'ArduJAXOptionSelectBase::selectedOption()']]],
-  ['selectoption',['selectOption',['../classArduJAXRadioGroup.html#a666f680891bb645573563691b9a07ea2',1,'ArduJAXRadioGroup::selectOption()'],['../classArduJAXOptionSelectBase.html#a99df6e4cb42722604a0a9712798d0079',1,'ArduJAXOptionSelectBase::selectOption()']]],
-  ['sendupdates',['sendUpdates',['../classArduJAXBase.html#aa8bfa9eb9f6b1ff03c7f1d8adeda1b2f',1,'ArduJAXBase::sendUpdates(uint16_t since, bool first)'],['../classArduJAXBase.html#aaf30d7ae2006aa554d8c56ef112a2f85',1,'ArduJAXBase::sendUpdates(ArduJAXBase **children, uint num, uint16_t since, bool first)'],['../classArduJAXElement.html#a125b9066afad5a18b695eeb38f8ea8bb',1,'ArduJAXElement::sendUpdates()'],['../classArduJAXContainer.html#a76aefa4a3b25a57189876ae741f9b256',1,'ArduJAXContainer::sendUpdates()'],['../classArduJAXHideableContainer.html#a78b539f930f279077a23dce1bcaed95f',1,'ArduJAXHideableContainer::sendUpdates()']]],
-  ['setdriver',['setDriver',['../classArduJAXBase.html#a96ed79bd994c0dd0cf1fec538de95703',1,'ArduJAXBase']]],
-  ['setenabled',['setEnabled',['../classArduJAXBase.html#a52fc708ed36ea5d6587a695b76e222a7',1,'ArduJAXBase']]],
-  ['settext',['setText',['../classArduJAXPushButton.html#a69efcca4125dbe06673c2c302bcbdccf',1,'ArduJAXPushButton']]],
-  ['setvalue',['setValue',['../classArduJAXMutableSpan.html#a226ccacee46afc789ca760c435f06154',1,'ArduJAXMutableSpan::setValue()'],['../classArduJAXTextInput.html#a2ae7c070e94bab4d95488fb6d311e7cf',1,'ArduJAXTextInput::setValue()']]],
-  ['setvisible',['setVisible',['../classArduJAXBase.html#a0cf9f79fcd2d468075b836ab805a4bdf',1,'ArduJAXBase']]]
+  ['selectedoption',['selectedOption',['../classAjaneRadioGroup.html#aa3fcbc50340daff0c8c5020306d32ce4',1,'AjaneRadioGroup::selectedOption()'],['../classAjaneOptionSelectBase.html#a5244602e896245af863487e74c6bb569',1,'AjaneOptionSelectBase::selectedOption()']]],
+  ['selectoption',['selectOption',['../classAjaneRadioGroup.html#ae319a37479ddf244b746c418081ea30d',1,'AjaneRadioGroup::selectOption()'],['../classAjaneOptionSelectBase.html#a3168d37e5bb56e6d86bf1c61d73f9e3f',1,'AjaneOptionSelectBase::selectOption()']]],
+  ['sendupdates',['sendUpdates',['../classAjaneBase.html#ae688689152c997a32f65c573d3135dcb',1,'AjaneBase::sendUpdates(uint16_t since, bool first)'],['../classAjaneBase.html#aae0ac7fc90b8097f8aa3aae5661fc430',1,'AjaneBase::sendUpdates(AjaneBase **children, uint num, uint16_t since, bool first)'],['../classAjaneElement.html#a4588420f6cba2b5fd1e0143103f4401e',1,'AjaneElement::sendUpdates()'],['../classAjaneContainer.html#a353634c1a8fcc74b5c83f5bc12e20e14',1,'AjaneContainer::sendUpdates()'],['../classAjaneHideableContainer.html#ae1b976f3782524e71db026836748f5c9',1,'AjaneHideableContainer::sendUpdates()']]],
+  ['setdriver',['setDriver',['../classAjaneBase.html#a064ccb00cc272d3402026e851c1514b9',1,'AjaneBase']]],
+  ['setenabled',['setEnabled',['../classAjaneBase.html#a892a1877f6503c8c3fb1c0fe41cd7111',1,'AjaneBase']]],
+  ['settext',['setText',['../classAjanePushButton.html#a6473d247ab7c7c54a508c366aba56a4c',1,'AjanePushButton']]],
+  ['setvalue',['setValue',['../classAjaneMutableSpan.html#a3fdf3c39e7db0b76a67d65ab919eceec',1,'AjaneMutableSpan::setValue()'],['../classAjaneTextInput.html#ac8a01d2027841b9909ebe1b886cc37aa',1,'AjaneTextInput::setValue()']]],
+  ['setvisible',['setVisible',['../classAjaneBase.html#a2b1936748d2bd156290a3fac2bb8ad4b',1,'AjaneBase']]]
 ];

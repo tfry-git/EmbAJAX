@@ -1,4 +1,4 @@
-# ArduJAX
+# Ajane
 
 Simplistic framework for creating and handling displays and controls on a web page served by an Arduino (or other small device).
 
@@ -50,7 +50,7 @@ These controls / elements are supported as of now:
 The following additional features may be of interest (supported as of now):
 
 - Allows to insert your own custom CSS for styling (no styling in the lib).
-- Elements can be hidden, inputs can be disabled from the server (ArduJAXBase::setVisible(), setEnabled()).
+- Elements can be hidden, inputs can be disabled from the server (AjaneBase::setVisible(), setEnabled()).
 
 ## Example sketch (compilable on ESP8266)
 
@@ -60,24 +60,24 @@ Some further examples can be found in the examples folder.
 ```cpp
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <ArduJAX.h>
+#include <Ajane.h>
 
-// Set up web server, and register it with ArduJAX
+// Set up web server, and register it with Ajane
 ESP8266WebServer server(80);
-ArduJAXOutputDriverESP8266 driver(&server);
+AjaneOutputDriverESP8266 driver(&server);
 
 // Define the main elements of interest as variables, so we can access them later in our sketch.
-ArduJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
-ArduJAXMutableSpan display("display");         // a plain text display
+AjaneSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
+AjaneMutableSpan display("display");         // a plain text display
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
-// static HTML. Note: MAKE_ArduJAXPage is just a convenience macro around the ArduJAXPage<>-class.
-MAKE_ArduJAXPage(page, "ArduJAXTest", "",
-  new ArduJAXStatic("<h1>This is a test</h1><p>The value you set in the following slider: "),
+// static HTML. Note: MAKE_AjanePage is just a convenience macro around the AjanePage<>-class.
+MAKE_AjanePage(page, "AjaneTest", "",
+  new AjaneStatic("<h1>This is a test</h1><p>The value you set in the following slider: "),
   &slider,
-  new ArduJAXStatic(" is sent to the server...</p><p>... which displays it here: <b>"),
+  new AjaneStatic(" is sent to the server...</p><p>... which displays it here: <b>"),
   &display,
-  new ArduJAXStatic("</b></p>")
+  new AjaneStatic("</b></p>")
 )
 
 // This is all you need to write for the page handler
@@ -93,9 +93,9 @@ void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig (IPAddress (192,168,4,1), IPAddress (0,0,0,0), IPAddress (255,255,255,0));
-  WiFi.softAP("ArduJAXTest", "12345678");
+  WiFi.softAP("AjaneTest", "12345678");
 
-  // Tell the server to serve our ArduJAX test page on root
+  // Tell the server to serve our Ajane test page on root
   server.on("/", handlePage);
   server.begin();
 
@@ -123,13 +123,13 @@ void loop() {
 ## Installation
 
 For now the installation routine is:
-- Download a ZIP of the current development version: https://github.com/tfry-git/ArduJAX/archive/master.zip
+- Download a ZIP of the current development version: https://github.com/tfry-git/Ajane/archive/master.zip
 - In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the downloaded .zip for installation
 - You may need to restart your IDE for the library and its examples to show up
 
 ## Further readings
 
-API documentation is at https://tfry-git.github.io/ArduJAX/api/annotated.html .
+API documentation is at https://tfry-git.github.io/Ajane/api/annotated.html .
 
 ## Some implementation notes
 
@@ -149,9 +149,9 @@ be noted, that the risk of memory-fragmentation is relatively real in the presen
 framework, and thus, in the future, it may make sense to support String *optionally*.
 
 Another thing you will notice is that the framework avoids any sort of dynamic list. Instead, template classes with a size parameter are
-used to keep lists of elements (such as the ArduJAXPage\<SIZE>). The reason is again, memory efficiency, and fear of fragmentation. Also,
+used to keep lists of elements (such as the AjanePage\<SIZE>). The reason is again, memory efficiency, and fear of fragmentation. Also,
 the vast majority of use cases should be perfectly fine with a statically defined setup of elements. However, should the need arise, it
-would be very easily possible to create a dynamically allocated analogon to ArduJAXContainer<SIZE>. An instance of that could simply be
+would be very easily possible to create a dynamically allocated analogon to AjaneContainer<SIZE>. An instance of that could simply be
 inserted into a page, and serve as a straight-forward wrapper around elements that are created dynamically. (A different question is how to
 keep this in sync with the client, of course, if that is also a requirement...)
 
@@ -174,11 +174,17 @@ may get lost on a network error, but the state of the controls shown in the clie
 - More drivers
 - More examples
 - Basic authentication features
-  - For now, ArduJAX makes no attempt at implementing any security features. If you need security, you will have to implement it at the network
+  - For now, Ajane makes no attempt at implementing any security features. If you need security, you will have to implement it at the network
     level. However, it would be nice, if there was at least a rudimentary mechanism besides this, so there can be differential permissions
     on the same network (e.g. view vs. control), and controlled access beyond a single subnet. Making a go at this makes relatively little sense
     with plain text communication, of course. One exciting news in this regard is that an HTTPS server implementation is about to be added to the
     ESP8266 arduino core. Once that is a bit more accessible, this should be revisited.
+
+## What does the name Ajane stand for?
+
+Ajane stands for "Asynchronous JAvascript Now/Neatly Embedded", and is the preliminary result of trying to come up with a name that does not clash with
+various trademarks and existing library names. This framework was originally called "ArduJAX", but the Arduino tradmark holders (very politely) asked me to
+try to find a different name.
 
 ## The beggar's line
 

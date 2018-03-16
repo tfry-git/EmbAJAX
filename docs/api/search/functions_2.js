@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['findchild',['findChild',['../classArduJAXBase.html#a863875297071c20240ef57fe7f41b305',1,'ArduJAXBase::findChild(const char *id) const '],['../classArduJAXBase.html#af609c86732fabddd6b15736be803b5c7',1,'ArduJAXBase::findChild(ArduJAXBase **children, uint num, const char *id) const '],['../classArduJAXContainer.html#aa6685610fb6ab26d1c4e6f9d4e0b8191',1,'ArduJAXContainer::findChild()'],['../classArduJAXHideableContainer.html#a6dbd84b949d7dd5f19dd2f90b44eb0e5',1,'ArduJAXHideableContainer::findChild()']]]
+  ['findchild',['findChild',['../classAjaneBase.html#aebaf29908588e530d76f15df0d7885f3',1,'AjaneBase::findChild(const char *id) const '],['../classAjaneBase.html#afaffad91f4e713628e90a1fbc1329a12',1,'AjaneBase::findChild(AjaneBase **children, uint num, const char *id) const '],['../classAjaneContainer.html#a142575be3978d272855cac283a1ea7b1',1,'AjaneContainer::findChild()'],['../classAjaneHideableContainer.html#a2fb1715c1e6c44e14b7c8c65fc154b98',1,'AjaneHideableContainer::findChild()']]]
 ];
