@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['findchild',['findChild',['../classAjaneBase.html#aebaf29908588e530d76f15df0d7885f3',1,'AjaneBase::findChild(const char *id) const '],['../classAjaneBase.html#afaffad91f4e713628e90a1fbc1329a12',1,'AjaneBase::findChild(AjaneBase **children, uint num, const char *id) const '],['../classAjaneContainer.html#a142575be3978d272855cac283a1ea7b1',1,'AjaneContainer::findChild()'],['../classAjaneHideableContainer.html#a2fb1715c1e6c44e14b7c8c65fc154b98',1,'AjaneHideableContainer::findChild()']]]
+  ['findchild',['findChild',['../classEmbAJAXBase.html#a622e3f9361b587a7fd21d521159e1d2c',1,'EmbAJAXBase::findChild(const char *id) const '],['../classEmbAJAXBase.html#a1a331a59240ed07c275d60a8bb33595e',1,'EmbAJAXBase::findChild(EmbAJAXBase **children, uint num, const char *id) const '],['../classEmbAJAXContainer.html#a7c5603c956621d476bf38f999baa438a',1,'EmbAJAXContainer::findChild()'],['../classEmbAJAXHideableContainer.html#a03c15ceed77cf7075d7ea3b06dd87ff9',1,'EmbAJAXHideableContainer::findChild()']]]
 ];

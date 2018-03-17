@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['handlerequest',['handleRequest',['../classAjaneBase.html#a90a4a2e3bb39322e8fd6e32ffc99866f',1,'AjaneBase::handleRequest()'],['../classAjanePage.html#aa77623b1315e8a041232ec8737dbc8fc',1,'AjanePage::handleRequest()']]]
+  ['handlerequest',['handleRequest',['../classEmbAJAXBase.html#a516a4532c5294855e8c94c4b8c5ff7f3',1,'EmbAJAXBase::handleRequest()'],['../classEmbAJAXPage.html#a401757d9e30ca118fac4c522a6df30b9',1,'EmbAJAXPage::handleRequest()']]]
 ];

@@ -1,4 +1,4 @@
-/* Basic usage example for Ajane library:
+/* Basic usage example for EmbAJAX library:
  * Provide a web interface to set built-in LED on, off, or blinking.
  * 
  * This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
@@ -12,27 +12,27 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <Ajane.h>
+#include <EmbAJAX.h>
 
 #define LEDPIN LED_BUILTIN
 
-// Set up web server, and register it with Ajane
+// Set up web server, and register it with EmbAJAX
 ESP8266WebServer server(80);
-AjaneOutputDriverESP8266 driver(&server);
+EmbAJAXOutputDriverESP8266 driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 const char* modes[] = {"On", "Blink", "Off"};
-AjaneRadioGroup<3> mode("mode", modes);
-AjaneSlider blinkfreq("blfreq", 0, 1000, 100);   // slider, from 0 to 500, initial value 400
+EmbAJAXRadioGroup<3> mode("mode", modes);
+EmbAJAXSlider blinkfreq("blfreq", 0, 1000, 100);   // slider, from 0 to 500, initial value 400
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
-// static HTML. Note: MAKE_AjanePage is just a convenience macro around the AjanePage<>-class.
-MAKE_AjanePage(page, "Ajane example - Blink", "",
-  new AjaneStatic("<h1>Control the builtin LED</h1><p>Set the LED to: "),
+// static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
+MAKE_EmbAJAXPage(page, "EmbAJAX example - Blink", "",
+  new EmbAJAXStatic("<h1>Control the builtin LED</h1><p>Set the LED to: "),
   &mode,
-  new AjaneStatic("</p><p>Blink frequency: <i>SLOW</i>"),
+  new EmbAJAXStatic("</p><p>Blink frequency: <i>SLOW</i>"),
   &blinkfreq,
-  new AjaneStatic("<i>FAST</i></p>")
+  new EmbAJAXStatic("<i>FAST</i></p>")
 )
 
 // This is all you need to write for the page handler
@@ -48,9 +48,9 @@ void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig (IPAddress (192,168,4,1), IPAddress (0,0,0,0), IPAddress (255,255,255,0));
-  WiFi.softAP("AjaneTest", "12345678");
+  WiFi.softAP("EmbAJAXTest", "12345678");
 
-  // Tell the server to serve our Ajane test page on root
+  // Tell the server to serve our EmbAJAX test page on root
   server.on("/", handlePage);
   server.begin();
 
