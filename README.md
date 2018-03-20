@@ -137,7 +137,7 @@ API documentation is at https://tfry-git.github.io/EmbAJAX/api/annotated.html .
 At present, EmbAJAX does not incorporate any security mechanisms. Anybody who can connect to the server will be able to view and
 set any control. So any security will have to be implemented on the network level.
 
-One easy way, that will suit many simple use cases - and is used in the examples - is to simply set up your device as a WiFi access point,
+One easy way to do so, that will suit many simple use cases - and is used in the examples - is to simply set up your device as a WiFi access point,
 with encryption and password protection. With this, any client in range can connect, _if_ they have the credentials for the access point.
 
 If you need remote connections, currently your best bet will be to use an nginx proxy server (see e.g. https://jjssoftware.github.io/secure-your-esp8266/).
