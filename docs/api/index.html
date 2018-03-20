@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>EmdAJAX: EmbAJAX</title>
+<title>EmbAJAX: EmbAJAX</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -23,7 +23,7 @@
  <tbody>
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">EmdAJAX
+   <div id="projectname">EmbAJAX
    </div>
   </td>
  </tr>
@@ -126,6 +126,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </ul>
 <h2>Further readings</h2>
 <p>API documentation is at <a href="https://tfry-git.github.io/EmbAJAX/api/annotated.html">https://tfry-git.github.io/EmbAJAX/api/annotated.html</a> .</p>
+<h2>A word on security</h2>
+<p>At present, EmbAJAX does not incorporate any security mechanisms. Anybody who can connect to the server will be able to view and set any control. So any security will have to be implemented on the network level.</p>
+<p>One easy way to do so, that will suit many simple use cases - and is used in the examples - is to simply set up your device as a WiFi access point, with encryption and password protection. With this, any client in range can connect, <em>if</em> they have the credentials for the access point.</p>
+<p>If you need remote connections, currently your best bet will be to use an nginx proxy server (see e.g. <a href="https://jjssoftware.github.io/secure-your-esp8266/">https://jjssoftware.github.io/secure-your-esp8266/</a>).</p>
+<p>Future versions of EmbAJAX will provide a basic authentication and permission system, but to provide any meaningful level of security, this will mean communication with your device will have to be encrypted. One exciting news in this regard is that an HTTPS server implementation is about to be added to the ESP8266 arduino core. So check back soon (or submit your pull request)!</p>
 <h2>Some implementation notes</h2>
 <p>Currently, the web servers for embeddables I have dealt with so far, are limited to one client at a time. Therefore, if using a permanent AJAX connection, all further access would be blocked. Even separate page loads from the same browser. So, instead, we resort to regular polling for updates. An update poll is always included, automatically, when the client sends control changes to the server, so in most cases, the client would still appear to be refreshed, immediately.</p>
 <p>To avoid sending all states of all controls on each request from each client, the framework keeps track of the latest "revision number" sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded.</p>
@@ -144,8 +149,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>More drivers</li>
 <li>More examples</li>
-<li>Basic authentication features<ul>
-<li>For now, EmbAJAX makes no attempt at implementing any security features. If you need security, you will have to implement it at the network level. However, it would be nice, if there was at least a rudimentary mechanism besides this, so there can be differential permissions on the same network (e.g. view vs. control), and controlled access beyond a single subnet. Making a go at this makes relatively little sense with plain text communication, of course. One exciting news in this regard is that an HTTPS server implementation is about to be added to the ESP8266 arduino core. Once that is a bit more accessible, this should be revisited.</li>
+<li>Basic authentication / permission features<ul>
+<li>Will need to rely on encrypted communication. I.e. HTTPS server implementation.</li>
 </ul>
 </li>
 </ul>
