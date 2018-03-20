@@ -132,6 +132,20 @@ For now the installation routine is:
 
 API documentation is at https://tfry-git.github.io/EmbAJAX/api/annotated.html .
 
+## A word on security
+
+At present, EmbAJAX does not incorporate any security mechanisms. Anybody who can connect to the server will be able to view and
+set any control. So any security will have to be implemented on the network level.
+
+One easy way, that will suit many simple use cases - and is used in the examples - is to simply set up your device as a WiFi access point,
+with encryption and password protection. With this, any client in range can connect, _if_ they have the credentials for the access point.
+
+If you need remote connections, currently your best bet will be to use an nginx proxy server (see e.g. https://jjssoftware.github.io/secure-your-esp8266/).
+
+Future versions of EmbAJAX will provide a basic authentication and permission system, but to provide any meaningful level of security, this will
+mean communication with your device will have to be encrypted. One exciting news in this regard is that an HTTPS server implementation is about to be
+added to the ESP8266 arduino core. So check back soon (or submit your pull request)!
+
 ## Some implementation notes
 
 Currently, the web servers for embeddables I have dealt with so far, are limited to one client at a time. Therefore, if using
@@ -174,12 +188,8 @@ may get lost on a network error, but the state of the controls shown in the clie
     - Bonus points: With position marker ("cursor"), with ability to load arbitrary background image.
 - More drivers
 - More examples
-- Basic authentication features
-  - For now, EmbAJAX makes no attempt at implementing any security features. If you need security, you will have to implement it at the network
-    level. However, it would be nice, if there was at least a rudimentary mechanism besides this, so there can be differential permissions
-    on the same network (e.g. view vs. control), and controlled access beyond a single subnet. Making a go at this makes relatively little sense
-    with plain text communication, of course. One exciting news in this regard is that an HTTPS server implementation is about to be added to the
-    ESP8266 arduino core. Once that is a bit more accessible, this should be revisited.
+- Basic authentication / permission features
+  - Will need to rely on encrypted communication. I.e. HTTPS server implementation.
 
 ## The beggar's line
 
