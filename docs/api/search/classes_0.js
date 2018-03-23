@@ -7,6 +7,7 @@ var searchData=
   ['embajaxcontainer',['EmbAJAXContainer',['../classEmbAJAXContainer.html',1,'']]],
   ['embajaxelement',['EmbAJAXElement',['../classEmbAJAXElement.html',1,'']]],
   ['embajaxhideablecontainer',['EmbAJAXHideableContainer',['../classEmbAJAXHideableContainer.html',1,'']]],
+  ['embajaxmomentarybutton',['EmbAJAXMomentaryButton',['../classEmbAJAXMomentaryButton.html',1,'']]],
   ['embajaxmutablespan',['EmbAJAXMutableSpan',['../classEmbAJAXMutableSpan.html',1,'']]],
   ['embajaxoptionselect',['EmbAJAXOptionSelect',['../classEmbAJAXOptionSelect.html',1,'']]],
   ['embajaxoptionselectbase',['EmbAJAXOptionSelectBase',['../classEmbAJAXOptionSelectBase.html',1,'']]],

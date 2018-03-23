@@ -46,6 +46,9 @@ EmbAJAXPushButton button("button", "I can count", buttonPressed);
 EmbAJAXMutableSpan button_d("button_d");
 char button_d_buf[BUFLEN];
 
+EmbAJAXMomentaryButton m_button("m_button", "Press and hold");
+EmbAJAXMutableSpan m_button_d("m_button_d");
+
 EmbAJAXStatic nextCell("</td><td>&nbsp;</td><td><b>");
 EmbAJAXStatic nextRow("</b></td></tr><tr><td>");
 
@@ -57,30 +60,42 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Inputs", "",
     &nextCell,  // Static elements can safely be inserted into the same page more than once!
     &check_d,
     &nextRow,
+
     &radio,
     &nextCell,
     &radio_d,
     &nextRow,
+
     &select,
     &nextCell,
     &select_d,
     &nextRow,
+
     &slider,
     &nextCell,
     &slider_d,
     &nextRow,
+
     &color,
     &nextCell,
     &color_d,
     &nextRow,
+
     &text,
     &nextCell,
     &text_d,
     &nextRow,
+
     &button,
     &nextCell,
     &button_d,
     &nextRow,
+
+    &m_button,
+    &nextCell,
+    &m_button_d,
+    &nextRow,
+
     new EmbAJAXStatic("Server status:"),
     &nextCell,
     new EmbAJAXConnectionIndicator(),
@@ -119,6 +134,7 @@ void updateUI() {
     color_d.setValue(strncpy(color_d_buf, color.value(), BUFLEN));  // r, g, b, are also available, numerically.
     text_d.setValue(strncpy(text_d_buf, text.value(), BUFLEN));
     button_d.setValue(itoa(button_count, button_d_buf, 10));
+    m_button_d.setValue((m_button.status() == EmbAJAXMomentaryButton::Pressed) ? "pressed" : "not pressed");
 }
 
 void loop() {

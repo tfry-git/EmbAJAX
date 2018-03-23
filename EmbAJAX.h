@@ -390,7 +390,7 @@ private:
  *  When clicked a custom callback function will be called on the server. */
 class EmbAJAXPushButton : public EmbAJAXElement {
 public:
-    /** @param text: @see setText(). HTML is allowed, here.
+    /** @param label: @see setText(). HTML is allowed, here.
      *  @param callback Called when the button was clicked in the UI (with a pointer to the button as parameter) */
     EmbAJAXPushButton(const char* id, const char* label, void (*callback)(EmbAJAXPushButton*));
     void print() const override;
@@ -407,9 +407,38 @@ public:
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override;
     bool valueNeedsEscaping(uint8_t which=EmbAJAXBase::Value) const override;
     void updateFromDriverArg(const char* argname) override;
-private:
+protected:
     void (*_callback)(EmbAJAXPushButton*);
     const char* _label;
+};
+
+/** @brief A momentary "press-and-hold" button.
+ *
+ *  This button will be return status()==Pressed while the button is actively held pressed in a client.
+ *  While the button is pressed, the client will send continuous "pings" to the server. If a button
+ *  press has been registered, but the latest ping has timed out, the status() will return MayBePressed,
+ *  instead, so your code can take select an appropriate fallback behavior in case of unreliable connections
+ *  (e.g. stopping an RC car).
+ */
+class EmbAJAXMomentaryButton : public EmbAJAXPushButton {
+public:
+    /** @param text: @see setText(). HTML is allowed, here.
+     *  @param ping_interval: While the button is pressed, the client will send "ping" messages every timeout/1.5 milliseconds.
+     *                        If no ping has been received within timeout, status() will return MaybePressed.
+     *  @param callback Called when the button was clicked or relased in the UI (with a pointer to the button as parameter)
+     *                  @em Not called, when a ping has timed out. */
+    EmbAJAXMomentaryButton(const char* id, const char* label, uint16_t timeout=600, void (*callback)(EmbAJAXPushButton*)=0);
+    void print() const override;
+    enum Status {
+        Pressed,
+        MaybePressed,
+        Released
+    };
+    Status status() const;
+    void updateFromDriverArg(const char* argname) override;
+private:
+    uint32_t latest_ping;
+    uint16_t _timeout;
 };
 
 class EmbAJAXRadioGroupBase;

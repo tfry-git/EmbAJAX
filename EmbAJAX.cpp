@@ -364,7 +364,42 @@ const char* EmbAJAXPushButton::valueProperty(uint8_t which) const {
 }
 
 void EmbAJAXPushButton::updateFromDriverArg(const char* argname) {
-    _callback(this);
+    if (_callback) _callback(this);
+}
+
+//////////////////////// EmbAJAXḾomentaryButton /////////////////////////////
+
+EmbAJAXMomentaryButton::EmbAJAXMomentaryButton(const char* id, const char* label, uint16_t timeout, void (*callback)(EmbAJAXPushButton*)) : EmbAJAXPushButton(id, label, callback) {
+    latest_ping = 0;
+    _timeout = timeout;
+}
+
+void EmbAJAXMomentaryButton::print() const {
+    _driver->printContent("<button type=\"button\" id=");
+    _driver->printQuoted(_id);
+    _driver->printContent(" onMouseDown=\"this.pinger=setTimeout(function() {doRequest(this.id, 'p');}.bind(this),");
+    _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
+    _driver->printContent("); doRequest(this.id, 'p');\" onMouseUp=\"clearTimeout(this.pinger); doRequest(this.id, 'r');\" onMouseLeave=\"clearTimeout(this.pinger); doRequest(this.id, 'r');\">");
+    _driver->printFiltered(_label, false, valueNeedsEscaping());
+    _driver->printContent("</button>");
+}
+
+EmbAJAXMomentaryButton::Status EmbAJAXMomentaryButton::status() const {
+    if (latest_ping == 0) return Released;
+    if ((millis () - latest_ping) < _timeout) return Pressed;
+    return MaybePressed;
+}
+
+void EmbAJAXMomentaryButton::updateFromDriverArg(const char* argname) {
+    char buf[8];
+    _driver->getArg(argname, buf, 8);
+    if (buf[0] == 'p') {
+        latest_ping = millis();
+        if (!latest_ping) latest_ping = 1; // paranoid overflow protection
+    } else {
+        latest_ping = 0;
+    }
+    EmbAJAXPushButton::updateFromDriverArg(argname);
 }
 
 //////////////////////// EmbAJAXCheckButton /////////////////////////////
