@@ -377,9 +377,9 @@ EmbAJAXMomentaryButton::EmbAJAXMomentaryButton(const char* id, const char* label
 void EmbAJAXMomentaryButton::print() const {
     _driver->printContent("<button type=\"button\" id=");
     _driver->printQuoted(_id);
-    _driver->printContent(" onMouseDown=\"this.pinger=setTimeout(function() {doRequest(this.id, 'p');}.bind(this),");
+    _driver->printContent(" onMouseDown=\"this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
     _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
-    _driver->printContent("); doRequest(this.id, 'p');\" onMouseUp=\"clearTimeout(this.pinger); doRequest(this.id, 'r');\" onMouseLeave=\"clearTimeout(this.pinger); doRequest(this.id, 'r');\">");
+    _driver->printContent("); doRequest(this.id, 'p');\" onMouseUp=\"clearInterval(this.pinger); doRequest(this.id, 'r');\" onMouseLeave=\"clearInterval(this.pinger); doRequest(this.id, 'r');\">");
     _driver->printFiltered(_label, false, valueNeedsEscaping());
     _driver->printContent("</button>");
 }
