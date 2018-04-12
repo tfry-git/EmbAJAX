@@ -178,8 +178,8 @@ private:
  *  @param title HTML Title
  *  @param header_add a custom string to add to the HTML header section, e.g. a CSS definition. */
 #define MAKE_EmbAJAXPage(name, title, header_add, ...) \
-    EmbAJAXBase* name_elements[] = {__VA_ARGS__}; \
-    EmbAJAXPage<sizeof(name_elements)/sizeof(EmbAJAXBase*)> name(name_elements, title, header_add);
+    EmbAJAXBase* name##_elements[] = {__VA_ARGS__}; \
+    EmbAJAXPage<sizeof(name##_elements)/sizeof(EmbAJAXBase*)> name(name##_elements, title, header_add);
 
 /** @brief A static chunk of HTML
  *
