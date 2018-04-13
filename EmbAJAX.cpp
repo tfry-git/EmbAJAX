@@ -540,8 +540,8 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, uint NUM, const char* _titl
                             "setInterval(doPoll,1000);\n");
     _driver->printContent("</SCRIPT>\n");
     if (_header_add) _driver->printContent(_header_add);
-    _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
-                                                                            // but also the "restore latest settings after client reload" is questionable in our use-case.
+    _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\" onSubmit=\"return false;\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
+                                                                                                       // but also the "restore latest settings after client reload" is questionable in our use-case.
     printChildren(_children, NUM);
 
     _driver->printContent("\n</FORM></BODY></HTML>\n");
