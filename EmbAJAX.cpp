@@ -138,7 +138,7 @@ void EmbAJAXElement::printTextInput(uint SIZE, const char* _value) const {
     _driver->printQuoted(_id);
     _driver->printContent(" type=\"text\" maxLength=\"");
     _driver->printContent(itoa(SIZE-1, itoa_buf, 10));
-    _driver->printContent("\" size=");
+    _driver->printContent("\" size=\"");
     _driver->printContent(itoa(min(max(abs(SIZE-1), 10),40), itoa_buf, 10));  // Arbitray limit for rendered width of text fields: 10..40 chars
     _driver->printContent("\" value=");
     _driver->printQuoted(_value);
