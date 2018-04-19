@@ -29,7 +29,7 @@ char EmbAJAXBase::itoa_buf[ITOA_BUFLEN];
 
 ////////////////////////////// EmbAJAXOutputDriverBase ////////////////////
 
-void EmbAJAXOutputDriverBase::printFiltered(const char* value, bool quoted, bool HTMLescaped) {
+void EmbAJAXOutputDriverBase::printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped) {
     // NOTE: The assumption, here is that frequent (char-by-char) calls to printContent() _could_ be expensive, depending on the server
     //       implementation. Thus, a buffer is used to enable printing in larger chunks.
     char buf[32];
@@ -37,15 +37,22 @@ void EmbAJAXOutputDriverBase::printFiltered(const char* value, bool quoted, bool
     if (quoted) buf[bufpos++] = '"';
     const char *pos = value;
     while(*pos != '\0') {
-        if (bufpos > 24) {  // == Not enough room for the worst case, i.e. "&amp;" + quote-end + terminating '\0'
+        if (bufpos > 23) {  // == Not enough room for the worst case, i.e. "&quot;" + quote-end + terminating '\0'
             buf[bufpos] = '\0';
             printContent(buf);
             bufpos = 0;
             continue;
         }
-        if (quoted && (*pos == '"' || *pos == '\\')) {
+        if ((quoted == JSQuoted) && (*pos == '"' || *pos == '\\')) {
             buf[bufpos++] = '\\';
             buf[bufpos++] = *pos;
+        } else if ((quoted == HTMLQuoted) && (*pos == '"')) {
+            buf[bufpos++] = '&';
+            buf[bufpos++] = 'q';
+            buf[bufpos++] = 'u';
+            buf[bufpos++] = 'o';
+            buf[bufpos++] = 't';
+            buf[bufpos++] = ';';
         } else if (HTMLescaped && (*pos == '<')) {
             buf[bufpos++] = '&';
             buf[bufpos++] = 'l';
@@ -71,7 +78,7 @@ void EmbAJAXOutputDriverBase::printAttribute(const char* name, const char* value
     printContent(" ");
     printContent(name);
     printContent("=");
-    printQuoted(value);
+    printHTMLQuoted(value);
 }
 
 void EmbAJAXOutputDriverBase::printAttribute(const char* name, const int32_t value) {
@@ -89,10 +96,10 @@ void EmbAJAXConnectionIndicator::print() const {
                           "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
                           "'misses': 0,\n"
                           "'in': function() { if(this.misses) { this.misses = 0; this.div.innerHTML=");
-    _driver->printQuoted(_content_ok ? _content_ok : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:green;\">OK</span>");
+    _driver->printJSQuoted(_content_ok ? _content_ok : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:green;\">OK</span>");
     _driver->printContent (";}},\n"
                            "'out': function() {if (this.misses < 5) { if(++(this.misses) >= 5) this.div.innerHTML=");
-    _driver->printQuoted(_content_fail ? _content_fail : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:red;\">FAIL</span>");
+    _driver->printJSQuoted(_content_fail ? _content_fail : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:red;\">FAIL</span>");
     _driver->printContent(";}}\n"
                           "}\n</script></div>");
 }
@@ -110,7 +117,7 @@ bool EmbAJAXElement::sendUpdates(uint16_t since, bool first) {
     if (!changed(since)) return false;
     if (!first) _driver->printContent(",\n");
     _driver->printContent("{\n\"id\": ");
-    _driver->printQuoted(_id);
+    _driver->printJSQuoted(_id);
     _driver->printContent(",\n\"changes\": [");
     uint8_t i = 0;
     while (true) {
@@ -120,9 +127,9 @@ bool EmbAJAXElement::sendUpdates(uint16_t since, bool first) {
 
         if (i != 0) _driver->printContent(",");
         _driver->printContent("[");
-        _driver->printQuoted(pid);
+        _driver->printJSQuoted(pid);
         _driver->printContent(", ");
-        _driver->printFiltered(pval, true, valueNeedsEscaping(i));
+        _driver->printFiltered(pval, EmbAJAXOutputDriverBase::JSQuoted, valueNeedsEscaping(i));
         _driver->printContent("]");
 
         ++i;
@@ -193,7 +200,7 @@ void EmbAJAXMutableSpan::print() const {
     _driver->printContent("<span");
     _driver->printAttribute("id", _id);
     _driver->printContent(">");
-    if (_value) _driver->printFiltered(_value, false, valueNeedsEscaping());
+    if (_value) _driver->printFiltered(_value, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
     _driver->printContent("</span>\n");
 }
 
@@ -234,7 +241,7 @@ void EmbAJAXSlider::print() const {
     _driver->printAttribute("min", _min);
     _driver->printAttribute("max", _max);
     _driver->printAttribute("value", _value);
-    _driver->printContent("\" onChange=\"doRequest(this.id, this.value);\"/>");
+    _driver->printContent(" onChange=\"doRequest(this.id, this.value);\"/>");
 }
 
 const char* EmbAJAXSlider::value(uint8_t which) const {
@@ -346,7 +353,7 @@ void EmbAJAXPushButton::print() const {
     _driver->printContent("<button type=\"button\"");
     _driver->printAttribute("id", _id);
     _driver->printContent(" onClick=\"doRequest(this.id, 'p');\">");
-    _driver->printFiltered(_label, false, valueNeedsEscaping());
+    _driver->printFiltered(_label, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
     _driver->printContent("</button>");
 }
 
@@ -388,7 +395,7 @@ void EmbAJAXMomentaryButton::print() const {
     _driver->printContent(" onMouseDown=\"this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
     _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
     _driver->printContent("); doRequest(this.id, 'p');\" onMouseUp=\"clearInterval(this.pinger); doRequest(this.id, 'r');\" onMouseLeave=\"clearInterval(this.pinger); doRequest(this.id, 'r');\">");
-    _driver->printFiltered(_label, false, valueNeedsEscaping());
+    _driver->printFiltered(_label, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
     _driver->printContent("</button>");
 }
 
@@ -427,8 +434,8 @@ void EmbAJAXCheckButton::print() const {
     }
     _driver->printContent(" value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"");
     if (_checked) _driver->printContent(" checked=\"true\"");
-    _driver->printContent ("/><label for=");
-    _driver->printQuoted(_id);
+    _driver->printContent ("/><label");
+    _driver->printAttribute("for", _id);
     _driver->printContent(">");
     _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
     _driver->printContent("</label></span>");

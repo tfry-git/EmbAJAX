@@ -128,16 +128,24 @@ public:
     void nextRevision() {
         _revision = next_revision;
     }
+    /** Quotation modes. Used in printFiltered() */
+    enum QuoteMode {
+        NotQuoted,  ///< Will not be quoted
+        JSQuoted,   ///< Will be quoted suitable for JavaScript
+        HTMLQuoted  ///< Will be quoted suitable for HTML attributes
+    };
     /** Print the given value filtered according to the parameters:
      *
      *  @param quoted If true, add double-quotes around the string, and esacpe any double
-     *                quotes within the string.
+     *                quotes within the string as &quot;.
      *  @param HTMLescaped If true, escape any "<" and "&" in the input as "\&lt;" and "\&amp;"
      *                     such that it will appear as plain text if rendered as HTML
      *                     (safe for untrusted user input). */
-    void printFiltered(const char* value, bool quoted, bool HTMLescaped);
-    /** Shorthand for printFiltered(value, true, false); */
-    inline void printQuoted (const char* value) { printFiltered (value, true, false); }
+    void printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
+    /** Shorthand for printFiltered(value, JSQuoted, false); */
+    inline void printJSQuoted (const char* value) { printFiltered (value, JSQuoted, false); }
+    /** Shorthand for printFiltered(value, HTMLQuoted, false); */
+    inline void printHTMLQuoted (const char* value) { printFiltered (value, HTMLQuoted, false); }
     /** Convenience function to print an attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
      *
@@ -357,7 +365,7 @@ public:
     void updateFromDriverArg(const char* argname) override {
         _driver->getArg(argname, _value, SIZE);
     }
-private:
+protected:
     char _value[SIZE];
 };
 
@@ -533,8 +541,8 @@ public:
         _childlist = EmbAJAXContainer<NUM>(children);
     }
     void print() const override {
-        _driver->printContent("<div id=");
-        _driver->printQuoted(_id);
+        _driver->printContent("<div");
+        _driver->printAttribute("id", _id);
         _driver->printContent(">");
         _childlist.print();
         _driver->printContent("</div>");
