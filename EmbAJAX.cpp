@@ -67,6 +67,21 @@ void EmbAJAXOutputDriverBase::printFiltered(const char* value, bool quoted, bool
     printContent(buf);
 }
 
+void EmbAJAXOutputDriverBase::printAttribute(const char* name, const char* value) {
+    printContent(" ");
+    printContent(name);
+    printContent("=");
+    printQuoted(value);
+}
+
+void EmbAJAXOutputDriverBase::printAttribute(const char* name, const int32_t value) {
+    printContent(" ");
+    printContent(name);
+    printContent("=");
+    char buf[12];
+    printContent(itoa(value, buf, 10));
+}
+
 //////////////////////// EmbAJAXConnectionIndicator ///////////////////////
 
 void EmbAJAXConnectionIndicator::print() const {
@@ -134,14 +149,11 @@ bool EmbAJAXElement::changed(uint16_t since) {
 }
 
 void EmbAJAXElement::printTextInput(uint SIZE, const char* _value) const {
-    _driver->printContent("<input id=");
-    _driver->printQuoted(_id);
-    _driver->printContent(" type=\"text\" maxLength=\"");
-    _driver->printContent(itoa(SIZE-1, itoa_buf, 10));
-    _driver->printContent("\" size=\"");
-    _driver->printContent(itoa(min(max(abs(SIZE-1), 10),40), itoa_buf, 10));  // Arbitray limit for rendered width of text fields: 10..40 chars
-    _driver->printContent("\" value=");
-    _driver->printQuoted(_value);
+    _driver->printContent("<input type=\"text\"");
+    _driver->printAttribute("id", _id);
+    _driver->printAttribute("maxLength", SIZE-1);
+    _driver->printAttribute("size", min(max(abs(SIZE-1), 10),40));  // Arbitray limit for rendered width of text fields: 10..40 chars
+    _driver->printAttribute("value", _value);
     // Using onChange to update is too awkward. Using plain onInput would generate too may requests (and often result in "eaten" characters). Instead,
     // as a compromise, we arrange for an update one second after the last key was pressed.
     _driver->printContent(" onInput=\"clearTimeout(this.debouncer); this.debouncer=setTimeout(function() {doRequest(this.id, this.value);}.bind(this),1000);\"/>");
@@ -178,8 +190,8 @@ EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase** _children, uint NUM, const 
 //////////////////////// EmbAJAXMutableSpan /////////////////////////////
 
 void EmbAJAXMutableSpan::print() const {
-    _driver->printContent("<span id=");
-    _driver->printQuoted(_id);
+    _driver->printContent("<span");
+    _driver->printAttribute("id", _id);
     _driver->printContent(">");
     if (_value) _driver->printFiltered(_value, false, valueNeedsEscaping());
     _driver->printContent("</span>\n");
@@ -217,14 +229,11 @@ EmbAJAXSlider::EmbAJAXSlider(const char* id, int16_t min, int16_t max, int16_t i
 }
 
 void EmbAJAXSlider::print() const {
-    _driver->printContent("<input id=");
-    _driver->printQuoted(_id);
-    _driver->printContent(" type=\"range\" min=\"");
-    _driver->printContent(itoa(_min, itoa_buf, 10));
-    _driver->printContent("\" max=\"");
-    _driver->printContent(itoa(_max, itoa_buf, 10));
-    _driver->printContent("\" value=\"");
-    _driver->printContent(itoa(_value, itoa_buf, 10));
+    _driver->printContent("<input type=\"range\"");
+    _driver->printAttribute("id", _id);
+    _driver->printAttribute("min", _min);
+    _driver->printAttribute("max", _max);
+    _driver->printAttribute("value", _value);
     _driver->printContent("\" onChange=\"doRequest(this.id, this.value);\"/>");
 }
 
@@ -258,10 +267,9 @@ EmbAJAXColorPicker::EmbAJAXColorPicker(const char* id, uint8_t r, uint8_t g, uin
 }
 
 void EmbAJAXColorPicker::print() const {
-    _driver->printContent("<input id=");
-    _driver->printQuoted(_id);
-    _driver->printContent(" type=\"color\" value=");
-    _driver->printQuoted(value());
+    _driver->printContent("<input type=\"color\"");
+    _driver->printAttribute("id", _id);
+    _driver->printAttribute("value", value());
     // see EmbAJAXTextInput::print(): Use onInput(), instead of onChange().
     _driver->printContent(" onInput=\"clearTimeout(this.debouncer); this.debouncer=setTimeout(function() {doRequest(this.id, this.value);}.bind(this),1000);\"/>");
 }
@@ -335,8 +343,8 @@ EmbAJAXPushButton::EmbAJAXPushButton(const char* id, const char* label, void (*c
 }
 
 void EmbAJAXPushButton::print() const {
-    _driver->printContent("<button type=\"button\" id=");
-    _driver->printQuoted(_id);
+    _driver->printContent("<button type=\"button\"");
+    _driver->printAttribute("id", _id);
     _driver->printContent(" onClick=\"doRequest(this.id, 'p');\">");
     _driver->printFiltered(_label, false, valueNeedsEscaping());
     _driver->printContent("</button>");
@@ -375,8 +383,8 @@ EmbAJAXMomentaryButton::EmbAJAXMomentaryButton(const char* id, const char* label
 }
 
 void EmbAJAXMomentaryButton::print() const {
-    _driver->printContent("<button type=\"button\" id=");
-    _driver->printQuoted(_id);
+    _driver->printContent("<button type=\"button\"");
+    _driver->printAttribute("id", _id);
     _driver->printContent(" onMouseDown=\"this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
     _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
     _driver->printContent("); doRequest(this.id, 'p');\" onMouseUp=\"clearInterval(this.pinger); doRequest(this.id, 'r');\" onMouseLeave=\"clearInterval(this.pinger); doRequest(this.id, 'r');\">");
@@ -411,20 +419,17 @@ EmbAJAXCheckButton::EmbAJAXCheckButton(const char* id, const char* label, bool c
 }
 
 void EmbAJAXCheckButton::print() const {
-    _driver->printContent("<span><input id=");  // <input> and <label> inside a common span to support hiding, better
-    _driver->printQuoted(_id);
-    _driver->printContent(" type=");
+    _driver->printContent("<span><input");  // <input> and <label> inside a common span to support hiding, better
+    _driver->printAttribute("id", _id);
+    _driver->printAttribute("type", radiogroup ? "radio" : "checkbox");
     if (radiogroup) {
-        _driver->printContent("\"radio\"");
-        _driver->printContent("\" name=");
-        _driver->printQuoted(radiogroup->_name);
+        _driver->printAttribute("name", radiogroup->_name);
     }
-    else _driver->printContent("\"checkbox\"");
     _driver->printContent(" value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"");
     if (_checked) _driver->printContent(" checked=\"true\"");
-    _driver->printContent ("/><label for=\"");
+    _driver->printContent ("/><label for=");
     _driver->printQuoted(_id);
-    _driver->printContent("\">");
+    _driver->printContent(">");
     _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
     _driver->printContent("</label></span>");
 }
@@ -457,13 +462,13 @@ void EmbAJAXCheckButton::setChecked(bool checked) {
 //////////////////////// EmbAJAXOptionSelect(Base) ///////////////
 
 void EmbAJAXOptionSelectBase::print(const char* const* _labels, uint8_t NUM) const {
-    _driver->printContent("<select id=");
-    _driver->printQuoted(_id);
+    _driver->printContent("<select");
+    _driver->printAttribute("id", _id);
     _driver->printContent(" onChange=\"doRequest(this.id, this.value)\">\n");
     for(uint8_t i = 0; i < NUM; ++i) {
-        _driver->printContent("<option value=\"");
-        _driver->printContent(itoa(i, itoa_buf, 10));
-        _driver->printContent("\">");
+        _driver->printContent("<option");
+        _driver->printAttribute("value", i);
+        _driver->printContent(">");
         _driver->printContent(_labels[i]);
         _driver->printContent("</option>\n");
     }

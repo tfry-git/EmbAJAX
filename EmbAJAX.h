@@ -138,6 +138,18 @@ public:
     void printFiltered(const char* value, bool quoted, bool HTMLescaped);
     /** Shorthand for printFiltered(value, true, false); */
     inline void printQuoted (const char* value) { printFiltered (value, true, false); }
+    /** Convenience function to print an attribute inside an HTML tag.
+     *  This function adds a space _in front of_ the printed attribute.
+     *
+     *  @param name name of the attribute
+     *  @param value value of the attribute. Will be quoted. */
+    void printAttribute(const char* name, const char* value);
+    /** Convenience function to print an integert attribute inside an HTML tag.
+     *  This function adds a space _in front of_ the printed attribute.
+     *
+     *  @param name name of the attribute
+     *  @param value value of the attribute. */
+    void printAttribute(const char* name, const int32_t value);
 private:
     uint16_t _revision;
     uint16_t next_revision;
