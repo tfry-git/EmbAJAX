@@ -10,6 +10,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
+#include <EmbAJAXValidatingTextInput.h> // Fancier text input in a separate header file
 
 // Set up web server, and register it with EmbAJAX
 ESP8266WebServer server(80);
@@ -39,6 +40,10 @@ char color_d_buf[BUFLEN];
 EmbAJAXTextInput<BUFLEN> text("text");  // Text input, width BUFLEN
 EmbAJAXMutableSpan text_d("text_d");
 char text_d_buf[BUFLEN];
+
+EmbAJAXValidatingTextInput<16> valtext("valtext");
+EmbAJAXMutableSpan valtext_d("valtext_d");
+char valtext_d_buf[BUFLEN];
 
 int button_count = 0;
 void buttonPressed(EmbAJAXPushButton*) { button_count++; }
@@ -86,6 +91,11 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Inputs", "",
     &text_d,
     &nextRow,
 
+    &valtext,
+    &nextCell,
+    &valtext_d,
+    &nextRow,
+
     &button,
     &nextCell,
     &button_d,
@@ -121,6 +131,9 @@ void setup() {
     server.on("/", handlePage);
     server.begin();
 
+    valtext.setPlaceholder("192.168.1.1");
+    valtext.setPattern("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}");
+
     updateUI(); // init displays
 }
 
@@ -133,6 +146,7 @@ void updateUI() {
     slider_d.setValue(itoa(slider.intValue(), slider_d_buf, 10));
     color_d.setValue(strncpy(color_d_buf, color.value(), BUFLEN));  // r, g, b, are also available, numerically.
     text_d.setValue(strncpy(text_d_buf, text.value(), BUFLEN));
+    valtext_d.setValue(strncpy(valtext_d_buf, valtext.value(), BUFLEN));
     button_d.setValue(itoa(button_count, button_d_buf, 10));
     m_button_d.setValue((m_button.status() == EmbAJAXMomentaryButton::Pressed) ? "pressed" : "not pressed");
 }

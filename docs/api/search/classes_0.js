@@ -18,5 +18,6 @@ var searchData=
   ['embajaxradiogroupbase',['EmbAJAXRadioGroupBase',['../classEmbAJAXRadioGroupBase.html',1,'']]],
   ['embajaxslider',['EmbAJAXSlider',['../classEmbAJAXSlider.html',1,'']]],
   ['embajaxstatic',['EmbAJAXStatic',['../classEmbAJAXStatic.html',1,'']]],
-  ['embajaxtextinput',['EmbAJAXTextInput',['../classEmbAJAXTextInput.html',1,'']]]
+  ['embajaxtextinput',['EmbAJAXTextInput',['../classEmbAJAXTextInput.html',1,'']]],
+  ['embajaxvalidatingtextinput',['EmbAJAXValidatingTextInput',['../classEmbAJAXValidatingTextInput.html',1,'']]]
 ];

@@ -83,6 +83,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classEmbAJAXOutputDriverBase-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -95,6 +96,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <p><code>#include &lt;<a class="el" href="EmbAJAX_8h_source.html">EmbAJAX.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ad191a9065376c84fe844c46b2df0466d"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466d">QuoteMode</a> { <a class="el" href="classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466dad9b2afb39df156b63a1ca6a05c485d35">NotQuoted</a>, 
+<a class="el" href="classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466da333c0bd0e8a52e9976187d380c75f3cd">JSQuoted</a>, 
+<a class="el" href="classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466da69e05689bd034099d4d5b54830cb9b63">HTMLQuoted</a>
+ }</td></tr>
+<tr class="separator:ad191a9065376c84fe844c46b2df0466d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aec86913fdb2546414e46df7c8de4cab5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec86913fdb2546414e46df7c8de4cab5"></a>
@@ -115,17 +124,116 @@ uint16_t&#160;</td><td class="memItemRight" valign="bottom"><b>setChanged</b> ()
 <tr class="memitem:ade0291e8a1ca2d8ee186b6e0969817e5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade0291e8a1ca2d8ee186b6e0969817e5"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</td></tr>
 <tr class="separator:ade0291e8a1ca2d8ee186b6e0969817e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a84ab40f326273eb9929b616c0d64fece"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#a84ab40f326273eb9929b616c0d64fece">printFiltered</a> (const char *value, bool quoted, bool HTMLescaped)</td></tr>
-<tr class="separator:a84ab40f326273eb9929b616c0d64fece"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad50c7d3415453408a18ed8c32b80eace"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#ad50c7d3415453408a18ed8c32b80eace">printQuoted</a> (const char *value)</td></tr>
-<tr class="separator:ad50c7d3415453408a18ed8c32b80eace"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad39c8b7be8ac85acd1658c9b6f9cb1f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#ad39c8b7be8ac85acd1658c9b6f9cb1f7">printFiltered</a> (const char *value, <a class="el" href="classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466d">QuoteMode</a> quoted, bool HTMLescaped)</td></tr>
+<tr class="separator:ad39c8b7be8ac85acd1658c9b6f9cb1f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a810883222624b50715a1ae851f2e4354"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#a810883222624b50715a1ae851f2e4354">printJSQuoted</a> (const char *value)</td></tr>
+<tr class="separator:a810883222624b50715a1ae851f2e4354"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb79ed980f99d154cd4969991eb9aa39"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#adb79ed980f99d154cd4969991eb9aa39">printHTMLQuoted</a> (const char *value)</td></tr>
+<tr class="separator:adb79ed980f99d154cd4969991eb9aa39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a416a1ddf6cf53a147d8b29f3aaf1fa29"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#a416a1ddf6cf53a147d8b29f3aaf1fa29">printAttribute</a> (const char *name, const char *value)</td></tr>
+<tr class="separator:a416a1ddf6cf53a147d8b29f3aaf1fa29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e4a3709a07a2c19dedde3c38a8f60a8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEmbAJAXOutputDriverBase.html#a1e4a3709a07a2c19dedde3c38a8f60a8">printAttribute</a> (const char *name, const int32_t value)</td></tr>
+<tr class="separator:a1e4a3709a07a2c19dedde3c38a8f60a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract base class for output drivers/server implementations. </p>
 <p>Output driver as an abstraction over the server read/write commands. You will have to instantiate exactly one object of exactly one implementation, before using any EmbAJAX classes.</p>
 <p>Providing your own driver is very easy. All you have to do it to wrap the basic functions for writing to the server and retrieving (POST) arguments: printHeader(), printContent(), and getArg(). </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a84ab40f326273eb9929b616c0d64fece"></a>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a class="anchor" id="ad191a9065376c84fe844c46b2df0466d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466d">EmbAJAXOutputDriverBase::QuoteMode</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Quotation modes. Used in <a class="el" href="classEmbAJAXOutputDriverBase.html#ad39c8b7be8ac85acd1658c9b6f9cb1f7">printFiltered()</a> </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a class="anchor" id="ad191a9065376c84fe844c46b2df0466dad9b2afb39df156b63a1ca6a05c485d35"></a>NotQuoted&#160;</td><td class="fielddoc">
+<p>Will not be quoted. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="ad191a9065376c84fe844c46b2df0466da333c0bd0e8a52e9976187d380c75f3cd"></a>JSQuoted&#160;</td><td class="fielddoc">
+<p>Will be quoted suitable for JavaScript. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="ad191a9065376c84fe844c46b2df0466da69e05689bd034099d4d5b54830cb9b63"></a>HTMLQuoted&#160;</td><td class="fielddoc">
+<p>Will be quoted suitable for HTML attributes. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a416a1ddf6cf53a147d8b29f3aaf1fa29"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EmbAJAXOutputDriverBase::printAttribute </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convenience function to print an attribute inside an HTML tag. This function adds a space <em>in front of</em> the printed attribute.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>name of the attribute </td></tr>
+    <tr><td class="paramname">value</td><td>value of the attribute. Will be quoted. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a1e4a3709a07a2c19dedde3c38a8f60a8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EmbAJAXOutputDriverBase::printAttribute </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int32_t&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convenience function to print an integert attribute inside an HTML tag. This function adds a space <em>in front of</em> the printed attribute.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>name of the attribute </td></tr>
+    <tr><td class="paramname">value</td><td>value of the attribute. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ad39c8b7be8ac85acd1658c9b6f9cb1f7"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -138,7 +246,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
+          <td class="paramtype"><a class="el" href="classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466d">QuoteMode</a>&#160;</td>
           <td class="paramname"><em>quoted</em>, </td>
         </tr>
         <tr>
@@ -157,7 +265,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</
 <p>Print the given value filtered according to the parameters:</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">quoted</td><td>If true, add double-quotes around the string, and esacpe any double quotes within the string. </td></tr>
+    <tr><td class="paramname">quoted</td><td>If true, add double-quotes around the string, and esacpe any double quotes within the string as &quot;. </td></tr>
     <tr><td class="paramname">HTMLescaped</td><td>If true, escape any "&lt;" and "&amp;" in the input as "\&amp;lt;" and "\&amp;amp;" such that it will appear as plain text if rendered as HTML (safe for untrusted user input). </td></tr>
   </table>
   </dd>
@@ -165,7 +273,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</
 
 </div>
 </div>
-<a class="anchor" id="ad50c7d3415453408a18ed8c32b80eace"></a>
+<a class="anchor" id="adb79ed980f99d154cd4969991eb9aa39"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -173,7 +281,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void EmbAJAXOutputDriverBase::printQuoted </td>
+          <td class="memname">void EmbAJAXOutputDriverBase::printHTMLQuoted </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>value</em></td><td>)</td>
@@ -186,7 +294,32 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>nextRevision</b> ()</
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Shorthand for printFiltered(value, true, false); </p>
+<p>Shorthand for printFiltered(value, HTMLQuoted, false); </p>
+
+</div>
+</div>
+<a class="anchor" id="a810883222624b50715a1ae851f2e4354"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EmbAJAXOutputDriverBase::printJSQuoted </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Shorthand for printFiltered(value, JSQuoted, false); </p>
 
 </div>
 </div>

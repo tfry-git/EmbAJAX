@@ -19,5 +19,6 @@ var searchData=
   ['embajaxslider',['EmbAJAXSlider',['../classEmbAJAXSlider.html',1,'']]],
   ['embajaxstatic',['EmbAJAXStatic',['../classEmbAJAXStatic.html',1,'EmbAJAXStatic'],['../classEmbAJAXStatic.html#ae628ec2d0b175c48cdce833b8d682ebe',1,'EmbAJAXStatic::EmbAJAXStatic()']]],
   ['embajaxtextinput',['EmbAJAXTextInput',['../classEmbAJAXTextInput.html',1,'']]],
+  ['embajaxvalidatingtextinput',['EmbAJAXValidatingTextInput',['../classEmbAJAXValidatingTextInput.html',1,'']]],
   ['embajax',['EmbAJAX',['../index.html',1,'']]]
 ];
