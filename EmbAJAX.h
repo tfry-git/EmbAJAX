@@ -676,7 +676,7 @@ public:
      *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
     EmbAJAXPage(EmbAJAXBase* children[NUM], const char* title, const char* header_add = 0) : EmbAJAXContainer<NUM>(children) {
         _title = title;
-        _header_add = 0;
+        _header_add = header_add;
     }
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
      *  there is a GET request to the desired URL. */
