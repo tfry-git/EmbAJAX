@@ -33,13 +33,13 @@ EmbAJAXStatic statics[] = {
 EmbAJAXCheckButton check("check", "Some option");
 const char* radio_opts[] = {"Option1", "Option2", "Option3"};
 EmbAJAXRadioGroup<3> radio("radio", radio_opts);
-EmbAJAXOptionSelect<3> select("select", radio_opts);
+EmbAJAXOptionSelect<3> optionselect("optionselect", radio_opts);
 EmbAJAXSlider slider("slider", 0, 1000, 500);
 EmbAJAXTextInput<30> text("text");
 void buttonPressed(EmbAJAXPushButton*) { }
 EmbAJAXPushButton button("button", "I can count", buttonPressed);
 
-EmbAJAXBase* container1_contents[] = {&statics[0], &check, &statics[1], &select, &statics[2], &slider, &statics[3]};
+EmbAJAXBase* container1_contents[] = {&statics[0], &check, &statics[1], &optionselect, &statics[2], &slider, &statics[3]};
 EmbAJAXContainer<7> container1(container1_contents);
 
 EmbAJAXBase* container2_contents[] = {&statics[0], &button, &statics[1], &text, &statics[2], &radio, &statics[3]};

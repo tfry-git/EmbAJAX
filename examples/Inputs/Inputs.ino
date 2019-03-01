@@ -26,8 +26,8 @@ const char* radio_opts[] = {"Option1", "Option2", "Option3"};
 EmbAJAXRadioGroup<3> radio("radio", radio_opts);
 EmbAJAXMutableSpan radio_d("radio_d");
 
-EmbAJAXOptionSelect<3> select("select", radio_opts);
-EmbAJAXMutableSpan select_d("select_d");
+EmbAJAXOptionSelect<3> optionselect("optionselect", radio_opts);
+EmbAJAXMutableSpan optionselect_d("optionselect_d");
 
 EmbAJAXSlider slider("slider", 0, 1000, 500);
 EmbAJAXMutableSpan slider_d("slider_d");
@@ -71,9 +71,9 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Inputs", "",
     &radio_d,
     &nextRow,
 
-    &select,
+    &optionselect,
     &nextCell,
-    &select_d,
+    &optionselect_d,
     &nextRow,
 
     &slider,
@@ -142,7 +142,7 @@ void updateUI() {
     // placing it here makes the client UI more responsive (try it).
     check_d.setValue(check.isChecked() ? "checked" : "not checked");
     radio_d.setValue(radio_opts[radio.selectedOption()]);
-    select_d.setValue(radio_opts[select.selectedOption()]);
+    optionselect_d.setValue(radio_opts[optionselect.selectedOption()]);
     slider_d.setValue(itoa(slider.intValue(), slider_d_buf, 10));
     color_d.setValue(strncpy(color_d_buf, color.value(), BUFLEN));  // r, g, b, are also available, numerically.
     text_d.setValue(strncpy(text_d_buf, text.value(), BUFLEN));
