@@ -1,24 +1,21 @@
 /* Basic usage example for EmbAJAX library:
  * Provide a web interface to set built-in LED on, off, or blinking.
  * 
- * This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
- * 
  * Note that ESP boards seems to be no real standard on which pin the builtin LED is on, and
  * there is a very real chance that LED_BUILTIN is not defined, correctly, for your board.
  * If you see no blinking, try changing the LEDPIN define (with an externally connected LED
- * on a known pin being the safest option).
+ * on a known pin being the safest option). Similarly, on and off states are sometimes reversed.
  * 
  * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 
 #define LEDPIN LED_BUILTIN
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 const char* modes[] = {"On", "Blink", "Off"};

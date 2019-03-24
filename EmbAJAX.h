@@ -2,7 +2,7 @@
  * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
- * Copyright (C) 2018 Thomas Friedrichsmeier
+ * Copyright (C) 2018-2019 Thomas Friedrichsmeier
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
 **/
-#ifndef ARDUJAX_H
-#define ARDUJAX_H
+#ifndef EMBAJAX_H
+#define EMBAJAX_H
 
 #include <Arduino.h>
 
@@ -163,34 +163,15 @@ private:
     uint16_t next_revision;
 };
 
-#if defined (ESP8266)  // TODO: Move this to extra header
-#include <ESP8266WebServer.h>
-/**  @brief Output driver implementation for ESP8266WebServer */
-class EmbAJAXOutputDriverESP8266 : public EmbAJAXOutputDriverBase {
-public:
-    /** To register an ESP8266WebServer with EmbAJAX, simply create a (globaL) instance of this class. */
-    EmbAJAXOutputDriverESP8266(ESP8266WebServer *server) {
-        EmbAJAXBase::setDriver(this);
-        _server = server;
-    }
-    void printHeader(bool html) override {
-        _server->setContentLength(CONTENT_LENGTH_UNKNOWN);
-        if (html) {
-            _server->send(200, "text/html", "");
-        } else {
-            _server->send(200, "text/json", "");
-        }
-    }
-    void printContent(const char *content) override {
-        if (content[0] != '\0') _server->sendContent(content);  // NOTE: There seems to be a bug in the server when sending empty string.
-    }
-    const char* getArg(const char* name, char* buf, int buflen) override {
-        _server->arg(name).toCharArray (buf, buflen);
-        return buf;
-    };
-private:
-    ESP8266WebServer *_server;
-};
+// If the user has not #includ'ed a specific output driver implementation, make a good guess, here
+#if not defined (EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION)
+#if defined (ESP8266)
+#include <EmbAJAXOutputDriverESP8266.h>
+#elif defined (ESP32)
+#include <EmbAJAXOutputDriverESP32.h>
+#else
+#error No output driver available for this hardware (yet). Please implement your own (it is easy!) and submit a patch.
+#endif
 #endif
 
 /** Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage()

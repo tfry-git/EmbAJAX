@@ -2,7 +2,7 @@
  * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
- * Copyright (C) 2018 Thomas Friedrichsmeier
+ * Copyright (C) 2018-2019 Thomas Friedrichsmeier
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -18,6 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
 **/
+
+// Avoid auto-including an output driver, here.
+#define EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION
 
 #include "EmbAJAX.h"
 

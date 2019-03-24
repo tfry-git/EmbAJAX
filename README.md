@@ -53,19 +53,27 @@ The following additional features may be of interest (supported as of now):
 - Allows to insert your own custom CSS for styling (no styling in the lib).
 - Elements can be hidden, inputs can be disabled from the server (EmbAJAXBase::setVisible(), setEnabled()).
 
-## Example sketch (compilable on ESP8266)
+### Hardware support
+
+Currently there are output drivers for ESP8266 and ESP32. However, drivers are really easy to add. All that is needed is a very
+basic abstraction across some web server calls.
+
+ESP8266 support is solid. ESP32-support is currently plagued by a bug in the ESP32's networking code, that causes incoming connections
+to fail under some circumstances (https://github.com/espressif/arduino-esp32/issues/1921).
+
+
+## Example sketch
 
 Not really useful, but you know what to really do with a slider, and a display, right?
 Some further examples can be found in the examples folder.
 
 ```cpp
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access them later in our sketch.
 EmbAJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400

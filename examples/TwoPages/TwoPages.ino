@@ -1,19 +1,16 @@
 /* Basic usage example for EmbAJAX library:
  * Demonstrate using two pages with shared controls
  * 
- * This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
- * 
  * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 
 #define LEDPIN LED_BUILTIN
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 EmbAJAXSlider shared_slider("shared_slider", 0, 1000, 100);

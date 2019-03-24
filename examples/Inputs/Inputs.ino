@@ -3,18 +3,15 @@
 * of this writing. The right hand side has displays to show some sort of value for each (after a
 * round-trip to the server).
 * 
-* This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
-* 
 * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 #include <EmbAJAXValidatingTextInput.h> // Fancier text input in a separate header file
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 #define BUFLEN 30
 
