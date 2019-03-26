@@ -59,15 +59,6 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Visibility", "",
     &radioc
 )
 
-// This is all you need to write for the page handler
-void handlePage() {
-    if(server.method() == HTTP_POST) { // AJAX request
-        page.handleRequest(updateUI);
-    } else {  // Page load
-        page.print();
-    }
-}
-
 void setup() {
     // Example WIFI setup as an access point. Change this to whatever suits you, best.
     WiFi.mode(WIFI_AP);
