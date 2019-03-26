@@ -23,7 +23,7 @@
 #define EMBAJAXOUTPUTDRIVERESP32_H
 
 #include <WebServer.h>
-#define EmbAJAXOutputDriverWebserverClass Webserver
+#define EmbAJAXOutputDriverWebServerClass WebServer
 
 #include <WiFi.h>  // Makes the examples work cross-platform; not strictly needed
 

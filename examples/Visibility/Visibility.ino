@@ -75,7 +75,8 @@ void setup() {
     WiFi.softAP("EmbAJAXTest", "12345678");
 
     // Tell the server to serve our EmbAJAX test page on root
-    server.on("/", handlePage);
+    // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+    driver.installPage(&page, "/", updateUI);
     server.begin();
 
     updateUI(); // init displays
@@ -93,6 +94,6 @@ void updateUI() {
 }
 
 void loop() {
-    // handle network
-    server.handleClient();
+    // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+    driver.loopHook();
 }

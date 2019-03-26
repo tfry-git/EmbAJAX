@@ -1,5 +1,4 @@
 /**
- * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
  * Copyright (C) 2018-2019 Thomas Friedrichsmeier
@@ -19,61 +18,68 @@
  * 
 **/
 
-#ifndef EMBAJAXOUTPUTDRIVERGENERIC_H
-#define EMBAJAXOUTPUTDRIVERGENERIC_H
+#ifndef EMBAJAXOUTPUTDRIVERESPASYNC_H
+#define EMBAJAXOUTPUTDRIVERESPASYNC_H
 
 #if defined (EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION)
 #error Duplicate definition of output driver. Fix your include-directives.
 #endif
 #define EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION
 
-#if not defined EmbAJAXOutputDriverWebServerClass
-#error Please define EmbAJAXOutputDriverWebServerClass or #include appropriate hardware specific driver
-#endif
-
 // For EmbAJAXPage. Important to include after defining EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION
 #include "EmbAJAX.h"
 
-/**  @brief Output driver implementation. This implementation should work for most arduino web servers with minimal adjustmnets. */
-class EmbAJAXOutputDriverGeneric : public EmbAJAXOutputDriverBase {
+#include <ESPAsyncWebServer.h>
+
+#if defined (ESP32)
+#define EmbAJAXOutputDriverWebServerClass AsyncWebServer
+#else
+#define EmbAJAXOutputDriverWebServerClass ESPAsyncWebServer
+#endif
+
+/**  @brief Output driver implementation. This implementation works with ESPAsyncWebServer (https://github.com/me-no-dev/ESPAsyncWebServer).
+ *   
+ *   To use this class, you will have to include EmbAJAXOutputDriverESPAsync.h *before* EmbAJAX.h
+ */
+class EmbAJAXOutputDriverESPAsync : public EmbAJAXOutputDriverBase {
 public:
-    /** To register an WebServer with EmbAJAX, simply create a (globaL) instance of this class. 
-        @param server pointer to the server. The class of this is usually an auto-detected sensible default for the platform, e.g. ESP8266WebServer on ESP8266. */
-    EmbAJAXOutputDriverGeneric(EmbAJAXOutputDriverWebServerClass *server) {
+    /** To register an (ESP)AsyncWebServer with EmbAJAX, simply create a (global) instance of this class. 
+        @param server pointer to the server. The class of this is usually an auto-detected sensible default for the platform, AsyncWebServer on ESP32, ESPAsyncWebServer on ESP8266. */
+    EmbAJAXOutputDriverESPAsync(EmbAJAXOutputDriverWebServerClass *server) {
         EmbAJAXBase::setDriver(this);
         _server = server;
+        _request = 0;
     }
     void printHeader(bool html) override {
-        _server->setContentLength(CONTENT_LENGTH_UNKNOWN);
-        if (html) {
-            _server->send(200, "text/html", "");
-        } else {
-            _server->send(200, "text/json", "");
-        }
+        _response = _request->beginResponseStream(html ? "text/html" : "text/json");
     }
     void printContent(const char *content) override {
-        if (content[0] != '\0') _server->sendContent(content);  // NOTE: There seems to be a bug in the ESP8266 server when sending empty string.
+        _response->print(content);
     }
     const char* getArg(const char* name, char* buf, int buflen) override {
-        _server->arg(name).toCharArray (buf, buflen);
+        _request->arg(name).toCharArray (buf, buflen);
         return buf;
     }
     void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) override {
-        _server->on(path, [=]() {
-             if (_server->method() == HTTP_POST) {  // AJAX request
+        _server->on(path, [=](AsyncWebServerRequest* request) {
+             _request = request;
+             _response = 0;
+             if (_request->method() == HTTP_POST) {  // AJAX request
                  page->handleRequest(change_callback);
              } else {  // Page load
                  page->printPage();
              }
+             _request->send(_response);
+             _request = 0;
         });
     }
-    void loopHook() override {
-        _server->handleClient();
-    };
+    void loopHook() override {};
 private:
     EmbAJAXOutputDriverWebServerClass *_server;
+    AsyncWebServerRequest *_request;
+    AsyncResponseStream *_response;
 };
 
-typedef EmbAJAXOutputDriverGeneric EmbAJAXOutputDriver;
+typedef EmbAJAXOutputDriverESPAsync EmbAJAXOutputDriver;
 
 #endif

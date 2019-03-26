@@ -32,15 +32,6 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Blink", "",
   new EmbAJAXStatic("<i>FAST</i></p>")
 )
 
-// This is all you need to write for the page handler
-void handlePage() {
-  if(server.method() == HTTP_POST) { // AJAX request
-    page.handleRequest(updateUI);
-  } else {  // Page load
-    page.print();
-  }
-}
-
 void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
@@ -48,7 +39,8 @@ void setup() {
   WiFi.softAP("EmbAJAXTest", "12345678");
 
   // Tell the server to serve our EmbAJAX test page on root
-  server.on("/", handlePage);
+  // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+  driver.installPage(&page, "/", updateUI);
   server.begin();
 
   pinMode(LEDPIN, OUTPUT);
@@ -61,8 +53,8 @@ void updateUI() {
 }
 
 void loop() {
-  // handle network
-  server.handleClient();
+  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+  driver.loopHook();
 
   // And these lines are all you have to write for the logic: Access the elements as if they were plain
   // local controls

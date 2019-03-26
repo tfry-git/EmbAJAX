@@ -28,6 +28,7 @@
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
 class EmbAJAXContainerBase;
+class EmbAJAXPageBase;
 
 /** @brief Abstract base class for anything shown on an EmbAJAXPage
  *
@@ -117,6 +118,13 @@ public:
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
     virtual const char* getArg(const char* name, char* buf, int buflen) = 0;
+    /** Set up the given page to be served on the given path.
+     *
+     *  @param change_callback See EmbAJAXPage::handleRequest() for details.
+     */
+    virtual void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) = 0;
+    /** Insert this hook into loop(). Takes care of the appropriate server calls, if needed. */
+    virtual void loopHook() = 0;
 
     uint16_t revision() const {
         return _revision;
@@ -162,17 +170,6 @@ private:
     uint16_t _revision;
     uint16_t next_revision;
 };
-
-// If the user has not #includ'ed a specific output driver implementation, make a good guess, here
-#if not defined (EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION)
-#if defined (ESP8266)
-#include <EmbAJAXOutputDriverESP8266.h>
-#elif defined (ESP32)
-#include <EmbAJAXOutputDriverESP32.h>
-#else
-#error No output driver available for this hardware (yet). Please implement your own (it is easy!) and submit a patch.
-#endif
-#endif
 
 /** Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage()
  *  @param name Variable name of the page instance
@@ -546,7 +543,7 @@ protected:
 
 /** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
  *
- *  You can insert either the whole group into an ArudJAXPage at once, or - for more flexbile
+ *  You can insert either the whole group into an EmbAJAXPage at once, or - for more flexbile
  *  layouting - retrieve the individual buttons using() button, and insert them into the page
  *  as independent elements. */
 template<size_t NUM> class EmbAJAXRadioGroup : public EmbAJAXContainer<NUM>, public EmbAJAXRadioGroupBase {
@@ -643,13 +640,22 @@ private:
     const char* _labels[NUM];
 };
 
+/** @brief Absrract internal helper class
+ *
+ * Needed for internal reasons. Refer to EmbAJAXPage, instead. */
+class EmbAJAXPageBase {
+public:
+    virtual void handleRequest(void (*change_callback)()=0) = 0;
+    virtual void printPage() = 0;
+};
+
 /** @brief The main interface class
  *
  *  This is the main interface class. Create a web-page with a list of elements on it, and arrange for
  *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,
  *  both page loads, and AJAX are handled on the same URL, but the first via GET, and the second
  *  via POST. */
-template<size_t NUM> class EmbAJAXPage : public EmbAJAXContainer<NUM> {
+template<size_t NUM> class EmbAJAXPage : public EmbAJAXContainer<NUM>, public EmbAJAXPageBase {
 public:
     /** Create a web page.
      *  @param children list of elements on the page
@@ -658,6 +664,10 @@ public:
     EmbAJAXPage(EmbAJAXBase* children[NUM], const char* title, const char* header_add = 0) : EmbAJAXContainer<NUM>(children) {
         _title = title;
         _header_add = header_add;
+    }
+    /** Duplication of print(), needed for internal reasons. Use print(), instead! */
+    void printPage() override {
+        print();
     }
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
      *  there is a GET request to the desired URL. */
@@ -672,12 +682,23 @@ public:
      *                         response to the change, you should specify this function, and handle the change inside it.
      *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
      *                         (Otherwise the client will be updated on the next poll). */
-    void handleRequest(void (*change_callback)()=0) {
+    void handleRequest(void (*change_callback)()=0) override {
         EmbAJAXBase::handleRequest(EmbAJAXContainer<NUM>::_children, NUM, change_callback);
     }
 protected:
     const char* _title;
     const char* _header_add;
 };
+
+// If the user has not #includ'ed a specific output driver implementation, make a good guess, here
+#if not defined (EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION)
+#if defined (ESP8266)
+#include <EmbAJAXOutputDriverESP8266.h>
+#elif defined (ESP32)
+#include <EmbAJAXOutputDriverESP32.h>
+#else
+#error No output driver available for this hardware (yet). Please implement your own (it is easy!) and submit a patch.
+#endif
+#endif
 
 #endif

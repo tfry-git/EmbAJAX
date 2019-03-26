@@ -58,9 +58,22 @@ The following additional features may be of interest (supported as of now):
 Currently there are output drivers for ESP8266 and ESP32. However, drivers are really easy to add. All that is needed is a very
 basic abstraction across some web server calls.
 
-ESP8266 support is solid. ESP32-support is currently plagued by a bug in the ESP32's networking code, that causes incoming connections
-to fail under some circumstances (https://github.com/espressif/arduino-esp32/issues/1921).
+#### ESP32 quirks and workaround
 
+Unfortunately, ESP32-support is currently plagued by a bug in the ESP32's networking code, that causes incoming connections
+to fail under some circumstances (https://github.com/espressif/arduino-esp32/issues/1921). If you are using ESP32, and EmbAJAX
+feels sluggish, displays do not update, or the status indicator sometimes turns red, despite good network strength, you are probably
+being hit by this bug.
+
+You can work around this by using the ESPAsyncWebServer library (https://github.com/me-no-dev/ESPAsyncWebServer). To do so,
+(after installing the lib), you will need to add:
+
+```cpp
+#include <AsyncTCP.h>
+#include <EmbAJAXOutputDriverESPAsync.h>
+```
+
+**above** ```#include <EmbAJAX.h>``` in your EmbAJAX sketches. No further adjustments are needed in the examples, provided, here.
 
 ## Example sketch
 
@@ -89,15 +102,6 @@ MAKE_EmbAJAXPage(page, "EmbAJAXTest", "",
   new EmbAJAXStatic("</b></p>")
 )
 
-// This is all you need to write for the page handler
-void handlePage() {
-  if(server.method() == HTTP_POST) { // AJAX request
-    page.handleRequest(updateUI);
-  } else {  // Page load
-    page.print();
-  }
-}
-
 void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
@@ -105,7 +109,8 @@ void setup() {
   WiFi.softAP("EmbAJAXTest", "12345678");
 
   // Tell the server to serve our EmbAJAX test page on root
-  server.on("/", handlePage);
+  // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+  driver.installPage(&page, "/", updateUI);
   server.begin();
 
   updateUI();  // initialize display
@@ -123,8 +128,8 @@ void updateUI() {
 }
 
 void loop() {
-  // handle network
-  server.handleClient();
+    // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+    driver.loopHook();
 }
 
 ```
@@ -157,12 +162,17 @@ added to the ESP8266 arduino core. So check back soon (or submit your pull reque
 ## Some implementation notes
 
 Currently, the web servers for embeddables I have dealt with so far, are limited to one client at a time. Therefore, if using
-a permanent AJAX connection, all further access would be blocked. Even separate page loads from the same browser. So, instead,
+a permanent connection, all further access would be blocked. Even separate page loads from the same browser. So, instead,
 we resort to regular polling for updates. An update poll is always included, automatically, when the client sends control
 changes to the server, so in most cases, the client would still appear to be refreshed, immediately.
 
 To avoid sending all states of all controls on each request from each client, the framework keeps track of the latest "revision number"
 sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded.
+
+Concurrent access by an arbitrary number of separate clients is the main reason behind going with AJAX, instead of WebSockets, even if the
+latter are often described as more "modern". Note that the purpoted drawback to AJAX - latency - can easily be circumventented for most use
+cases, as desribed, above. Still, it would be relatively easy to generalize the framework to also allow a WebSocket-connection. I'm not
+doing this, ATM, for fear of adding unneccessary complexity for little or no practical gain.
 
 You may have noted that the framework avoids the use of the String class, even though that would make some things easier. The reason
 for this design choice is that the overhead of using char*, here, in a sketch that may be using String, already, is low. However, if this
