@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['toelement',['toElement',['../classEmbAJAXBase.html#ae86f36d34a415efc3e9a7f3c25f2261c',1,'EmbAJAXBase::toElement()'],['../classEmbAJAXElement.html#a4f07d6346edbbcefb07c2a21afa36a9f',1,'EmbAJAXElement::toElement()']]]
+  ['quotemode',['QuoteMode',['../classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466d',1,'EmbAJAXOutputDriverBase']]]
 ];

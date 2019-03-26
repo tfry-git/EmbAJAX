@@ -1,24 +1,21 @@
 /* Basic usage example for EmbAJAX library:
  * Provide a web interface to set built-in LED on, off, or blinking.
  * 
- * This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
- * 
  * Note that ESP boards seems to be no real standard on which pin the builtin LED is on, and
  * there is a very real chance that LED_BUILTIN is not defined, correctly, for your board.
  * If you see no blinking, try changing the LEDPIN define (with an externally connected LED
- * on a known pin being the safest option).
+ * on a known pin being the safest option). Similarly, on and off states are sometimes reversed.
  * 
  * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 
 #define LEDPIN LED_BUILTIN
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 const char* modes[] = {"On", "Blink", "Off"};
@@ -35,15 +32,6 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Blink", "",
   new EmbAJAXStatic("<i>FAST</i></p>")
 )
 
-// This is all you need to write for the page handler
-void handlePage() {
-  if(server.method() == HTTP_POST) { // AJAX request
-    page.handleRequest(updateUI);
-  } else {  // Page load
-    page.print();
-  }
-}
-
 void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
@@ -51,7 +39,8 @@ void setup() {
   WiFi.softAP("EmbAJAXTest", "12345678");
 
   // Tell the server to serve our EmbAJAX test page on root
-  server.on("/", handlePage);
+  // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+  driver.installPage(&page, "/", updateUI);
   server.begin();
 
   pinMode(LEDPIN, OUTPUT);
@@ -64,8 +53,8 @@ void updateUI() {
 }
 
 void loop() {
-  // handle network
-  server.handleClient();
+  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+  driver.loopHook();
 
   // And these lines are all you have to write for the logic: Access the elements as if they were plain
   // local controls

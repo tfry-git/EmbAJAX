@@ -3,18 +3,15 @@
 * of this writing. The right hand side has displays to show some sort of value for each (after a
 * round-trip to the server).
 * 
-* This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
-* 
 * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 #include <EmbAJAXValidatingTextInput.h> // Fancier text input in a separate header file
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 #define BUFLEN 30
 
@@ -112,15 +109,6 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Inputs", "",
     new EmbAJAXStatic("</b></td></tr></table>")
 )
 
-// This is all you need to write for the page handler
-void handlePage() {
-    if(server.method() == HTTP_POST) { // AJAX request
-        page.handleRequest(updateUI);
-    } else {  // Page load
-        page.print();
-    }
-}
-
 void setup() {
     // Example WIFI setup as an access point. Change this to whatever suits you, best.
     WiFi.mode(WIFI_AP);
@@ -128,7 +116,8 @@ void setup() {
     WiFi.softAP("EmbAJAXTest", "12345678");
 
     // Tell the server to serve our EmbAJAX test page on root
-    server.on("/", handlePage);
+    // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+    driver.installPage(&page, "/", updateUI);
     server.begin();
 
     valtext.setPlaceholder("192.168.1.1");
@@ -152,6 +141,6 @@ void updateUI() {
 }
 
 void loop() {
-    // handle network
-    server.handleClient();
+    // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+    driver.loopHook();
 }

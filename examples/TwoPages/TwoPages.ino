@@ -1,19 +1,16 @@
 /* Basic usage example for EmbAJAX library:
  * Demonstrate using two pages with shared controls
  * 
- * This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
- * 
  * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 
 #define LEDPIN LED_BUILTIN
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 EmbAJAXSlider shared_slider("shared_slider", 0, 1000, 100);
@@ -38,32 +35,16 @@ MAKE_EmbAJAXPage(page2, "EmbAJAX example - Two Pages II", "",
   new EmbAJAXStatic("</p><p>Link to <a href=\"/\">page 1</a> (you can open this directly, or in a tab of your browser).</p>")
 )
 
-// One page handler for each page. Note that these are essentially identical, except for the page object
-void handlePage1() {
-  if(server.method() == HTTP_POST) { // AJAX request
-    page1.handleRequest(updateUI);
-  } else {  // Page load
-    page1.print();
-  }
-}
-
-void handlePage2() {
-  if(server.method() == HTTP_POST) { // AJAX request
-    page2.handleRequest(updateUI);
-  } else {  // Page load
-    page2.print();
-  }
-}
-
 void setup() {
   // Example WIFI setup as an access point. Change this to whatever suits you, best.
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig (IPAddress (192,168,4,1), IPAddress (0,0,0,0), IPAddress (255,255,255,0));
   WiFi.softAP("EmbAJAXTest", "12345678");
 
-  // Tell the server to handle both pages
-  server.on("/", handlePage1);
-  server.on("/page2", handlePage2);
+  // Tell the server to serve the two pages at root, and at "/page2", respectively.
+  // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+  driver.installPage(&page1, "/", updateUI);
+  driver.installPage(&page2, "/page2", updateUI);
   server.begin();
 
   updateUI(); // to initialize display
@@ -76,6 +57,6 @@ void updateUI() {
 }
 
 void loop() {
-  // handle network
-  server.handleClient();
+  // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+  driver.loopHook();
 }

@@ -3,17 +3,14 @@
 * This example shows the semantics of calling setVisible() and setEnabled() on the various
 * elements.
 * 
-* This example is based on an ESP8266 with Arduino core (https://github.com/esp8266/Arduino).
-* 
 * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <EmbAJAX.h>
 
-// Set up web server, and register it with EmbAJAX
-ESP8266WebServer server(80);
-EmbAJAXOutputDriverESP8266 driver(&server);
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
+// converience #define to allow using the same example code across platforms
+EmbAJAXOutputDriverWebServerClass server(80);
+EmbAJAXOutputDriver driver(&server);
 
 // The radio groups will be used to control the state
 const char* visibility_opts[] = {"Normal", "Hidden", "Disabled"};
@@ -62,15 +59,6 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Visibility", "",
     &radioc
 )
 
-// This is all you need to write for the page handler
-void handlePage() {
-    if(server.method() == HTTP_POST) { // AJAX request
-        page.handleRequest(updateUI);
-    } else {  // Page load
-        page.print();
-    }
-}
-
 void setup() {
     // Example WIFI setup as an access point. Change this to whatever suits you, best.
     WiFi.mode(WIFI_AP);
@@ -78,7 +66,8 @@ void setup() {
     WiFi.softAP("EmbAJAXTest", "12345678");
 
     // Tell the server to serve our EmbAJAX test page on root
-    server.on("/", handlePage);
+    // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+    driver.installPage(&page, "/", updateUI);
     server.begin();
 
     updateUI(); // init displays
@@ -96,6 +85,6 @@ void updateUI() {
 }
 
 void loop() {
-    // handle network
-    server.handleClient();
+    // handle network. loopHook() simply calls server.handleClient(), in most but not all server implementations.
+    driver.loopHook();
 }
