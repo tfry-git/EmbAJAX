@@ -339,6 +339,7 @@ public:
      *  you can safely pass a temporary string. */
     void setValue(const char* value) {
         strncpy(_value, value, SIZE);
+        setChanged();
     }
     void updateFromDriverArg(const char* argname) override {
         _driver->getArg(argname, _value, SIZE);
