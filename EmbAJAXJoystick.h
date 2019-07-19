@@ -18,8 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
 **/
-//#error The EmbAJAXJoystick class is a work in progress, and not expected to work, yet. Check back, later.
-
 
 #ifndef EMBAJAXJOYSTICK_H
 #define EMBAJAXJOYSTICK_H
@@ -39,7 +37,7 @@ const char EmbAJAXJoystick_POSITION_9_DIRECTIONS[] = "if (pressed) {\n"
                                                       "  else y = height / 2;\n"
                                                       "}\n";
 
-/** This class provides a basic joystick for directional control. WORK IN PROGRESS, THIS IS NOT EXPECTED TO WORK, YET. */
+/** This class provides a basic joystick for directional control. WORK IN PROGRESS, API and behavior may be subject to change in future versions of EmbAJAX. */
 class EmbAJAXJoystick : public EmbAJAXElement {
 public:
     /** C'tor.
@@ -64,16 +62,16 @@ public:
         EmbAJAXBase::_driver->printAttribute("id", _id);
         EmbAJAXBase::_driver->printAttribute("width", _width);
         EmbAJAXBase::_driver->printAttribute("height", _height);
-        EmbAJAXBase::_driver->printContent("style=\"cursor: all-scroll\"/>");  // style="border-radius:50%; background-color:grey; cursor: all-scroll"
+        EmbAJAXBase::_driver->printContent(" style=\"cursor: all-scroll\"></canvas>");  // style="border-radius:50%; background-color:grey; cursor: all-scroll"
         EmbAJAXBase::_driver->printContent(
            "<script>\n"
            "var elem = document.getElementById(");
         EmbAJAXBase::_driver->printAttribute("id", _id);
         EmbAJAXBase::_driver->printContent(
            ");\n"
-           "elem.prototype.__defineSetter__('coords', function(value) {\n"
+           "elem.__defineSetter__('coords', function(value) {\n"
            "  var vals = value.split(',');\n"
-           "  update(vals[0], vals[1]);\n"
+           "  this.update(vals[0], vals[1], false);\n"
            "});\n"
            "elem.last_server_update = Date.now();\n"
            "elem.sendState = function() {\n"
@@ -82,17 +80,19 @@ public:
         EmbAJAXBase::_driver->printContent(
            ";\n"
            "  if (Date.now() - this.last_server_update < act_t) {\n"
-           "    window.setTimeout(function() { this.sendState() }.bind(this), act_t);\n"
+           "    window.clearTimeout(this.updatetimeoutid);\n"
+           "    this.updatetimeoutid = window.setTimeout(function() { this.sendState() }.bind(this), act_t*1.5);\n"
+           "  } else {\n"
+           "    doRequest(this.id, this.pressed + ',' + this.posx + ',' + this.posy);\n"
+           "    this.last_server_update = Date.now();\n"
            "  }\n"
-           "  doRequest(this.id, this.pressed + ',' + this.posx + ',' + this.posy);\n"
-           "  this.last_server_update = Date.now();\n"
            "}\n"
            "\n"
            "elem.applypos = function(x, y, pressed) {\n"
            "  var width = this.width;\n"
            "  var height = this.height;\n"
-           "  x = Math.round(((x - width / 2) * 2000) / width);\n"    // Scale values to +/-1000, independent of display size
-           "  y = Math.round(((y - height / 2) * 2000) / height);\n"
+           //"  x = Math.round(((x - width / 2) * 2000) / width);\n"    // Scale values to +/-1000, independent of display size
+           //"  y = Math.round(((y - height / 2) * 2000) / height);\n"
            );
         EmbAJAXBase::_driver->printContent(_snap_back);
         EmbAJAXBase::_driver->printContent(_position_adjust);
@@ -101,22 +101,24 @@ public:
            "  this.posy = y;\n"
            "}\n"
            "\n"
-           "elem.update = function(x, y) {\n"
+           "elem.update = function(x, y, send=true) {\n"
            "  var oldx = this.posx;\n"
            "  var oldy = this.posy;\n"
-           "  this.applypos(x, y, this.pressed);\n"
+           "  this.applypos(x, y, send ? this.pressed : true);\n"
            "  if (this.posx != oldx || this.posy != oldy) {\n"
            "    var ctx = this.getContext('2d');\n"
            "    ctx.clearRect(0, 0, this.width, this.height);\n"
            "    this.drawKnob(ctx, this.posx, this.posy);\n"
-           "    this.sendState();\n"
+           "    if(send) this.sendState();\n"
            "  }\n"
            "}\n"
            "\n"
            // TODO: This should be customizable
            "elem.drawKnob = function(ctx, x, y) {\n"
-           "  x = x * width / 2000 + width / 2;\n"
-           "  y = y * height / 2000 + height / 2;\n"
+           "  var width = this.width;\n"
+           "  var height = this.height;\n"
+           //"  x = x * width / 2000 + width / 2;\n"
+           //"  y = y * height / 2000 + height / 2;\n"
            "  ctx.beginPath();\n"
            "  ctx.arc(x, y, 15, 0, 2 * Math.PI);\n"
            "  ctx.stroke();\n"
@@ -137,13 +139,13 @@ public:
            "  this.update();\n"
            "}\n"
            "\n"
-           "elem.addEventListener('mousedown', function(event) { elem.press(event.offsetX, event.offsetY); }, false);\n"
-           "elem.addEventListener('mousemove', function(event) { elem.move(event.offsetX, event.offsetY); }, false);\n"
-           "elem.addEventListener('mouseup', function(event) { elem.release(event.offsetX, event.offsetY); }, false);\n"
-           "elem.addEventListener('mouseleave', function(event) { elem.release(event.offsetX, event.offsetY); }, false);\n"
-           "elem.addEventListener('touchstart', function(event) { elem.press(event.touches[0].offsetX, event.touches[0].offsetY); }, false);\n"
-           "elem.addEventListener('touchmove', function(event) { elem.move(event.touches[0].offsetX, event.touches[0].offsetY); }, false);\n"
-           "elem.addEventListener('touchend', function(event) { elem.release(event.touches[0].offsetX, event.touches[0].offsetY); }, false);\n"
+           "elem.addEventListener('mousedown', function(event) { this.press(event.offsetX, event.offsetY); }.bind(elem), false);\n"
+           "elem.addEventListener('mousemove', function(event) { this.move(event.offsetX, event.offsetY); }.bind(elem), false);\n"
+           "elem.addEventListener('mouseup', function(event) { this.release(event.offsetX, event.offsetY); }.bind(elem), false);\n"
+           "elem.addEventListener('mouseleave', function(event) { this.release(event.offsetX, event.offsetY); }.bind(elem), false);\n"
+           "elem.addEventListener('touchstart', function(event) { this.press(event.touches[0].offsetX, event.touches[0].offsetY); }.bind(elem), false);\n"
+           "elem.addEventListener('touchmove', function(event) { this.move(event.touches[0].offsetX, event.touches[0].offsetY); }.bind(elem), false);\n"
+           "elem.addEventListener('touchend', function(event) { this.release(event.touches[0].offsetX, event.touches[0].offsetY); }.bind(elem), false);\n"
            "</script>\n");
     }
     void updateFromDriverArg(const char* argname) {
