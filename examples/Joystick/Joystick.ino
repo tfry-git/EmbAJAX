@@ -11,8 +11,6 @@
 #include <EmbAJAX.h>
 #include <EmbAJAXJoystick.h>
 
-#define LEDPIN LED_BUILTIN
-
 // Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
 // converience #define to allow using the same example code across platforms
 EmbAJAXOutputDriverWebServerClass server(80);
@@ -41,8 +39,6 @@ void setup() {
   // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
   driver.installPage(&page, "/", updateUI);
   server.begin();
-
-  pinMode(LEDPIN, OUTPUT);
 }
 
 void updateUI() {

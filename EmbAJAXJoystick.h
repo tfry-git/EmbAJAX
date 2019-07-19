@@ -2,7 +2,7 @@
  * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
- * Copyright (C) 2018 Thomas Friedrichsmeier
+ * Copyright (C) 2018-2019 Thomas Friedrichsmeier
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -24,17 +24,17 @@
 
 #include <EmbAJAX.h>
 
-const char EmbAJAXJoystick_SNAP_BACK[] = "if (!pressed) { x = width / 2; y = height / 2; }\n";
+const char EmbAJAXJoystick_SNAP_BACK[] = "if (!pressed) { x = 0; y = 0; }\n";
 const char EmbAJAXJoystick_NO_SNAP_BACK[] = "";
 const char EmbAJAXJoystick_FREE_POSITION[] = "";
 const char EmbAJAXJoystick_POSITION_9_DIRECTIONS[] = "if (pressed) {\n"
-                                                      "  if (x < width/3) x = width / 6;\n"
-                                                      "  else if (x > (2*width/3)) x = 5*width / 6\n"
-                                                      "  else x = width / 2;\n"
+                                                      "  if (x < -500) x = -1000;\n"
+                                                      "  else if (x > 500) x = 1000\n"
+                                                      "  else x = 0;\n"
                                                       "\n"
-                                                      "  if (y < height/3) y = height / 6;\n"
-                                                      "  else if (y > (2*height/3)) y = 5*height / 6\n"
-                                                      "  else y = height / 2;\n"
+                                                      "  if (y < -500) y = -1000;\n"
+                                                      "  else if (y > 500) y = 1000\n"
+                                                      "  else y = 0;\n"
                                                       "}\n";
 
 /** This class provides a basic joystick for directional control. WORK IN PROGRESS, API and behavior may be subject to change in future versions of EmbAJAX. */
@@ -88,23 +88,23 @@ public:
            "  }\n"
            "}\n"
            "\n"
-           "elem.applypos = function(x, y, pressed) {\n"
+           "elem.updateFromClient = function(x, y) {\n"
            "  var width = this.width;\n"
            "  var height = this.height;\n"
-           //"  x = Math.round(((x - width / 2) * 2000) / width);\n"    // Scale values to +/-1000, independent of display size
-           //"  y = Math.round(((y - height / 2) * 2000) / height);\n"
-           );
+           "  var pressed = this.pressed;\n"
+           "  x = Math.round(((x - width / 2) * 2000) / (width-40));\n"    // Scale values to +/-1000, independent of display size
+           "  y = Math.round(((y - height / 2) * 2000) / (height-40));\n");
         EmbAJAXBase::_driver->printContent(_snap_back);
         EmbAJAXBase::_driver->printContent(_position_adjust);
         EmbAJAXBase::_driver->printContent(
-           "  this.posx = x;\n"
-           "  this.posy = y;\n"
+           "  this.update(x, y, true);\n"
            "}\n"
            "\n"
            "elem.update = function(x, y, send=true) {\n"
            "  var oldx = this.posx;\n"
            "  var oldy = this.posy;\n"
-           "  this.applypos(x, y, send ? this.pressed : true);\n"
+           "  this.posx = x;\n"
+           "  this.posy = y;\n"
            "  if (this.posx != oldx || this.posy != oldy) {\n"
            "    var ctx = this.getContext('2d');\n"
            "    ctx.clearRect(0, 0, this.width, this.height);\n"
@@ -117,8 +117,8 @@ public:
            "elem.drawKnob = function(ctx, x, y) {\n"
            "  var width = this.width;\n"
            "  var height = this.height;\n"
-           //"  x = x * width / 2000 + width / 2;\n"
-           //"  y = y * height / 2000 + height / 2;\n"
+           "  x = x * (width-40) / 2000 + width / 2;\n"
+           "  y = y * (height-40) / 2000 + height / 2;\n"
            "  ctx.beginPath();\n"
            "  ctx.arc(x, y, 15, 0, 2 * Math.PI);\n"
            "  ctx.stroke();\n"
@@ -127,16 +127,16 @@ public:
            "\n"
            "elem.press = function(x, y) {\n"
            "  this.pressed = 1;\n"
-           "  this.update(x, y);\n"
+           "  this.updateFromClient(x, y);\n"
            "}\n"
            "\n"
            "elem.move = function(x, y) {\n"
-           "  this.update(x, y);\n"
+           "  this.updateFromClient(x, y);\n"
            "}\n"
            "\n"
            "elem.release = function(x, y) {\n"
            "  this.pressed = 0;\n"
-           "  this.update();\n"
+           "  this.updateFromClient(x, y);\n"
            "}\n"
            "\n"
            "elem.addEventListener('mousedown', function(event) { this.press(event.offsetX, event.offsetY); }.bind(elem), false);\n"
@@ -164,8 +164,11 @@ public:
         _pressed = atoi(buf);
         updateValueString();
     }
+    /** Get current x position. Position is returned as a value between -1000 and +1000 (center 0), independent of the size of the control. */
     int getX() const { return _curx; };
+    /** Get current y position. Position is returned as a value between -1000 and +1000 (center 0), independent of the size of the control. */
     int getY() const { return _cury; };
+    /** Set x/y position in the client(s). Range -1000 to +1000. */
     void setPosition (int x, int y) {
         if (x != _curx || y != _cury) {
             _curx = x;

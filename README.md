@@ -45,6 +45,7 @@ These controls / elements are supported as of now:
 - Text input
 - Drop down option select
 - RGB Color picker
+- Directional input ("joystick")
 - Static HTML blocks
 - Connection status indicator
 
