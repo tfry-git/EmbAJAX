@@ -7,6 +7,7 @@ var searchData=
   ['embajaxcontainer',['EmbAJAXContainer',['../classEmbAJAXContainer.html',1,'']]],
   ['embajaxelement',['EmbAJAXElement',['../classEmbAJAXElement.html',1,'EmbAJAXElement'],['../classEmbAJAXElement.html#ac1a199ccedf33bb9c51403a085383f57',1,'EmbAJAXElement::EmbAJAXElement()']]],
   ['embajaxhideablecontainer',['EmbAJAXHideableContainer',['../classEmbAJAXHideableContainer.html',1,'']]],
+  ['embajaxjoystick',['EmbAJAXJoystick',['../classEmbAJAXJoystick.html',1,'EmbAJAXJoystick'],['../classEmbAJAXJoystick.html#ad5858949e058009e70403e2b7aa6a88d',1,'EmbAJAXJoystick::EmbAJAXJoystick()']]],
   ['embajaxmomentarybutton',['EmbAJAXMomentaryButton',['../classEmbAJAXMomentaryButton.html',1,'EmbAJAXMomentaryButton'],['../classEmbAJAXMomentaryButton.html#a1899a81f48279709c2bb900e7a966399',1,'EmbAJAXMomentaryButton::EmbAJAXMomentaryButton()']]],
   ['embajaxmutablespan',['EmbAJAXMutableSpan',['../classEmbAJAXMutableSpan.html',1,'']]],
   ['embajaxoptionselect',['EmbAJAXOptionSelect',['../classEmbAJAXOptionSelect.html',1,'EmbAJAXOptionSelect&lt; NUM &gt;'],['../classEmbAJAXOptionSelect.html#a2a69d9d6969bc969ea960bd979cbe6c7',1,'EmbAJAXOptionSelect::EmbAJAXOptionSelect()']]],
