@@ -243,7 +243,7 @@ public:
      *  This base class handles visibility and enabledness, only. Do call the base implementation for
      *  any "which" that is _not_ handled in your derived class. */
     virtual const char* value(uint8_t which = EmbAJAXBase::Value) const {
-        if (which == EmbAJAXBase::Visibility) return (basicProperty (EmbAJAXBase::Visibility) ? "initial" : "none");
+        if (which == EmbAJAXBase::Visibility) return (basicProperty (EmbAJAXBase::Visibility) ? "" : "none");
         if (which == EmbAJAXBase::Enabledness) return (basicProperty (EmbAJAXBase::Enabledness) ? "" : "disabled");
         return 0;
     }
