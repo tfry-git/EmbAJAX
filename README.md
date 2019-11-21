@@ -52,6 +52,7 @@ These controls / elements are supported as of now:
 The following additional features may be of interest (supported as of now):
 
 - Allows to insert your own custom CSS for styling (no styling in the lib).
+  - See the "Styling"-example for techniques that can be used to define styling
 - Elements can be hidden, inputs can be disabled from the server (EmbAJAXBase::setVisible(), setEnabled()).
 
 ### Hardware support

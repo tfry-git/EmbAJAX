@@ -1,5 +1,5 @@
 /* Basic usage example for EmbAJAX library:
- * Provide a web interface to set built-in LED on, off, or blinking.
+ * Demonstrate directional control using EmbAJAXJoystick.
  * 
  * Note that ESP boards seems to be no real standard on which pin the builtin LED is on, and
  * there is a very real chance that LED_BUILTIN is not defined, correctly, for your board.
