@@ -18,7 +18,7 @@ void handleButton(EmbAJAXPushButton *button) {
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
-MAKE_EmbAJAXPage(page, "EmbAJAX example - Blink",
+MAKE_EmbAJAXPage(page, "EmbAJAX example - Styling",
   // BEGIN: This is the actual CSS styling. For simplicitly reasons, we're inlining the CSS into the main page, here.
   //        Note that you could also link to an external stylesheet (served from SD card, or from the internet) like this:
   //        <link rel=\"stylesheet\" href=\"styles.css\">
