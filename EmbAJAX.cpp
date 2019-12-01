@@ -429,7 +429,9 @@ EmbAJAXCheckButton::EmbAJAXCheckButton(const char* id, const char* label, bool c
 }
 
 void EmbAJAXCheckButton::print() const {
-    _driver->printContent("<span><input");  // <input> and <label> inside a common span to support hiding, better
+    _driver->printContent("<span"); // <input> and <label> inside a common span to support hiding, better
+    _driver->printAttribute("class", radiogroup ? "radio" : "checkbox");  // also, assign a class to the surrounding span to ease styling via CSS
+    _driver->printContent("><input");
     _driver->printAttribute("id", _id);
     _driver->printAttribute("type", radiogroup ? "radio" : "checkbox");
     if (radiogroup) {
@@ -437,7 +439,7 @@ void EmbAJAXCheckButton::print() const {
     }
     _driver->printContent(" value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"");
     if (_checked) _driver->printContent(" checked=\"true\"");
-    _driver->printContent ("/><label");
+    _driver->printContent ("/><label");  // Note: Internal <span> element for more flexbility in styling the control
     _driver->printAttribute("for", _id);
     _driver->printContent(">");
     _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
