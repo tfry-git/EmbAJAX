@@ -27,7 +27,6 @@
 
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
-class EmbAJAXContainerBase;
 class EmbAJAXPageBase;
 
 /** @brief Abstract base class for anything shown on an EmbAJAXPage
@@ -81,6 +80,7 @@ public:
     }
 protected:
 template<size_t NUM> friend class EmbAJAXContainer;
+friend class EmbAJAXElementList;
     virtual void setBasicProperty(uint8_t num, bool status) {};
 
     static EmbAJAXOutputDriverBase *_driver;
@@ -540,6 +540,43 @@ protected:
         _childlist.setBasicProperty(num, status);
     }
     EmbAJAXContainer<NUM> _childlist;
+};
+
+/** @brief A container for a group of elements
+ *
+ * This is a modernized alternative to EmbAJAXContainer, without requiring a template parameter.
+ */
+class EmbAJAXElementList : public EmbAJAXBase {
+public:
+// TODO: How to create a safe factory function that will automatically derive the correct childcount, given a const array of children?
+    EmbAJAXElementList(size_t childcount, EmbAJAXBase **children) : EmbAJAXBase() {
+        NUM = childcount;
+        _children = children;
+    }
+    void print() const override {
+        EmbAJAXBase::printChildren(_children, NUM);
+    }
+    bool sendUpdates(uint16_t since, bool first) override {
+        return EmbAJAXBase::sendUpdates(_children, NUM, since, first);
+    }
+    /** Recursively look for a child (hopefully, there is only one) of the given id, and return a pointer to it. */
+    EmbAJAXElement* findChild(const char*id) const override final {
+        return EmbAJAXBase::findChild(_children, NUM, id);
+    }
+    size_t size() {
+        return NUM;
+    }
+    EmbAJAXBase* getChild(const size_t index) {
+        return _children[NUM];
+    }
+protected:
+    void setBasicProperty(uint8_t num, bool status) override {
+        for (size_t i = 0; i < NUM; ++i) {
+            _children[i]->setBasicProperty(num, status);
+        }
+    }
+    EmbAJAXBase** _children;
+    size_t NUM;
 };
 
 /** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
