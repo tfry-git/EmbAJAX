@@ -553,6 +553,18 @@ public:
         NUM = childcount;
         _children = children;
     }
+    template<typename... T> EmbAJAXElementList(T... elements) : EmbAJAXBase() {
+        NUM = sizeof...(elements);
+        _children = new EmbAJAXBase*[sizeof...(elements)] {(EmbAJAXBase*) elements...};
+    }
+/*
+    template<size_t N> static EmbAJAXElementList* _new(EmbAJAXBase* const (&children)[N]) {
+        return new EmbAJAXElementList(N, children);
+    }
+    template<typename... T> static EmbAJAXElementList* _new2(T... elements) {
+        EmbAJAXBase** dummy = new EmbAJAXBase*[sizeof...(elements)] {(EmbAJAXBase*) elements...};
+        return new EmbAJAXElementList(sizeof...(elements), dummy);
+    } */
     void print() const override {
         EmbAJAXBase::printChildren(_children, NUM);
     }
