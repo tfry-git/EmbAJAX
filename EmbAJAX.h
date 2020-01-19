@@ -553,9 +553,10 @@ public:
         NUM = childcount;
         _children = children;
     }
-    template<typename... T> EmbAJAXElementList(T... elements) : EmbAJAXBase() {
-        NUM = sizeof...(elements);
-        _children = new EmbAJAXBase*[sizeof...(elements)] {(EmbAJAXBase*) elements...};
+// Note: "first" forces all args to be EmbAJAXBase
+    template<typename... T> EmbAJAXElementList(EmbAJAXBase* first, T... elements) : EmbAJAXBase() {
+        NUM = sizeof...(elements) + 1;
+        _children = new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...};
     }
 /*
     template<size_t N> static EmbAJAXElementList* _new(EmbAJAXBase* const (&children)[N]) {
