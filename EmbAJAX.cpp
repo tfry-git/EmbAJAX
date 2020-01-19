@@ -36,7 +36,7 @@ void EmbAJAXOutputDriverBase::printFiltered(const char* value, QuoteMode quoted,
     // NOTE: The assumption, here is that frequent (char-by-char) calls to printContent() _could_ be expensive, depending on the server
     //       implementation. Thus, a buffer is used to enable printing in larger chunks.
     char buf[32];
-    uint bufpos = 0;
+    size_t bufpos = 0;
     if (quoted) buf[bufpos++] = '"';
     const char *pos = value;
     while(*pos != '\0') {
@@ -158,7 +158,7 @@ bool EmbAJAXElement::changed(uint16_t since) {
     return (revision > since);
 }
 
-void EmbAJAXElement::printTextInput(uint SIZE, const char* _value) const {
+void EmbAJAXElement::printTextInput(size_t SIZE, const char* _value) const {
     _driver->printContent("<input type=\"text\"");
     _driver->printAttribute("id", _id);
     _driver->printAttribute("maxLength", SIZE-1);
@@ -171,22 +171,22 @@ void EmbAJAXElement::printTextInput(uint SIZE, const char* _value) const {
 
 //////////////////////// EmbAJAXContainer ////////////////////////////////////
 
-void EmbAJAXBase::printChildren(EmbAJAXBase** _children, uint NUM) const {
-    for (uint i = 0; i < NUM; ++i) {
+void EmbAJAXBase::printChildren(EmbAJAXBase** _children, size_t NUM) const {
+    for (size_t i = 0; i < NUM; ++i) {
         _children[i]->print();
     }
 }
 
-bool EmbAJAXBase::sendUpdates(EmbAJAXBase** _children, uint NUM, uint16_t since, bool first) {
-    for (uint i = 0; i < NUM; ++i) {
+bool EmbAJAXBase::sendUpdates(EmbAJAXBase** _children, size_t NUM, uint16_t since, bool first) {
+    for (size_t i = 0; i < NUM; ++i) {
         bool sent = _children[i]->sendUpdates(since, first);
         if (sent) first = false;
     }
     return !first;
 }
 
-EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase** _children, uint NUM, const char*id) const {
-    for (uint i = 0; i < NUM; ++i) {
+EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase** _children, size_t NUM, const char*id) const {
+    for (size_t i = 0; i < NUM; ++i) {
         EmbAJAXElement* child = _children[i]->toElement();
         if (child) {
             if (strcmp(id, child->id()) == 0) return child;
@@ -512,7 +512,7 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 //////////////////////// EmbAJAXPage /////////////////////////////
 
-void EmbAJAXBase::printPage(EmbAJAXBase** _children, uint NUM, const char* _title, const char* _header_add) const {
+void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _title, const char* _header_add) const {
     _driver->printHeader(true);
     _driver->printContent("<HTML><HEAD><TITLE>");
     if (_title) _driver->printContent(_title);
@@ -564,7 +564,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, uint NUM, const char* _titl
     _driver->printContent("\n</FORM></BODY></HTML>\n");
 }
 
-void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, uint NUM, void (*change_callback)()) {
+void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*change_callback)()) {
     char conversion_buf[ARDUJAX_MAX_ID_LEN];
 
     // handle value changes sent from client

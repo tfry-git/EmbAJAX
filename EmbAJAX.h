@@ -87,15 +87,15 @@ template<size_t NUM> friend class EmbAJAXContainer;
     static char itoa_buf[8];
 
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::printChildren() */
-    void printChildren(EmbAJAXBase** children, uint num) const;
+    void printChildren(EmbAJAXBase** children, size_t num) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::sendUpdates() */
-    bool sendUpdates(EmbAJAXBase** children, uint num, uint16_t since, bool first);
+    bool sendUpdates(EmbAJAXBase** children, size_t num, uint16_t since, bool first);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::findChild() */
-    EmbAJAXElement* findChild(EmbAJAXBase** children, uint num, const char*id) const;
+    EmbAJAXElement* findChild(EmbAJAXBase** children, size_t num, const char*id) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::print() */
-    void printPage(EmbAJAXBase** children, uint num, const char* _title, const char* _header) const;
+    void printPage(EmbAJAXBase** children, size_t num, const char* _title, const char* _header) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::handleRequest() */
-    void handleRequest(EmbAJAXBase** children, uint num, void (*change_callback)());
+    void handleRequest(EmbAJAXBase** children, size_t num, void (*change_callback)());
 };
 
 /** @brief Abstract base class for output drivers/server implementations
@@ -283,7 +283,7 @@ friend class EmbAJAXBase;
     void setChanged();
     bool changed(uint16_t since);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXTextInput::print() */
-    void printTextInput(uint size, const char* value) const;
+    void printTextInput(size_t size, const char* value) const;
 private:
     byte _flags;
     uint16_t revision;
