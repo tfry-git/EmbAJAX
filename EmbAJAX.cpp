@@ -171,13 +171,13 @@ void EmbAJAXElement::printTextInput(uint SIZE, const char* _value) const {
 
 //////////////////////// EmbAJAXContainer ////////////////////////////////////
 
-void EmbAJAXBase::printChildren(EmbAJAXBase** _children, uint NUM) const {
+void EmbAJAXBase::printChildren(EmbAJAXBase* const* _children, uint NUM) const {
     for (uint i = 0; i < NUM; ++i) {
         _children[i]->print();
     }
 }
 
-bool EmbAJAXBase::sendUpdates(EmbAJAXBase** _children, uint NUM, uint16_t since, bool first) {
+bool EmbAJAXBase::sendUpdates(EmbAJAXBase* const* _children, uint NUM, uint16_t since, bool first) {
     for (uint i = 0; i < NUM; ++i) {
         bool sent = _children[i]->sendUpdates(since, first);
         if (sent) first = false;
@@ -185,7 +185,7 @@ bool EmbAJAXBase::sendUpdates(EmbAJAXBase** _children, uint NUM, uint16_t since,
     return !first;
 }
 
-EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase** _children, uint NUM, const char*id) const {
+EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase* const* _children, uint NUM, const char*id) const {
     for (uint i = 0; i < NUM; ++i) {
         EmbAJAXElement* child = _children[i]->toElement();
         if (child) {
@@ -512,7 +512,7 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 //////////////////////// EmbAJAXPage /////////////////////////////
 
-void EmbAJAXBase::printPage(EmbAJAXBase** _children, uint NUM, const char* _title, const char* _header_add) const {
+void EmbAJAXBase::printPage(EmbAJAXBase* const* _children, uint NUM, const char* _title, const char* _header_add) const {
     _driver->printHeader(true);
     _driver->printContent("<HTML><HEAD><TITLE>");
     if (_title) _driver->printContent(_title);
@@ -564,7 +564,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, uint NUM, const char* _titl
     _driver->printContent("\n</FORM></BODY></HTML>\n");
 }
 
-void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, uint NUM, void (*change_callback)()) {
+void EmbAJAXBase::handleRequest(EmbAJAXBase* const* _children, uint NUM, void (*change_callback)()) {
     char conversion_buf[ARDUJAX_MAX_ID_LEN];
 
     // handle value changes sent from client

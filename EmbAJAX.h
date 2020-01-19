@@ -87,15 +87,15 @@ friend class EmbAJAXElementList;
     static char itoa_buf[8];
 
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::printChildren() */
-    void printChildren(EmbAJAXBase** children, uint num) const;
+    void printChildren(EmbAJAXBase* const* children, uint num) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::sendUpdates() */
-    bool sendUpdates(EmbAJAXBase** children, uint num, uint16_t since, bool first);
+    bool sendUpdates(EmbAJAXBase* const* children, uint num, uint16_t since, bool first);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::findChild() */
-    EmbAJAXElement* findChild(EmbAJAXBase** children, uint num, const char*id) const;
+    EmbAJAXElement* findChild(EmbAJAXBase* const* children, uint num, const char*id) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::print() */
-    void printPage(EmbAJAXBase** children, uint num, const char* _title, const char* _header) const;
+    void printPage(EmbAJAXBase* const* children, uint num, const char* _title, const char* _header) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::handleRequest() */
-    void handleRequest(EmbAJAXBase** children, uint num, void (*change_callback)());
+    void handleRequest(EmbAJAXBase* const* children, uint num, void (*change_callback)());
 };
 
 /** @brief Abstract base class for output drivers/server implementations
@@ -549,23 +549,15 @@ protected:
 class EmbAJAXElementList : public EmbAJAXBase {
 public:
 // TODO: How to create a safe factory function that will automatically derive the correct childcount, given a const array of children?
-    EmbAJAXElementList(size_t childcount, EmbAJAXBase **children) : EmbAJAXBase() {
-        NUM = childcount;
-        _children = children;
-    }
+    EmbAJAXElementList(size_t childcount, EmbAJAXBase* const* children) :
+        EmbAJAXBase(),
+        _children(children),
+        NUM(childcount) {}
 // Note: "first" forces all args to be EmbAJAXBase
-    template<typename... T> EmbAJAXElementList(EmbAJAXBase* first, T... elements) : EmbAJAXBase() {
-        NUM = sizeof...(elements) + 1;
-        _children = new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...};
-    }
-/*
-    template<size_t N> static EmbAJAXElementList* _new(EmbAJAXBase* const (&children)[N]) {
-        return new EmbAJAXElementList(N, children);
-    }
-    template<typename... T> static EmbAJAXElementList* _new2(T... elements) {
-        EmbAJAXBase** dummy = new EmbAJAXBase*[sizeof...(elements)] {(EmbAJAXBase*) elements...};
-        return new EmbAJAXElementList(sizeof...(elements), dummy);
-    } */
+    template<class... T> EmbAJAXElementList(EmbAJAXBase* first, T*... elements) :
+        EmbAJAXBase(),
+        _children(new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...}),
+        NUM(sizeof...(elements) + 1) {}
     void print() const override {
         EmbAJAXBase::printChildren(_children, NUM);
     }
@@ -580,7 +572,7 @@ public:
         return NUM;
     }
     EmbAJAXBase* getChild(const size_t index) {
-        return _children[NUM];
+        return _children[index];
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override {
@@ -588,8 +580,8 @@ protected:
             _children[i]->setBasicProperty(num, status);
         }
     }
-    EmbAJAXBase** _children;
-    size_t NUM;
+    EmbAJAXBase* const* _children;
+    const size_t NUM;
 };
 
 /** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
