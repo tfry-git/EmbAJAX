@@ -162,7 +162,7 @@ void EmbAJAXElement::printTextInput(size_t SIZE, const char* _value) const {
     _driver->printContent("<input type=\"text\"");
     _driver->printAttribute("id", _id);
     _driver->printAttribute("maxLength", SIZE-1);
-    _driver->printAttribute("size", min(max(abs(SIZE-1), 10),40));  // Arbitray limit for rendered width of text fields: 10..40 chars
+    _driver->printAttribute("size", min(max((size_t) abs(SIZE-1), (size_t) 10), (size_t) 40));  // Arbitray limit for rendered width of text fields: 10..40 chars
     _driver->printAttribute("value", _value);
     // Using onChange to update is too awkward. Using plain onInput would generate too may requests (and often result in "eaten" characters). Instead,
     // as a compromise, we arrange for an update one second after the last key was pressed.
