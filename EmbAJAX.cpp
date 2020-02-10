@@ -395,11 +395,18 @@ EmbAJAXMomentaryButton::EmbAJAXMomentaryButton(const char* id, const char* label
 void EmbAJAXMomentaryButton::print() const {
     _driver->printContent("<button type=\"button\"");
     _driver->printAttribute("id", _id);
-    _driver->printContent(" onMouseDown=\"this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
-    _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
-    _driver->printContent("); doRequest(this.id, 'p');\" onMouseUp=\"clearInterval(this.pinger); doRequest(this.id, 'r');\" onMouseLeave=\"clearInterval(this.pinger); doRequest(this.id, 'r');\">");
+    _driver->printContent(">");
     _driver->printFiltered(_label, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
-    _driver->printContent("</button>");
+    _driver->printContent("</button>"
+                          "<script>\n"
+                          "{let btn=document.getElementById(");
+    _driver->printFiltered(_id, EmbAJAXOutputDriverBase::JSQuoted, false);
+    _driver->printContent(");\n"
+                          "btn.onmousedown = btn.ontouchstart = function() { this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
+    _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
+    _driver->printContent("); doRequest(this.id, 'p'); return false; };\n"
+                          "btn.onmouseup = btn.ontouchend = btn.onmouseleave = function() { clearInterval(this.pinger); doRequest(this.id, 'r'); return false;};}\n"
+                          "</script>");
 }
 
 EmbAJAXMomentaryButton::Status EmbAJAXMomentaryButton::status() const {
