@@ -7,6 +7,7 @@
 
 #include <EmbAJAX.h>
 #include <EmbAJAXValidatingTextInput.h> // Fancier text input in a separate header file
+#include <EmbAJAXScriptedSpan.h>
 
 // Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
 // converience #define to allow using the same example code across platforms
@@ -50,6 +51,8 @@ char button_d_buf[BUFLEN];
 
 EmbAJAXMomentaryButton m_button("m_button", "Press and hold");
 EmbAJAXMutableSpan m_button_d("m_button_d");
+
+EmbAJAXScriptedSpan m_script_s("m_script_s", "this.receiveValue = function(value) { this.innerHTML = value + ' + 1 = ' + (Number(value)+1); };");
 
 EmbAJAXStatic nextCell("</td><td>&nbsp;</td><td><b>");
 EmbAJAXStatic nextRow("</b></td></tr><tr><td>");
@@ -103,6 +106,11 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Inputs", "",
     &m_button_d,
     &nextRow,
 
+    new EmbAJAXStatic("A client side script:"),
+    &nextCell,
+    &m_script_s,
+    &nextRow,
+
     new EmbAJAXStatic("Server status:"),
     &nextCell,
     new EmbAJAXConnectionIndicator(),
@@ -138,6 +146,7 @@ void updateUI() {
     valtext_d.setValue(strncpy(valtext_d_buf, valtext.value(), BUFLEN));
     button_d.setValue(itoa(button_count, button_d_buf, 10));
     m_button_d.setValue((m_button.status() == EmbAJAXMomentaryButton::Pressed) ? "pressed" : "not pressed");
+    m_script_s.setValue(button_d_buf);
 }
 
 void loop() {
