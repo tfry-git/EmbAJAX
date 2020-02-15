@@ -1,4 +1,4 @@
-/**
+/*
  * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
-**/
+*/
 
 #ifndef EMBAJAXSCRIPTEDSPAN_H
 #define EMBAJAXSCRIPTEDSPAN_H
