@@ -85,8 +85,8 @@ Some further examples can be found in the examples folder.
 ```cpp
 #include <EmbAJAX.h>
 
-// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
-// converience #define to allow using the same example code across platforms
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDriverWebServerClass is a
+// convenience #define to allow using the same example code across platforms
 EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 

@@ -22,11 +22,13 @@
 #ifndef EMBAJAXSCRIPTEDSPAN_H
 #define EMBAJAXSCRIPTEDSPAN_H
 
+#include <EmbAJAX.h>
+
 /** @brief A span element containing a custom javascript script, meant to creating custom dispays
  * 
  * This class creates a <span> element containing a custom script. The script to
  * use is passed in the constructor. The span element itself is accessible using
- * "this", inside this script.
+ * "this", inside the script.
  * 
  * The script may contain "this.receiveValue = function(value) { [...] };". This
  * function will then be called, when the value is changed from the server.
@@ -41,7 +43,13 @@
 class EmbAJAXScriptedSpan : public EmbAJAXElement {
 public:
     /** Constructor. See the class description for some detail on how to provide
-     * a script. */
+     * a script.
+     *
+     * @param id unique id of the span
+     * @param script the script code. See the class description for details.
+     * @param rec_buffer if the script supplies values to the server (via @code this.sendValue(x); @endcode in the script), a receive buffer is needed hold that value. Pass a pointer to a suitably sized buffer.
+     * @param rec_buffer_size size of the rec_buffer.
+     */
     EmbAJAXScriptedSpan(const char* id, const char* script, char* rec_buffer = 0, size_t rec_buffer_size=0) : EmbAJAXElement(id) {
         _value = 0;
         _script = script;
