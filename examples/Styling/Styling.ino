@@ -1,6 +1,11 @@
 /* CSS styling example for EmbAJAX library:
  * Show various methods of applying CSS styles to elements.
  *
+ * In this example, the CSS code is inlined in the call to MAKE_EmbAJAXPage.
+ * It could also be served as a separate file. Be sure to read the comments.
+ *
+ * The example CSS may be easier to read inside your browser (page source).
+ *
  * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
 #include <EmbAJAX.h>
