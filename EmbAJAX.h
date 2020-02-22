@@ -215,7 +215,7 @@ public:
     }
     void print() const override;
     static constexpr const char* default_ok = {"<span style=\"background-color:green;\">OK</span>"};
-    static constexpr const char* default_fail = {"<span style=\"background-color:red\">FAIL</span>"};
+    static constexpr const char* default_fail = {"<span style=\"background-color:red;\">FAIL</span>"};
 private:
     const char* _content_ok;
     const char* _content_fail;
