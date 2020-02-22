@@ -96,9 +96,9 @@ void EmbAJAXOutputDriverBase::printAttribute(const char* name, const int32_t val
 
 void EmbAJAXConnectionIndicator::print() const {
     _driver->printContent("<div class=\"EmbAJAXStatus\"><span>");
-    _driver->printContent(_content_ok ? _content_ok : "<span style=\"background-color:green;\">OK</span>");
+    _driver->printContent(_content_ok);
     _driver->printContent("</span><span>");
-    _driver->printContent(_content_fail ? _content_fail : "<span style=\"background-color:red;\">FAIL</span>");
+    _driver->printContent(_content_fail);
     _driver->printContent("</span><script>\n"
                           "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
                           "'misses': 0,\n"

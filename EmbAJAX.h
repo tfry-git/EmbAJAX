@@ -207,13 +207,15 @@ class EmbAJAXConnectionIndicator : public EmbAJAXBase {
 public:
     /** c'tor. If you don't like the default status indications, you can pass the HTML to be shown for "ok" and "fail" states.
      *
-     *  @param content_ok Value to show for OK state. May contain HTML markup. Leave as 0 for default.
-     *  @param content_ok Value to show for broken state. May contain HTML markup. Leave as 0 for default. */
-    EmbAJAXConnectionIndicator(const char* content_ok = 0, const char* content_fail = 0) {
+     *  @param content_ok Value to show for OK state. May contain HTML markup. Default is "OK" on a green background.
+     *  @param content_ok Value to show for broken state. May contain HTML markup. Default is "FAIL" on a green background. */
+    EmbAJAXConnectionIndicator(const char* content_ok = default_ok, const char* content_fail = default_fail) {
         _content_ok = content_ok;
         _content_fail = content_fail;
     }
     void print() const override;
+    static constexpr const char* default_ok = {"<span style=\"background-color:green;\">OK</span>"};
+    static constexpr const char* default_fail = {"<span style=\"background-color:red\">FAIL</span>"};
 private:
     const char* _content_ok;
     const char* _content_fail;
