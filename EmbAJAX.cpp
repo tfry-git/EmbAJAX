@@ -95,16 +95,17 @@ void EmbAJAXOutputDriverBase::printAttribute(const char* name, const int32_t val
 //////////////////////// EmbAJAXConnectionIndicator ///////////////////////
 
 void EmbAJAXConnectionIndicator::print() const {
-    _driver->printContent("<div><script>\n"
+    _driver->printContent("<div class=\"EmbAJAXStatus\"><span>");
+    _driver->printContent(_content_ok ? _content_ok : "<span style=\"background-color:green;\">OK</span>");
+    _driver->printContent("</span><span>");
+    _driver->printContent(_content_fail ? _content_fail : "<span style=\"background-color:red;\">FAIL</span>");
+    _driver->printContent("</span><script>\n"
                           "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
                           "'misses': 0,\n"
-                          "'in': function() { if(this.misses) { this.misses = 0; this.div.innerHTML=");
-    _driver->printJSQuoted(_content_ok ? _content_ok : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:green;\">OK</span>");
-    _driver->printContent (";}},\n"
-                           "'out': function() {if (this.misses < 5) { if(++(this.misses) >= 5) this.div.innerHTML=");
-    _driver->printJSQuoted(_content_fail ? _content_fail : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:red;\">FAIL</span>");
-    _driver->printContent(";}}\n"
-                          "}\n</script></div>");
+                          "'toggle': function(on) { this.div.children[on].style.display = 'none'; this.div.children[1-on].style.display = 'inline'; },\n"
+                          "'in': function() { if(this.misses > 4) { this.toggle(1); } this.misses=0; },\n"
+                           "'out': function() {if (this.misses < 5) { if(++(this.misses) >= 5) this.toggle(0); }}\n"
+                          "};\nwindow.ardujaxsh.toggle(1);\n</script></div>");
 }
 
 ////////////////////////////// EmbAJAXElement /////////////////////////////
