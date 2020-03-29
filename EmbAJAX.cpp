@@ -463,7 +463,7 @@ void EmbAJAXCheckButton::updateFromDriverArg(const char* argname) {
     char buf[16];
     _driver->getArg(argname, buf, 16);
     _checked = (buf[0] == 't');
-    if (_checked && radiogroup) radiogroup->selectOption(this);
+    if (_checked && radiogroup) radiogroup->selectButton(this);
 }
 
 const char* EmbAJAXCheckButton::valueProperty(uint8_t which) const {
@@ -475,7 +475,7 @@ const char* EmbAJAXCheckButton::valueProperty(uint8_t which) const {
 void EmbAJAXCheckButton::setChecked(bool checked) {
     if (_checked == checked) return;
     _checked = checked;
-    if (radiogroup && checked) radiogroup->selectOption(this);
+    if (radiogroup && checked) radiogroup->selectButton(this);
     setChanged();
 }
 

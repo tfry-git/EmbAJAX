@@ -472,7 +472,7 @@ class EmbAJAXRadioGroupBase {
 protected:
     EmbAJAXRadioGroupBase() {};
 friend class EmbAJAXCheckButton;
-    virtual void selectOption(EmbAJAXCheckButton* which) = 0;
+    virtual void selectButton(EmbAJAXCheckButton* which) = 0;
     const char* _name;
 };
 
@@ -591,7 +591,7 @@ private:
     EmbAJAXBase* buttonpointers[NUM];
     char childids[NUM][ARDUJAX_MAX_ID_LEN];
     int8_t _current_option;
-    void selectOption(EmbAJAXCheckButton* which) override {
+    void selectButton(EmbAJAXCheckButton* which) override {
         _current_option = -1;
         for (uint8_t i = 0; i < NUM; ++i) {
             if (which == buttonpointers[i]) {
