@@ -89,7 +89,8 @@ public:
         return EmbAJAXElement::value(which);
     }
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override {
-        return "EmbAJAXValue";
+        if (which == EmbAJAXBase::Value) return "EmbAJAXValue";
+        return EmbAJAXElement::valueProperty(which);
     }
     /** Send the given value to the client side script. Note that if you call this very
      *  often, the client will probably not see every value. It will only get to see
