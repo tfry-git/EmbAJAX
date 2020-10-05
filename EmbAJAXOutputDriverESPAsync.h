@@ -31,11 +31,7 @@
 
 #include <ESPAsyncWebServer.h>
 
-#if defined (ESP32)
 #define EmbAJAXOutputDriverWebServerClass AsyncWebServer
-#else
-#define EmbAJAXOutputDriverWebServerClass ESPAsyncWebServer
-#endif
 
 /**  @brief Output driver implementation. This implementation works with ESPAsyncWebServer (https://github.com/me-no-dev/ESPAsyncWebServer).
  *   
