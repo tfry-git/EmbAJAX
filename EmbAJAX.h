@@ -279,6 +279,7 @@ protected:
     bool basicProperty(uint8_t num) const {
         return (_flags & (1 << num));
     }
+    byte _flags;
 template<size_t NUM> friend class EmbAJAXPage;
 friend class EmbAJAXBase;
     const char* _id;
@@ -287,7 +288,6 @@ friend class EmbAJAXBase;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXTextInput::print() */
     void printTextInput(size_t size, const char* value) const;
 private:
-    byte _flags;
     uint16_t revision;
 };
 

@@ -350,7 +350,7 @@ void EmbAJAXColorPicker::updateFromDriverArg(const char* argname)  {
 EmbAJAXPushButton::EmbAJAXPushButton(const char* id, const char* label, void (*callback)(EmbAJAXPushButton*)) : EmbAJAXElement (id) {
     _label = label;
     _callback = callback;
-    setBasicProperty(EmbAJAXBase::HTMLAllowed, true);
+    _flags |= (1 << EmbAJAXBase::HTMLAllowed); // like setBasicProperty(EmbAJAXBase::HTMLAllowed, true); but without changing value or presuming a driver instance
 }
 
 void EmbAJAXPushButton::print() const {
