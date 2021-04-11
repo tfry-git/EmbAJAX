@@ -403,7 +403,7 @@ void EmbAJAXMomentaryButton::print() const {
                           "{let btn=document.getElementById(");
     _driver->printFiltered(_id, EmbAJAXOutputDriverBase::JSQuoted, false);
     _driver->printContent(");\n"
-                          "btn.onmousedown = btn.ontouchstart = function() { this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
+                          "btn.onmousedown = btn.ontouchstart = function() { clearInterval(this.pinger); this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
     _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
     _driver->printContent("); doRequest(this.id, 'p'); return false; };\n"
                           "btn.onmouseup = btn.ontouchend = btn.onmouseleave = function() { clearInterval(this.pinger); doRequest(this.id, 'r'); return false;};}\n"
