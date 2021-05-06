@@ -20,7 +20,7 @@ EmbAJAXOutputDriver driver(&server);
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
 const char* modes[] = {"On", "Blink", "Off"};
 EmbAJAXRadioGroup<3> mode("mode", modes);
-EmbAJAXSlider blinkfreq("blfreq", 0, 1000, 100);   // slider, from 0 to 500, initial value 400
+EmbAJAXSlider blinkfreq("blfreq", 0, 1000, 100);   // slider, from 0 to 1000, initial value 100
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
