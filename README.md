@@ -85,8 +85,8 @@ Some further examples can be found in the examples folder.
 ```cpp
 #include <EmbAJAX.h>
 
-// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
-// converience #define to allow using the same example code across platforms
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDriverWebServerClass is a
+// convenience #define to allow using the same example code across platforms
 EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 
@@ -140,7 +140,8 @@ void loop() {
 
 For now the installation routine is:
 - Download a ZIP of the current development version: https://github.com/tfry-git/EmbAJAX/archive/master.zip
-- In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the downloaded .zip for installation
+- Unzip, rename ```EmbAJAX-master``` to ```EmbAJAX``` (sorry, this step seems really silly, indeed, but is not easily avoidable)
+- In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the renamed EmbAJAX folder for installation
 - You may need to restart your IDE for the library and its examples to show up
 
 ## Further readings

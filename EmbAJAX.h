@@ -88,11 +88,11 @@ friend class EmbAJAXElementList;
 
     // TODO: remove these
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::printChildren() */
-    void printChildren(EmbAJAXBase* const* children, uint num) const;
+    void printChildren(EmbAJAXBase* const* children, size_t num) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::sendUpdates() */
-    bool sendUpdates(EmbAJAXBase* const* children, uint num, uint16_t since, bool first);
+    bool sendUpdates(EmbAJAXBase* const* children, size_t num, uint16_t since, bool first);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::findChild() */
-    EmbAJAXElement* findChild(EmbAJAXBase* const* children, uint num, const char*id) const;
+    EmbAJAXElement* findChild(EmbAJAXBase* const* children, size_t num, const char*id) const;
 };
 
 /** @brief Abstract base class for output drivers/server implementations
@@ -204,13 +204,15 @@ class EmbAJAXConnectionIndicator : public EmbAJAXBase {
 public:
     /** c'tor. If you don't like the default status indications, you can pass the HTML to be shown for "ok" and "fail" states.
      *
-     *  @param content_ok Value to show for OK state. May contain HTML markup. Leave as 0 for default.
-     *  @param content_ok Value to show for broken state. May contain HTML markup. Leave as 0 for default. */
-    EmbAJAXConnectionIndicator(const char* content_ok = 0, const char* content_fail = 0) {
+     *  @param content_ok Value to show for OK state. May contain HTML markup. Default is "OK" on a green background.
+     *  @param content_ok Value to show for broken state. May contain HTML markup. Default is "FAIL" on a green background. */
+    EmbAJAXConnectionIndicator(const char* content_ok = default_ok, const char* content_fail = default_fail) {
         _content_ok = content_ok;
         _content_fail = content_fail;
     }
     void print() const override;
+    static constexpr const char* default_ok = {"<span style=\"background-color:green;\">OK</span>"};
+    static constexpr const char* default_fail = {"<span style=\"background-color:red;\">FAIL</span>"};
 private:
     const char* _content_ok;
     const char* _content_fail;
@@ -276,13 +278,13 @@ protected:
     }
 friend class EmbAJAXPage;
 friend class EmbAJAXBase;
+    byte _flags;
     const char* _id;
     void setChanged();
     bool changed(uint16_t since);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXTextInput::print() */
-    void printTextInput(uint size, const char* value) const;
+    void printTextInput(size_t size, const char* value) const;
 private:
-    byte _flags;
     uint16_t revision;
 };
 
@@ -467,7 +469,7 @@ class EmbAJAXRadioGroupBase {
 protected:
     EmbAJAXRadioGroupBase() {};
 friend class EmbAJAXCheckButton;
-    virtual void selectOption(EmbAJAXCheckButton* which) = 0;
+    virtual void selectButton(EmbAJAXCheckButton* which) = 0;
     const char* _name;
 };
 
@@ -636,7 +638,7 @@ private:
     EmbAJAXCheckButton buttons[N]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
     char childids[N][EMBAJAX_MAX_ID_LEN]; /** NOTE: Child ids are not copied by EmbAJAXElement. This is the storage space for them */  // TODO: Can we remove those, by using a recursive lookup scheme, instead? (groupid.buttonid)
     int8_t _current_option;
-    void selectOption(EmbAJAXCheckButton* which) override {
+    void selectButton(EmbAJAXCheckButton* which) override {
         _current_option = -1;
         for (uint8_t i = 0; i < NUM; ++i) {
             if (which == _children[i]) {

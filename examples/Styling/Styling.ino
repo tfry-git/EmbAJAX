@@ -1,12 +1,17 @@
 /* CSS styling example for EmbAJAX library:
  * Show various methods of applying CSS styles to elements.
  *
+ * In this example, the CSS code is inlined in the call to MAKE_EmbAJAXPage.
+ * It could also be served as a separate file. Be sure to read the comments.
+ *
+ * The example CSS may be easier to read inside your browser (page source).
+ *
  * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
 #include <EmbAJAX.h>
 
-// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDirverWebServerClass is a
-// converience #define to allow using the same example code across platforms
+// Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDriverWebServerClass is a
+// convenience #define to allow using the same example code across platforms
 EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 

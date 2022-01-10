@@ -36,7 +36,7 @@ void EmbAJAXOutputDriverBase::printFiltered(const char* value, QuoteMode quoted,
     // NOTE: The assumption, here is that frequent (char-by-char) calls to printContent() _could_ be expensive, depending on the server
     //       implementation. Thus, a buffer is used to enable printing in larger chunks.
     char buf[32];
-    uint bufpos = 0;
+    size_t bufpos = 0;
     if (quoted) buf[bufpos++] = '"';
     const char *pos = value;
     while(*pos != '\0') {
@@ -95,16 +95,17 @@ void EmbAJAXOutputDriverBase::printAttribute(const char* name, const int32_t val
 //////////////////////// EmbAJAXConnectionIndicator ///////////////////////
 
 void EmbAJAXConnectionIndicator::print() const {
-    _driver->printContent("<div><script>\n"
+    _driver->printContent("<div class=\"EmbAJAXStatus\"><span>");
+    _driver->printContent(_content_ok);
+    _driver->printContent("</span><span>");
+    _driver->printContent(_content_fail);
+    _driver->printContent("</span><script>\n"
                           "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
                           "'misses': 0,\n"
-                          "'in': function() { if(this.misses) { this.misses = 0; this.div.innerHTML=");
-    _driver->printJSQuoted(_content_ok ? _content_ok : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:green;\">OK</span>");
-    _driver->printContent (";}},\n"
-                           "'out': function() {if (this.misses < 5) { if(++(this.misses) >= 5) this.div.innerHTML=");
-    _driver->printJSQuoted(_content_fail ? _content_fail : "<span class=\"EmbAJAXStatusOK\" style=\"background-color:red;\">FAIL</span>");
-    _driver->printContent(";}}\n"
-                          "}\n</script></div>");
+                          "'toggle': function(on) { this.div.children[on].style.display = 'none'; this.div.children[1-on].style.display = 'inline'; },\n"
+                          "'in': function() { if(this.misses > 4) { this.toggle(1); } this.misses=0; },\n"
+                           "'out': function() {if (this.misses < 5) { if(++(this.misses) >= 5) this.toggle(0); }}\n"
+                          "};\nwindow.ardujaxsh.toggle(1);\n</script></div>");
 }
 
 ////////////////////////////// EmbAJAXElement /////////////////////////////
@@ -158,11 +159,11 @@ bool EmbAJAXElement::changed(uint16_t since) {
     return (revision > since);
 }
 
-void EmbAJAXElement::printTextInput(uint SIZE, const char* _value) const {
+void EmbAJAXElement::printTextInput(size_t SIZE, const char* _value) const {
     _driver->printContent("<input type=\"text\"");
     _driver->printAttribute("id", _id);
     _driver->printAttribute("maxLength", SIZE-1);
-    _driver->printAttribute("size", min(max(abs(SIZE-1), 10),40));  // Arbitray limit for rendered width of text fields: 10..40 chars
+    _driver->printAttribute("size", min(max((size_t) SIZE, (size_t) 11), (size_t) 41) - 1);  // Arbitray limit for rendered width of text fields: 10..40 chars
     _driver->printAttribute("value", _value);
     // Using onChange to update is too awkward. Using plain onInput would generate too may requests (and often result in "eaten" characters). Instead,
     // as a compromise, we arrange for an update one second after the last key was pressed.
@@ -171,22 +172,22 @@ void EmbAJAXElement::printTextInput(uint SIZE, const char* _value) const {
 
 //////////////////////// EmbAJAXContainer ////////////////////////////////////
 
-void EmbAJAXBase::printChildren(EmbAJAXBase* const* _children, uint NUM) const {
-    for (uint i = 0; i < NUM; ++i) {
+void EmbAJAXBase::printChildren(EmbAJAXBase* const* _children, size_t NUM) const {
+    for (size_t i = 0; i < NUM; ++i) {
         _children[i]->print();
     }
 }
 
-bool EmbAJAXBase::sendUpdates(EmbAJAXBase* const* _children, uint NUM, uint16_t since, bool first) {
-    for (uint i = 0; i < NUM; ++i) {
+bool EmbAJAXBase::sendUpdates(EmbAJAXBase* const* _children, size_t NUM, uint16_t since, bool first) {
+    for (size_t i = 0; i < NUM; ++i) {
         bool sent = _children[i]->sendUpdates(since, first);
         if (sent) first = false;
     }
     return !first;
 }
 
-EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase* const* _children, uint NUM, const char*id) const {
-    for (uint i = 0; i < NUM; ++i) {
+EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase* const* _children, size_t NUM, const char*id) const {
+    for (size_t i = 0; i < NUM; ++i) {
         EmbAJAXElement* child = _children[i]->toElement();
         if (child) {
             if (strcmp(id, child->id()) == 0) return child;
@@ -349,7 +350,7 @@ void EmbAJAXColorPicker::updateFromDriverArg(const char* argname)  {
 EmbAJAXPushButton::EmbAJAXPushButton(const char* id, const char* label, void (*callback)(EmbAJAXPushButton*)) : EmbAJAXElement (id) {
     _label = label;
     _callback = callback;
-    setBasicProperty(EmbAJAXBase::HTMLAllowed, true);
+    _flags |= (1 << EmbAJAXBase::HTMLAllowed); // like setBasicProperty(EmbAJAXBase::HTMLAllowed, true); but without changing value or presuming a driver instance
 }
 
 void EmbAJAXPushButton::print() const {
@@ -395,11 +396,18 @@ EmbAJAXMomentaryButton::EmbAJAXMomentaryButton(const char* id, const char* label
 void EmbAJAXMomentaryButton::print() const {
     _driver->printContent("<button type=\"button\"");
     _driver->printAttribute("id", _id);
-    _driver->printContent(" onMouseDown=\"this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
-    _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
-    _driver->printContent("); doRequest(this.id, 'p');\" onMouseUp=\"clearInterval(this.pinger); doRequest(this.id, 'r');\" onMouseLeave=\"clearInterval(this.pinger); doRequest(this.id, 'r');\">");
+    _driver->printContent(">");
     _driver->printFiltered(_label, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
-    _driver->printContent("</button>");
+    _driver->printContent("</button>"
+                          "<script>\n"
+                          "{let btn=document.getElementById(");
+    _driver->printFiltered(_id, EmbAJAXOutputDriverBase::JSQuoted, false);
+    _driver->printContent(");\n"
+                          "btn.onmousedown = btn.ontouchstart = function() { clearInterval(this.pinger); this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
+    _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
+    _driver->printContent("); doRequest(this.id, 'p'); return false; };\n"
+                          "btn.onmouseup = btn.ontouchend = btn.onmouseleave = function() { clearInterval(this.pinger); doRequest(this.id, 'r'); return false;};}\n"
+                          "</script>");
 }
 
 EmbAJAXMomentaryButton::Status EmbAJAXMomentaryButton::status() const {
@@ -455,7 +463,7 @@ void EmbAJAXCheckButton::updateFromDriverArg(const char* argname) {
     char buf[16];
     _driver->getArg(argname, buf, 16);
     _checked = (buf[0] == 't');
-    if (_checked && radiogroup) radiogroup->selectOption(this);
+    if (_checked && radiogroup) radiogroup->selectButton(this);
 }
 
 const char* EmbAJAXCheckButton::valueProperty(uint8_t which) const {
@@ -467,7 +475,7 @@ const char* EmbAJAXCheckButton::valueProperty(uint8_t which) const {
 void EmbAJAXCheckButton::setChecked(bool checked) {
     if (_checked == checked) return;
     _checked = checked;
-    if (radiogroup && checked) radiogroup->selectOption(this);
+    if (radiogroup && checked) radiogroup->selectButton(this);
     setChanged();
 }
 

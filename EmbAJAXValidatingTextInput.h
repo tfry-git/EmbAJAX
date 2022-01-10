@@ -35,7 +35,7 @@ public:
         EmbAJAXBase::_driver->printContent("<input type=\"text\"");
         EmbAJAXBase::_driver->printAttribute("id", EmbAJAXTextInput<SIZE>::_id);
         EmbAJAXBase::_driver->printAttribute("maxLength", SIZE-1);
-        EmbAJAXBase::_driver->printAttribute("size", min(max(abs(SIZE-1), 10),40));  // Arbitray limit for rendered width of text fields: 10..40 chars
+        EmbAJAXBase::_driver->printAttribute("size", min(max(SIZE, (size_t) 11), (size_t) 41) - 1);  // Arbitray limit for rendered width of text fields: 10..40 chars
         if (EmbAJAXTextInput<SIZE>::_value[0] != '\0') {
             EmbAJAXBase::_driver->printAttribute("value", EmbAJAXTextInput<SIZE>::_value);
         }

@@ -11,5 +11,6 @@ var searchData=
   ['embajaxpage',['EmbAJAXPage',['../classEmbAJAXPage.html#ade25d88b39f57baa5943942c9080466d',1,'EmbAJAXPage']]],
   ['embajaxpushbutton',['EmbAJAXPushButton',['../classEmbAJAXPushButton.html#abeb564cfd92d1b6f295fbc32cbed0b13',1,'EmbAJAXPushButton']]],
   ['embajaxradiogroup',['EmbAJAXRadioGroup',['../classEmbAJAXRadioGroup.html#aea1fa2b3de1ce7d054a4c15f7d039c7c',1,'EmbAJAXRadioGroup']]],
+  ['embajaxscriptedspan',['EmbAJAXScriptedSpan',['../classEmbAJAXScriptedSpan.html#ab1b9507b8907fec4ac9aebb1f6fbe53d',1,'EmbAJAXScriptedSpan']]],
   ['embajaxstatic',['EmbAJAXStatic',['../classEmbAJAXStatic.html#ae628ec2d0b175c48cdce833b8d682ebe',1,'EmbAJAXStatic']]]
 ];

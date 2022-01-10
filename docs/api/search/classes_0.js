@@ -20,6 +20,7 @@ var searchData=
   ['embajaxpushbutton',['EmbAJAXPushButton',['../classEmbAJAXPushButton.html',1,'']]],
   ['embajaxradiogroup',['EmbAJAXRadioGroup',['../classEmbAJAXRadioGroup.html',1,'']]],
   ['embajaxradiogroupbase',['EmbAJAXRadioGroupBase',['../classEmbAJAXRadioGroupBase.html',1,'']]],
+  ['embajaxscriptedspan',['EmbAJAXScriptedSpan',['../classEmbAJAXScriptedSpan.html',1,'']]],
   ['embajaxslider',['EmbAJAXSlider',['../classEmbAJAXSlider.html',1,'']]],
   ['embajaxstatic',['EmbAJAXStatic',['../classEmbAJAXStatic.html',1,'']]],
   ['embajaxtextinput',['EmbAJAXTextInput',['../classEmbAJAXTextInput.html',1,'']]],
