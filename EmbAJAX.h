@@ -584,6 +584,12 @@ public:
         _childlist.print();
         _driver->printContent("</div>");
     }
+    /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
+    EmbAJAXHideableContainer(const char* id, size_t childcount, EmbAJAXBase* const* children) : EmbAJAXElement(id), _childlist(childcount, children) {}
+#ifndef EMBAJAX_NO_OPERATOR_NEW
+    /** constructor taking list of pointers to elements */
+    template<class... T> EmbAJAXHideableContainer(const char* id, EmbAJAXBase* first, T*... elements) : EmbAJAXElement(id), _childlist(first, elements...) {}
+#endif
     EmbAJAXElement* findChild(const char* id) const override {
         return _childlist.findChild(id);
     }
@@ -712,10 +718,16 @@ public:
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
      *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
-    template<size_t NUM> EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0) : EmbAJAXElementList(children) {
-        _title = title;
-        _header_add = header_add;
-    }
+    template<size_t NUM> EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0) :
+        EmbAJAXElementList(children), _title(title), _header_add(header_add) {}
+    /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
+    EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0) :
+        EmbAJAXElementList(childcount, children), _title(title), _header_add(header_add) {}
+#ifndef EMBAJAX_NO_OPERATOR_NEW
+    /** constructor taking list of pointers to elements */
+    template<class... T> EmbAJAXPage(EmbAJAXBase* first, T*... elements, const char* title, const char* header_add = 0) :
+        EmbAJAXElementList(first, elements...), _title(title), _header_add(header_add) {}
+#endif
     /** Duplication of print(), needed for internal reasons. Use print(), instead! */  // TODO: no, it isn't any more. deprecate
     EMBAJAX_DEPRECATED void printPage() const {
         print();
