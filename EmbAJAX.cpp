@@ -512,7 +512,7 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 //////////////////////// EmbAJAXPage /////////////////////////////
 
-void EmbAJAXBase::printPage(EmbAJAXBase* const* _children, uint NUM, const char* _title, const char* _header_add) const {
+void EmbAJAXPage::print() const {
     _driver->printHeader(true);
     _driver->printContent("<HTML><HEAD><TITLE>");
     if (_title) _driver->printContent(_title);
@@ -564,7 +564,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase* const* _children, uint NUM, const char*
     _driver->printContent("\n</FORM></BODY></HTML>\n");
 }
 
-void EmbAJAXBase::handleRequest(EmbAJAXBase* const* _children, uint NUM, void (*change_callback)()) {
+void EmbAJAXPage::handleRequest(void (*change_callback)()) {
     char conversion_buf[EMBAJAX_MAX_ID_LEN];
 
     // handle value changes sent from client
@@ -589,6 +589,6 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase* const* _children, uint NUM, void (*
     _driver->printContent("{\"revision\": ");
     _driver->printContent(itoa(_driver->revision(), conversion_buf, 10));
     _driver->printContent(",\n\"updates\": [\n");
-    sendUpdates(_children, NUM, client_revision, true);
+    sendUpdates(client_revision, true);
     _driver->printContent("\n]}\n");
 }

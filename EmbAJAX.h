@@ -27,7 +27,7 @@
 
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
-class EmbAJAXPageBase;
+class EmbAJAXPage;
 
 /** @brief Abstract base class for anything shown on an EmbAJAXPage
  *
@@ -86,16 +86,13 @@ friend class EmbAJAXElementList;
     static EmbAJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
 
+    // TODO: remove these
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::printChildren() */
     void printChildren(EmbAJAXBase* const* children, uint num) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::sendUpdates() */
     bool sendUpdates(EmbAJAXBase* const* children, uint num, uint16_t since, bool first);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::findChild() */
     EmbAJAXElement* findChild(EmbAJAXBase* const* children, uint num, const char*id) const;
-    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::print() */
-    void printPage(EmbAJAXBase* const* children, uint num, const char* _title, const char* _header) const;
-    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::handleRequest() */
-    void handleRequest(EmbAJAXBase* const* children, uint num, void (*change_callback)());
 };
 
 /** @brief Abstract base class for output drivers/server implementations
@@ -122,7 +119,7 @@ public:
      *
      *  @param change_callback See EmbAJAXPage::handleRequest() for details.
      */
-    virtual void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) = 0;
+    virtual void installPage(EmbAJAXPage *page, const char *path, void (*change_callback)()=0) = 0;
     /** Insert this hook into loop(). Takes care of the appropriate server calls, if needed. */
     virtual void loopHook() = 0;
 
@@ -604,6 +601,7 @@ public:
      *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
      *                         no option selected by default. */
     EmbAJAXRadioGroup(const char* id_base, const char* options[N], uint8_t selected_option = 0) : EmbAJAXElementList(), EmbAJAXRadioGroupBase() {
+        EmbAJAXBase* buttonpointers[N];
         for (uint8_t i = 0; i < N; ++i) {
             char* childid = childids[i];
             strncpy(childid, id_base, EMBAJAX_MAX_ID_LEN-4);
@@ -636,13 +634,12 @@ public:
     }
 private:
     EmbAJAXCheckButton buttons[N]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
-    EmbAJAXBase* buttonpointers[N];  // remove me?
-    char childids[N][EMBAJAX_MAX_ID_LEN]; /// TODO remove me? ids already available in the element list. would allow removal of templating.
+    char childids[N][EMBAJAX_MAX_ID_LEN]; /** NOTE: Child ids are not copied by EmbAJAXElement. This is the storage space for them */  // TODO: Can we remove those, by using a recursive lookup scheme, instead? (groupid.buttonid)
     int8_t _current_option;
     void selectOption(EmbAJAXCheckButton* which) override {
         _current_option = -1;
         for (uint8_t i = 0; i < NUM; ++i) {
-            if (which == buttonpointers[i]) {
+            if (which == _children[i]) {
                 _current_option = i;
             } else {
                 buttons[i].setChecked(false);
@@ -691,22 +688,13 @@ private:
     const char* _labels[NUM];
 };
 
-/** @brief Absrract internal helper class  // TODO: can we remove this, now?
- *
- * Needed for internal reasons. Refer to EmbAJAXPage, instead. */
-class EmbAJAXPageBase {
-public:
-    virtual void handleRequest(void (*change_callback)()=0) = 0;
-    virtual void printPage() = 0;
-};
-
 /** @brief The main interface class
  *
  *  This is the main interface class. Create a web-page with a list of elements on it, and arrange for
  *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,
  *  both page loads, and AJAX are handled on the same URL, but the first via GET, and the second
  *  via POST. */
-class EmbAJAXPage : public EmbAJAXElementList, public EmbAJAXPageBase {
+class EmbAJAXPage : public EmbAJAXElementList {
 public:
     /** Create a web page.
      *  @param children list of elements on the page
@@ -716,15 +704,13 @@ public:
         _title = title;
         _header_add = header_add;
     }
-    /** Duplication of print(), needed for internal reasons. Use print(), instead! */
-    void printPage() override {
+    /** Duplication of print(), needed for internal reasons. Use print(), instead! */  // TODO: no, it isn't any more. deprecate
+    void printPage() const {
         print();
-    }
+    };
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
      *  there is a GET request to the desired URL. */
-    void print() const override {
-        EmbAJAXBase::printPage(_children, NUM, _title, _header_add);
-    }
+    void print() const override;
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
      *  to whichever URL you served the page itself, from.
      *
@@ -733,9 +719,7 @@ public:
      *                         response to the change, you should specify this function, and handle the change inside it.
      *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
      *                         (Otherwise the client will be updated on the next poll). */
-    void handleRequest(void (*change_callback)()=0) override {
-        EmbAJAXBase::handleRequest(_children, NUM, change_callback);
-    }
+    void handleRequest(void (*change_callback)()=0);
 protected:
     const char* _title;
     const char* _header_add;
