@@ -565,17 +565,17 @@ void EmbAJAXBase::printPage(EmbAJAXBase* const* _children, uint NUM, const char*
 }
 
 void EmbAJAXBase::handleRequest(EmbAJAXBase* const* _children, uint NUM, void (*change_callback)()) {
-    char conversion_buf[ARDUJAX_MAX_ID_LEN];
+    char conversion_buf[EMBAJAX_MAX_ID_LEN];
 
     // handle value changes sent from client
-    uint16_t client_revision = atoi(_driver->getArg("revision", conversion_buf, ARDUJAX_MAX_ID_LEN));
+    uint16_t client_revision = atoi(_driver->getArg("revision", conversion_buf, EMBAJAX_MAX_ID_LEN));
     if (client_revision > _driver->revision()) {
         // This could happen on overflow, or if the server has rebooted, but not the client.
         // Setting revision to 0, here, means that all elements are considered changed, and will be
         // synced to the client.
         client_revision = 0;
     }
-    const char *id = _driver->getArg("id", conversion_buf, ARDUJAX_MAX_ID_LEN);
+    const char *id = _driver->getArg("id", conversion_buf, EMBAJAX_MAX_ID_LEN);
     EmbAJAXElement *element = (id[0] == '\0') ? 0 : findChild(id);
     if (element) {
         element->updateFromDriverArg("value");
