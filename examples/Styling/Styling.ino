@@ -84,7 +84,7 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Styling",
   new EmbAJAXPushButton("my_button1", "Nothing", handleButton),
   new EmbAJAXPushButton("my_button2", "Round", handleButton),
   new EmbAJAXPushButton("my_button3", "Nothing", handleButton),
-  new EmbAJAXHideableContainer<3> ("my_div", new EmbAJAXBase*[3] {
+  new EmbAJAXHideableContainer ("my_div", new EmbAJAXBase*[3] {
     new EmbAJAXStatic("<p>White on black</p>"),
     new EmbAJAXPushButton("my_button4", "Nothing", handleButton),
     new EmbAJAXPushButton("my_button5", "Nothing", handleButton),
