@@ -25,6 +25,16 @@
 
 #define EMBAJAX_MAX_ID_LEN 16
 
+#if __cplusplus >= 201402L
+#define EMBAJAX_DEPRECATED [[deprecated]]
+#elif defined(__GNUC__) || defined(__clang__)
+#define EMBAJAX_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define EMBAJAX_DEPRECATED __declspec(deprecated)
+#else
+#define EMBAJAX_DEPRECATED
+#endif
+
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
 class EmbAJAXPage;
@@ -86,7 +96,7 @@ friend class EmbAJAXElementList;
     static EmbAJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
 
-    // TODO: remove these
+    // Note: The following can be moved into EmbAJAXElementList once EmbAJAXContainer is removed for good
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::printChildren() */
     void printChildren(EmbAJAXBase* const* children, size_t num) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::sendUpdates() */
@@ -474,9 +484,9 @@ friend class EmbAJAXCheckButton;
 };
 
 /** @brief Base class for groups of objects. Deprecated. Use EmbAJAXElementList, instead. */
-template<size_t NUM> class EmbAJAXContainer : public EmbAJAXBase {
+template<size_t NUM> class EMBAJAX_DEPRECATED EmbAJAXContainer : public EmbAJAXBase {
 public:
-    EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
+    EMBAJAX_DEPRECATED EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
         _children = children;
     }
     void print() const override {
@@ -707,7 +717,7 @@ public:
         _header_add = header_add;
     }
     /** Duplication of print(), needed for internal reasons. Use print(), instead! */  // TODO: no, it isn't any more. deprecate
-    void printPage() const {
+    EMBAJAX_DEPRECATED void printPage() const {
         print();
     };
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
