@@ -649,7 +649,7 @@ public:
     }
 private:
     EmbAJAXCheckButton buttons[N]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
-    EmbAJAXBase* buttonpointers[N]; /** NOTE: ... and, unfortunately, we need a separate persistent array of pointers...
+    EmbAJAXBase* buttonpointers[N]; /** NOTE: ... and, unfortunately, we need a separate persistent array of pointers... */
     char childids[N][EMBAJAX_MAX_ID_LEN]; /** NOTE: Child ids are not copied by EmbAJAXElement. This is the storage space for them */  // TODO: Can we remove those, by using a recursive lookup scheme, instead? (groupid.buttonid)
     int8_t _current_option;
     void selectButton(EmbAJAXCheckButton* which) override {
