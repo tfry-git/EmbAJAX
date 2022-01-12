@@ -517,18 +517,16 @@ protected:
 class EmbAJAXElementList : public EmbAJAXBase {
 public:
     /** constructor taking a static array of elements */
-    //EmbAJAXElementList(const EmbAJAXListCtorHelperBase & list) : _children(list._children), NUM(list.childcount) {};
-    /** constructor taking a static array of elements */
     template<size_t N> constexpr EmbAJAXElementList(EmbAJAXBase* (&children)[N]) : _children(children), NUM(N) {};
     /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
-    EmbAJAXElementList(size_t childcount, EmbAJAXBase* const* children) :
+    constexpr EmbAJAXElementList(size_t childcount, EmbAJAXBase* const* children) :
         EmbAJAXBase(),
         _children(children),
         NUM(childcount) {}
 #ifndef EMBAJAX_NO_OPERATOR_NEW
     /** constructor taking list of pointers to elements */
 // Note: "first" forces all args to be EmbAJAXBase
-    template<class... T> EmbAJAXElementList(EmbAJAXBase* first, T*... elements) :
+    template<class... T> constexpr EmbAJAXElementList(EmbAJAXBase* first, T*... elements) :
         EmbAJAXBase(),
         _children(new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...}),
         NUM(sizeof...(elements) + 1) {}
@@ -619,7 +617,6 @@ public:
      *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
      *                         no option selected by default. */
     EmbAJAXRadioGroup(const char* id_base, const char* options[N], uint8_t selected_option = 0) : EmbAJAXElementList(), EmbAJAXRadioGroupBase() {
-        EmbAJAXBase* buttonpointers[N];
         for (uint8_t i = 0; i < N; ++i) {
             char* childid = childids[i];
             strncpy(childid, id_base, EMBAJAX_MAX_ID_LEN-4);
@@ -652,6 +649,7 @@ public:
     }
 private:
     EmbAJAXCheckButton buttons[N]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
+    EmbAJAXBase* buttonpointers[N]; /** NOTE: ... and, unfortunately, we need a separate persistent array of pointers...
     char childids[N][EMBAJAX_MAX_ID_LEN]; /** NOTE: Child ids are not copied by EmbAJAXElement. This is the storage space for them */  // TODO: Can we remove those, by using a recursive lookup scheme, instead? (groupid.buttonid)
     int8_t _current_option;
     void selectButton(EmbAJAXCheckButton* which) override {
@@ -718,14 +716,14 @@ public:
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
      *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
-    template<size_t NUM> EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0) :
+    template<size_t NUM> constexpr EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0) :
         EmbAJAXElementList(children), _title(title), _header_add(header_add) {}
     /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
-    EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0) :
+    constexpr EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0) :
         EmbAJAXElementList(childcount, children), _title(title), _header_add(header_add) {}
 #ifndef EMBAJAX_NO_OPERATOR_NEW
     /** constructor taking list of pointers to elements */
-    template<class... T> EmbAJAXPage(EmbAJAXBase* first, T*... elements, const char* title, const char* header_add = 0) :
+    template<class... T> constexpr EmbAJAXPage(EmbAJAXBase* first, T*... elements, const char* title, const char* header_add = 0) :
         EmbAJAXElementList(first, elements...), _title(title), _header_add(header_add) {}
 #endif
     /** Duplication of print(), needed for internal reasons. Use print(), instead! */  // TODO: no, it isn't any more. deprecate
