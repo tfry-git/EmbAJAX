@@ -614,11 +614,67 @@ public:
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override;
     void updateFromDriverArg(const char* argname) override;
 protected:
-    EmbAJAXOptionSelectBase(const char*id, uint8_t current_option) : EmbAJAXElement(id) {
-        _current_option = current_option;
-    };
+    // TOOD: make me constexpr
+    EmbAJAXOptionSelectBase(const char*id, uint8_t current_option) : EmbAJAXElement(id), _current_option(current_option) {};
     void print(const char* const* _labels, uint8_t NUM) const;
     uint8_t _current_option;
+};
+
+/** @brief Drop-down list of selectable options - experimental alternate version
+ *
+ *  Drop-down list of selectable options. Most functions of interest are implemented in the base class EmbAJAXOptionSelectBase,
+ *  you'll only use this class for the constructor. */
+class EmbAJAXOptionSelect2 : public EmbAJAXOptionSelectBase {
+public:
+    EmbAJAXOptionSelect2(const char*id) : EmbAJAXOptionSelectBase(id, 0), labels(nullptr), NUM(0), label_revision(1);
+    void print() const override {
+        EmbAJAXOptionSelectBase::print(_labels, NUM);
+    }
+    template<size_t N> void setLabels(char* (labels&)[N]) setLabels(N, labels);   // TODO: make me const
+    void setLabels(uint8_t N, char** labels) {  // TODO: make me const
+       _labels = labels;
+       NUM = N;
+       label_revision = _driver->setChanged();
+       // TODO: HACK for the time being: discard all quotes in labels. This is not meant to stay, but it does allow allow me to send you a self-contained solution
+       for(uint8_t i = 0; i < N; ++i) {
+          char *p = labels[i];
+          while(true) {
+            char c = *p;
+            if(!c) break;
+            if(c == '\"') *p = '\'';
+            else if(c == '\\') *p = '|';
+            ++p;
+          }
+       }
+    }
+    bool sendUpdates(uint16_t since, bool first) override {
+      bool other_changes = EmbAJAXOptionSelect2::sendUpdates(since, first);
+      if ((label_revision + 40000) < since) label_revision = since + 1;  // TODO: Merge with EmbAJAXElement::changed()
+      if (label_revision <= since) return other_changes;
+
+      // I hate duplicating all this code (let alone, sending two change records for this element), but for the time being it is the easiest solution
+      // to be re-thought, should a similar need arise for other elements
+      if (other_chaanges || !first) _driver->printContent(",\n");
+      _driver->printContent("{\n\"id\": ");
+      _driver->printJSQuoted(_id);
+      _driver->printContent(",\n\"changes\": [[\"innerHTML\", ");
+      for(uint8_t i = 0; i < NUM; ++i) {
+          // TODO: Reminder to self: Status of the code within is: terrible hack (WRT to quoting).
+          _driver->printContent("<option value=\"");
+          char buf[12];
+          _driverprintContent(itoa(i, buf, 10));
+          _driver->printContent("\">");
+          _driver->printContent(_labels[i]);
+          _driver->printContent("</option>\n");
+      }
+      _driver->printFiltered(pval, EmbAJAXOutputDriverBase::JSQuoted, valueNeedsEscaping(i));
+      _driver->printContent("]]\n}");
+      return true;
+    }
+private:
+    const char **_labels;
+    uint8_t NUM;
+    uint16_t label_revision;
 };
 
 /** @brief Drop-down list of selectable options
