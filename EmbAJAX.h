@@ -626,18 +626,31 @@ protected:
  *  you'll only use this class for the constructor. */
 class EmbAJAXOptionSelect2 : public EmbAJAXOptionSelectBase {
 public:
-    EmbAJAXOptionSelect2(const char*id) : EmbAJAXOptionSelectBase(id, 0), labels(nullptr), NUM(0), label_revision(1);
+    EmbAJAXOptionSelect2(const char*id) : EmbAJAXOptionSelectBase(id, 0), _labels(nullptr), NUM(0), label_revision(1), owning_labels(false) {};
     void print() const override {
         EmbAJAXOptionSelectBase::print(_labels, NUM);
     }
-    template<size_t N> void setLabels(char* (labels&)[N]) setLabels(N, labels);   // TODO: make me const
-    void setLabels(uint8_t N, char** labels) {  // TODO: make me const
-       _labels = labels;
+    ~EmbAJAXOptionSelect2() { destroy(); }
+    /** Set the given labels. Both the array of labels, and the labels themselves are copied, so they may be temporary.
+     *  This is generally the safest option, however, to save on resources, you may consider using setLabelsFromPersistent(), *if* you can guarantee
+     *  that the array of labels you pass will remain valid while in use. However, in that case, EmbAJAXOptionSelect may often be a better option. */
+    template<size_t N> void setLabels(const char* (&labels)[N]) { setLabels(N, labels); }
+    void setLabels(uint8_t N, const char** labels) {
+       destroy();
+       owning_labels = true;
+       _labels = new char*[N];
+       for (uint8_t i = 0; i < N; ++i) {
+         _labels[i] = new char [strlen(labels[i]) + 1];
+         strcpy(_labels[i], labels[i]);
+       }
        NUM = N;
+       if (_current_option >= NUM) _current_option = NUM - 1;
        label_revision = _driver->setChanged();
+       selectOption(_current_option);  // NOTE: current option _always_ need syncing, after a change of labels, too.
+
        // TODO: HACK for the time being: discard all quotes in labels. This is not meant to stay, but it does allow allow me to send you a self-contained solution
        for(uint8_t i = 0; i < N; ++i) {
-          char *p = labels[i];
+          char *p = _labels[i];
           while(true) {
             char c = *p;
             if(!c) break;
@@ -647,34 +660,43 @@ public:
           }
        }
     }
+    const char** labels() const { return (const char**) _labels; };
     bool sendUpdates(uint16_t since, bool first) override {
-      bool other_changes = EmbAJAXOptionSelect2::sendUpdates(since, first);
       if ((label_revision + 40000) < since) label_revision = since + 1;  // TODO: Merge with EmbAJAXElement::changed()
-      if (label_revision <= since) return other_changes;
+      if (label_revision <= since) return EmbAJAXOptionSelectBase::sendUpdates(since, first);
 
       // I hate duplicating all this code (let alone, sending two change records for this element), but for the time being it is the easiest solution
       // to be re-thought, should a similar need arise for other elements
-      if (other_chaanges || !first) _driver->printContent(",\n");
+      if (!first) _driver->printContent(",\n");
       _driver->printContent("{\n\"id\": ");
       _driver->printJSQuoted(_id);
-      _driver->printContent(",\n\"changes\": [[\"innerHTML\", ");
+      _driver->printContent(",\n\"changes\": [[\"innerHTML\", \"");
       for(uint8_t i = 0; i < NUM; ++i) {
           // TODO: Reminder to self: Status of the code within is: terrible hack (WRT to quoting).
-          _driver->printContent("<option value=\"");
+          _driver->printContent("<option value=\\\"");
           char buf[12];
-          _driverprintContent(itoa(i, buf, 10));
-          _driver->printContent("\">");
+          _driver->printContent(itoa(i, buf, 10));
+          _driver->printContent("\\\">");
           _driver->printContent(_labels[i]);
-          _driver->printContent("</option>\n");
+          _driver->printContent("</option>\\n");
       }
-      _driver->printFiltered(pval, EmbAJAXOutputDriverBase::JSQuoted, valueNeedsEscaping(i));
-      _driver->printContent("]]\n}");
+      _driver->printContent("\"]]\n}");
+
+      EmbAJAXOptionSelectBase::sendUpdates(since, false); // NOTE: must come after these changes, else selected option will always be re-set to first
       return true;
     }
 private:
-    const char **_labels;
+    void destroy() {
+       if (!owning_labels) return;
+       for (uint8_t i = 0; i < NUM; ++i) {
+         delete _labels[i];
+       }
+       delete [] _labels;
+    }
+    char **_labels;
     uint8_t NUM;
     uint16_t label_revision;
+    bool owning_labels;
 };
 
 /** @brief Drop-down list of selectable options
