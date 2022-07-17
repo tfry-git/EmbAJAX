@@ -522,7 +522,7 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _title, const char* _header_add) const {
     _driver->printHeader(true);
-    _driver->printContent("<HTML><HEAD><TITLE>");
+    _driver->printContent("<!DOCTYPE html>\n<HTML><HEAD><TITLE>");
     if (_title) _driver->printContent(_title);
     _driver->printContent("</TITLE>\n<SCRIPT>\n");
     _driver->printContent("var serverrevision = 0;\n"
