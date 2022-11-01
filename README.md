@@ -57,7 +57,7 @@ The following additional features may be of interest (supported as of now):
 
 ### Hardware support
 
-Currently there are output drivers for ESP8266 and ESP32. However, drivers are really easy to add. All that is needed is a very
+Currently there are output drivers for ESP8266, ESP32, and Raspberry Pi Pico. However, drivers are really easy to add. All that is needed is a very
 basic abstraction across some web server calls.
 
 #### ESP32 quirks and workaround
