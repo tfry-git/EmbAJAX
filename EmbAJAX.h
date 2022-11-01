@@ -699,8 +699,15 @@ protected:
 #include <EmbAJAXOutputDriverESP8266.h>
 #elif defined (ESP32)
 #include <EmbAJAXOutputDriverESP32.h>
+#elif defined (ARDUINO_ARCH_RP2040)
+#include <EmbAJAXOutputDriverRP2040.h>
 #else
-#error No output driver available for this hardware (yet). Please implement your own (it is easy!) and submit a patch.
+#include <WebServer.h>
+#define EmbAJAXOutputDriverWebServerClass WebServer
+#include <WiFi.h>
+#include <EmbAJAXOutputDriverGeneric.h>
+#warning No output driver available for this hardware (yet). We try using the generic driver, but success is not guaranteed.
+#warning In most cases, implementing a driver is as easy as picking the correct header file to include. Please consider submitting a patch.
 #endif
 #endif
 
