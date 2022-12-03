@@ -42,10 +42,12 @@ void setup() {
   WiFi.softAP("EmbAJAXTest", "12345678");
 
   Serial.println("EmbAjax connection example");
-
+  
+  driver.setConnectionEventCallback(onConnectionEvent);
+  
   // Tell the server to serve our EmbAJAX test page on root
   // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
-  driver.installPage(&page, "/", updateUI, onConnectionEvent);
+  driver.installPage(&page, "/", updateUI);
   server.begin();
 
   pinMode(LEDCONNECTIONPIN, OUTPUT);
