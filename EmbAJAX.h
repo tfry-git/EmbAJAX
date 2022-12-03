@@ -125,13 +125,21 @@ public:
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
     virtual const char* getArg(const char* name, char* buf, int buflen) = 0;
-    /** Set up the given page to be served on the given path.
+
+    /** Set up the callback function to process connection events
      *
-     *  @param change_callback See EmbAJAXPage::handleRequest() for details.
      *  @param onConnectionEvent_callback function that will be called when a client is connected,
      *                                    all clients are disconnected or when a message is received
      */
-    virtual void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0, void (*onConnectionEvent_callback)(EmbAjaxConnectionEventType)=0) = 0;
+    void setConnectionEventCallback(void (*onConnectionEvent_callback)(EmbAjaxConnectionEventType)=0) {
+        _onConnectionEvent_callback = onConnectionEvent_callback;
+    }
+
+    /** Set up the given page to be served on the given path.
+     *
+     *  @param change_callback See EmbAJAXPage::handleRequest() for details.
+     */
+    virtual void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) = 0;
     /** Insert this hook into loop(). Takes care of the appropriate server calls, if needed. */
     virtual void loopHook() = 0;
 
@@ -178,6 +186,8 @@ public:
 private:
     uint16_t _revision;
     uint16_t next_revision;
+protected:
+    void (*_onConnectionEvent_callback)(EmbAjaxConnectionEventType)=0;
 };
 
 /** Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage()
