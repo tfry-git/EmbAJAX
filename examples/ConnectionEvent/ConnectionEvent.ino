@@ -33,27 +33,6 @@ MAKE_EmbAJAXPage(page, "EmbAJAX example - Connection events", "",
                  &slider
                 )
 
-void setup() {
-  Serial.begin(115200);
-  
-  // Example WIFI setup as an access point. Change this to whatever suits you, best.
-  WiFi.mode(WIFI_AP);
-  WiFi.softAPConfig (IPAddress (192, 168, 4, 1), IPAddress (0, 0, 0, 0), IPAddress (255, 255, 255, 0));
-  WiFi.softAP("EmbAJAXTest", "12345678");
-
-  Serial.println("EmbAjax connection example");
-  
-  driver.setConnectionEventCallback(onConnectionEvent);
-  
-  // Tell the server to serve our EmbAJAX test page on root
-  // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
-  driver.installPage(&page, "/", updateUI);
-  server.begin();
-
-  pinMode(LEDCONNECTIONPIN, OUTPUT);
-
-  last_activity_message = millis();
-}
 
 void updateUI() {
   // Here you can add code to handle the slider events
@@ -85,6 +64,27 @@ void onConnectionEvent(EmbAjaxConnectionEventType event) {
   }
 }
 
+void setup() {
+  Serial.begin(115200);
+  
+  // Example WIFI setup as an access point. Change this to whatever suits you, best.
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig (IPAddress (192, 168, 4, 1), IPAddress (0, 0, 0, 0), IPAddress (255, 255, 255, 0));
+  WiFi.softAP("EmbAJAXTest", "12345678");
+
+  Serial.println("EmbAjax connection example");
+  
+  driver.setConnectionEventCallback(onConnectionEvent);
+  
+  // Tell the server to serve our EmbAJAX test page on root
+  // installPage() abstracts over the (trivial but not uniform) WebServer-specific instructions to do so
+  driver.installPage(&page, "/", updateUI);
+  server.begin();
+
+  pinMode(LEDCONNECTIONPIN, OUTPUT);
+
+  last_activity_message = millis();
+}
 
 void loop() {
   // handle network. loopHook() simply calls server.handleClient(), it can also call the connection callback function, here onConnectionEvent.
