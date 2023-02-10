@@ -12,6 +12,8 @@
 
 #include <EmbAJAX.h>
 
+void onConnectionEvent(EmbAjaxConnectionEventType event);
+
 #define LEDCONNECTIONPIN LED_BUILTIN
 #define LED_BRIGHTNESS_ON  LOW
 #define LED_BRIGHTNESS_OFF HIGH
