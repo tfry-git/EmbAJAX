@@ -696,16 +696,16 @@ protected:
 // If the user has not #includ'ed a specific output driver implementation, make a good guess, here
 #if not defined (EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION)
 #if defined (ESP8266)
-#include <EmbAJAXOutputDriverESP8266.h>
+#include "EmbAJAXOutputDriverESP8266.h"
 #elif defined (ESP32)
-#include <EmbAJAXOutputDriverESP32.h>
+#include "EmbAJAXOutputDriverESP32.h"
 #elif defined (ARDUINO_ARCH_RP2040)
-#include <EmbAJAXOutputDriverRP2040.h>
+#include "EmbAJAXOutputDriverRP2040.h"
 #else
 #include <WebServer.h>
 #define EmbAJAXOutputDriverWebServerClass WebServer
 #include <WiFi.h>
-#include <EmbAJAXOutputDriverGeneric.h>
+#include "EmbAJAXOutputDriverGeneric.h"
 #warning No output driver available for this hardware (yet). We try using the generic driver, but success is not guaranteed.
 #warning In most cases, implementing a driver is as easy as picking the correct header file to include. Please consider submitting a patch.
 #endif
