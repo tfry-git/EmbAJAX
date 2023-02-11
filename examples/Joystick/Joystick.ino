@@ -8,8 +8,8 @@
  * 
  * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include "EmbAJAX.h"
-#include "EmbAJAXJoystick.h"
+#include <EmbAJAX.h>
+#include <EmbAJAXJoystick.h>
 
 // Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDriverWebServerClass is a
 // convenience #define to allow using the same example code across platforms
