@@ -5,9 +5,9 @@
 * 
 * This example code is in the public domain (CONTRARY TO THE LIBRARY ITSELF). */
 
-#include "EmbAJAX.h"
-#include "EmbAJAXValidatingTextInput.h" // Fancier text input in a separate header file
-#include "EmbAJAXScriptedSpan.h"
+#include <EmbAJAX.h>
+#include <EmbAJAXValidatingTextInput.h> // Fancier text input in a separate header file
+#include <EmbAJAXScriptedSpan.h>
 
 // Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDriverWebServerClass is a
 // convenience #define to allow using the same example code across platforms
