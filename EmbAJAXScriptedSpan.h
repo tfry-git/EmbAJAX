@@ -22,7 +22,7 @@
 #ifndef EMBAJAXSCRIPTEDSPAN_H
 #define EMBAJAXSCRIPTEDSPAN_H
 
-#include <EmbAJAX.h>
+#include "EmbAJAX.h"
 
 /** @brief A span element containing a custom javascript script, meant to creating custom dispays
  * 

@@ -22,7 +22,7 @@
 #ifndef EMBAJAXVALIDATINGTEXTINPUT_H
 #define EMBAJAXVALIDATINGTEXTINPUT_H
 
-#include <EmbAJAX.h>
+#include "EmbAJAX.h"
 
 template<size_t SIZE> class EmbAJAXValidatingTextInput : public EmbAJAXTextInput<SIZE> {
 public:
