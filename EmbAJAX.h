@@ -26,13 +26,13 @@
 #define EMBAJAX_MAX_ID_LEN 16
 
 #if __cplusplus >= 201402L
-#define EMBAJAX_DEPRECATED [[deprecated]]
+#define EMBAJAX_DEPRECATED(WHEN, WHY) [[deprecated]](WHY)
 #elif defined(__GNUC__) || defined(__clang__)
-#define EMBAJAX_DEPRECATED __attribute__((deprecated))
+#define EMBAJAX_DEPRECATED(WHEN, WHY) __attribute__((deprecated))
 #elif defined(_MSC_VER)
-#define EMBAJAX_DEPRECATED __declspec(deprecated)
+#define EMBAJAX_DEPRECATED(WHEN, WHY) __declspec(deprecated)
 #else
-#define EMBAJAX_DEPRECATED
+#define EMBAJAX_DEPRECATED(WHEN, WHY)
 #endif
 
 class EmbAJAXOutputDriverBase;
@@ -178,13 +178,15 @@ private:
     uint16_t next_revision;
 };
 
-/** Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage()
+EMBAJAX_DEPRECATED(2023_03_12, "Use EmbAJAXPage constructor, direclty") inline int MAKE_EmbAJAXPageDeprecated() { return 0; };
+/** DEPRECATED: Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage().
  *  @param name Variable name of the page instance
  *  @param title HTML Title
  *  @param header_add a custom string to add to the HTML header section, e.g. a CSS definition. */
 #define MAKE_EmbAJAXPage(name, title, header_add, ...) \
     EmbAJAXBase* name##_elements[] = {__VA_ARGS__}; \
-    EmbAJAXPage name(name##_elements, title, header_add);
+    EmbAJAXPage name(name##_elements, title, header_add); \
+    int name##_warning = MAKE_EmbAJAXPageDeprecated();
 
 /** @brief A static chunk of HTML
  *
@@ -484,9 +486,9 @@ friend class EmbAJAXCheckButton;
 };
 
 /** @brief Base class for groups of objects. Deprecated. Use EmbAJAXElementList, instead. */
-template<size_t NUM> class EMBAJAX_DEPRECATED EmbAJAXContainer : public EmbAJAXBase {
+template<size_t NUM> class EMBAJAX_DEPRECATED(2023_03_12, "Use EmbAJAXElementList, instead") EmbAJAXContainer : public EmbAJAXBase {
 public:
-    EMBAJAX_DEPRECATED EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
+    EMBAJAX_DEPRECATED(2023_03_12, "Use EmbAJAXElementList, instead") EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
         _children = children;
     }
     void print() const override {
@@ -523,14 +525,13 @@ public:
         EmbAJAXBase(),
         _children(children),
         NUM(childcount) {}
-#ifndef EMBAJAX_NO_OPERATOR_NEW
     /** constructor taking list of pointers to elements */
-// Note: "first" forces all args to be EmbAJAXBase
+    // Note: "first" forces all args to be EmbAJAXBase
     template<class... T> constexpr EmbAJAXElementList(EmbAJAXBase* first, T*... elements) :
         EmbAJAXBase(),
         _children(new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...}),
         NUM(sizeof...(elements) + 1) {}
-#endif
+#warning proper d'tor!
     void print() const override {
         EmbAJAXBase::printChildren(_children, NUM);
     }
@@ -549,7 +550,7 @@ public:
     }
 protected:
 friend class EmbAJAXHideableContainer;
-    EmbAJAXElementList() : NUM(0) {};
+    constexpr EmbAJAXElementList(size_t N) : _children(nullptr), NUM(N) {};
     void setBasicProperty(uint8_t num, bool status) override {
         for (size_t i = 0; i < NUM; ++i) {
             _children[i]->setBasicProperty(num, status);
@@ -584,10 +585,9 @@ public:
     }
     /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
     EmbAJAXHideableContainer(const char* id, size_t childcount, EmbAJAXBase* const* children) : EmbAJAXElement(id), _childlist(childcount, children) {}
-#ifndef EMBAJAX_NO_OPERATOR_NEW
     /** constructor taking list of pointers to elements */
     template<class... T> EmbAJAXHideableContainer(const char* id, EmbAJAXBase* first, T*... elements) : EmbAJAXElement(id), _childlist(first, elements...) {}
-#endif
+
     EmbAJAXElement* findChild(const char* id) const override {
         return _childlist.findChild(id);
     }
@@ -616,7 +616,8 @@ public:
      *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
      *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
      *                         no option selected by default. */
-    EmbAJAXRadioGroup(const char* id_base, const char* options[N], uint8_t selected_option = 0) : EmbAJAXElementList(), EmbAJAXRadioGroupBase() {
+    EmbAJAXRadioGroup(const char* id_base, const char* options[N], uint8_t selected_option = 0) : EmbAJAXElementList(N), EmbAJAXRadioGroupBase() {
+#warning port to element list properly
         for (uint8_t i = 0; i < N; ++i) {
             char* childid = childids[i];
             strncpy(childid, id_base, EMBAJAX_MAX_ID_LEN-4);
@@ -626,8 +627,7 @@ public:
             buttonpointers[i] = &buttons[i];
         }
         _current_option = selected_option;
-         _children = buttonpointers;
-         NUM = N;
+        _children = buttonpointers;
         _name = id_base;
     }
     /** Select / check the option at the given index. All other options in this radio group will become deselected. */
@@ -721,13 +721,12 @@ public:
     /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
     constexpr EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0) :
         EmbAJAXElementList(childcount, children), _title(title), _header_add(header_add) {}
-#ifndef EMBAJAX_NO_OPERATOR_NEW
     /** constructor taking list of pointers to elements */
-    template<class... T> constexpr EmbAJAXPage(EmbAJAXBase* first, T*... elements, const char* title, const char* header_add = 0) :
+    template<class... T> constexpr EmbAJAXPage(const char* title, const char* header_add, EmbAJAXBase* first, T*... elements) :
         EmbAJAXElementList(first, elements...), _title(title), _header_add(header_add) {}
-#endif
-    /** Duplication of print(), needed for internal reasons. Use print(), instead! */  // TODO: no, it isn't any more. deprecate
-    EMBAJAX_DEPRECATED void printPage() const {
+
+    /** Duplication of print(), historically needed for internal reasons. Use print(), instead! */
+    EMBAJAX_DEPRECATED(2023_03_12, "Use print(), instead") void printPage() const {
         print();
     };
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
