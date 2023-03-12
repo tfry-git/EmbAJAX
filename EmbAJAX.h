@@ -531,7 +531,7 @@ public:
         EmbAJAXBase(),
         _children(new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...}),
         NUM(sizeof...(elements) + 1) {}
-#warning proper d'tor!
+#warning proper d'tor! Perhaps const init arrays should not be accepted at all? EmbAJAXPage c'tor should be the only API entry point where we need backwards compatibility
     void print() const override {
         EmbAJAXBase::printChildren(_children, NUM);
     }
