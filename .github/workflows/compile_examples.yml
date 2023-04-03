@@ -38,7 +38,7 @@ jobs:
             platforms: |
               - name: esp8266:esp8266
                 source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
-          - fqbn: esp32:esp32:esp32
+          - fqbn: esp32:esp32:LOLIN_D32
             type: esp32
             platforms: |
               - name: esp32:esp32

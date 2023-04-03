@@ -22,11 +22,7 @@
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress ip(192, 168, 1, 177);
 
-#if defined(LED_BUILTIN)
 #define LEDPIN LED_BUILTIN
-#else
-#define LEDPIN 2
-#endif
 
 // Set up web server, and register it with EmbAJAX. Note: EmbAJAXOutputDriverWebServerClass is a
 // convenience #define to allow using the same example code across platforms
