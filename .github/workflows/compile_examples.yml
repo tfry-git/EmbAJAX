@@ -33,9 +33,6 @@ jobs:
 # Note: incomplete! See https://github.com/arduino-libraries/ArduinoIoTCloud/blob/master/.github/workflows/compile-examples.yml for a complex multi-board setup
       matrix:
         board:
-          - fqbn: arduino:avr:uno
-            platforms: |
-              - name: arduino:avr
           - fqbn: esp8266:esp8266:huzzah
             type: esp8266
             platforms: |
@@ -66,7 +63,7 @@ jobs:
             - examples/
           libraries: |
             - source-path: ./
-            - name: Ethernet
+            - name: EthernetWebServer
           enable-deltas-report: true
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
 
