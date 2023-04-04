@@ -48,6 +48,18 @@ jobs:
             platforms: |
               - name: rp2040:rp2040
                 source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+        include:
+          - board:
+              type: esp8266
+            sketch-paths: |
+              - examples/Blink_Ethernet
+          - board:
+              type: esp32
+            sketch-paths: []
+          - board:
+              type: rp2040
+            sketch-paths: |
+              - examples/Blink_Ethernet
 
     steps:
       - name: Checkout repository
@@ -59,8 +71,15 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.board.fqbn }}
           platforms: ${{ matrix.board.platforms }}
+# This is a bit boring: Actually we want to compile all examples, but _exclude_ Blink_Ethernet on EPS32 (where it will not work out of the box). Sadly, there is no mechanism for that.
           sketch-paths: |
-            - examples/
+            - examples/Blink
+            - examples/Inputs
+            - examples/Joystick
+            - examples/Styling
+            - examples/TwoPages
+            - examples/Visibility
+            ${{ matrix.sketch-paths }}
           libraries: |
             - source-path: ./
             - name: EthernetWebServer
