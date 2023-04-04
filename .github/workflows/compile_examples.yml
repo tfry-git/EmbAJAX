@@ -55,7 +55,7 @@ jobs:
               - examples/Blink_Ethernet
           - board:
               type: esp32
-            sketch-paths: []
+            sketch-paths:
           - board:
               type: rp2040
             sketch-paths: |
