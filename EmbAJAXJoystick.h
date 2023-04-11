@@ -22,7 +22,7 @@
 #ifndef EMBAJAXJOYSTICK_H
 #define EMBAJAXJOYSTICK_H
 
-#include <EmbAJAX.h>
+#include "EmbAJAX.h"
 
 const char EmbAJAXJoystick_SNAP_BACK[] = "if (!pressed) { x = 0; y = 0; }\n";
 const char EmbAJAXJoystick_NO_SNAP_BACK[] = "";

@@ -1,0 +1,94 @@
+name: Compile Examples
+
+# See: https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows
+on:
+  push:
+    paths:
+      - ".github/workflows/compile_examples.yml"
+      - "examples/**"
+      - "**.cpp"
+      - "**.h"
+      - "**.hpp"
+  pull_request:
+    paths:
+      - ".github/workflows/compile_examples.yml"
+      - "examples/**"
+      - "**.cpp"
+      - "**.h"
+      - "**.hpp"
+  workflow_dispatch:
+  repository_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.board.fqbn }}
+    runs-on: ubuntu-latest
+
+    env:
+      SKETCHES_REPORTS_PATH: sketches-reports
+
+    strategy:
+      fail-fast: false
+
+# Note: incomplete! See https://github.com/arduino-libraries/ArduinoIoTCloud/blob/master/.github/workflows/compile-examples.yml for a complex multi-board setup
+      matrix:
+        board:
+          - fqbn: esp8266:esp8266:huzzah
+            type: esp8266
+            platforms: |
+              - name: esp8266:esp8266
+                source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          - fqbn: esp32:esp32:d32
+            type: esp32
+            platforms: |
+              - name: esp32:esp32
+                source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          - fqbn: rp2040:rp2040:rpipicow
+            type: rp2040
+            platforms: |
+              - name: rp2040:rp2040
+                source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+        include:
+          - board:
+              type: esp8266
+            sketch-paths: |
+              - examples/Blink_Ethernet
+          - board:
+              type: esp32
+            sketch-paths:
+          - board:
+              type: rp2040
+            sketch-paths: |
+              - examples/Blink_Ethernet
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Compile examples
+        uses: arduino/compile-sketches@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fqbn: ${{ matrix.board.fqbn }}
+          platforms: ${{ matrix.board.platforms }}
+# This is a bit boring: Actually we want to compile all examples, but _exclude_ Blink_Ethernet on EPS32 (where it will not work out of the box). Sadly, there is no mechanism for that.
+          sketch-paths: |
+            - examples/Blink
+            - examples/Inputs
+            - examples/Joystick
+            - examples/Styling
+            - examples/TwoPages
+            - examples/Visibility
+            ${{ matrix.sketch-paths }}
+          libraries: |
+            - source-path: ./
+            - name: EthernetWebServer
+          enable-deltas-report: true
+          sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
+
+      - name: Save sketches report as workflow artifact
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          path: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: ${{ env.SKETCHES_REPORTS_PATH }}

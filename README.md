@@ -57,8 +57,14 @@ The following additional features may be of interest (supported as of now):
 
 ### Hardware support
 
-Currently there are output drivers for ESP8266, ESP32, and Raspberry Pi Pico. However, drivers are really easy to add. All that is needed is a very
-basic abstraction across some web server calls.
+Currently EmbAJAX will work, without additional configuration using WiFi on ESP8266, ESP32, and Raspberry Pi Pico.
+
+For the general approach on using EmbAJAX with different hardware, see the Blink_Ethernet example. This relies on the EthernetWebServer library,
+which supports a large number of different boards, including ATMEGA 2560, Teensy, etc. In a similar fashion, it should be possible to utilize the
+WiFiWebServer library for boards that do not include native WiFi (this latter claim has not currently been tested).
+
+Should your hardware need more custom tweaking, or you wish to use a different webserver library, drivers are really easy to add.
+All that is needed is a very basic abstraction across some web server calls.
 
 #### ESP32 quirks and workaround
 
