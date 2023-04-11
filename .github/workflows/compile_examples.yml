@@ -74,6 +74,7 @@ jobs:
 # This is a bit boring: Actually we want to compile all examples, but _exclude_ Blink_Ethernet on EPS32 (where it will not work out of the box). Sadly, there is no mechanism for that.
           sketch-paths: |
             - examples/Blink
+            - examples/ConnectionStatus
             - examples/Inputs
             - examples/Joystick
             - examples/Styling

@@ -686,11 +686,19 @@ public:
      *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
      *                         (Otherwise the client will be updated on the next poll). */
     void handleRequest(void (*change_callback)()=0) override {
+        _latest_ping = millis();
         EmbAJAXBase::handleRequest(EmbAJAXContainer<NUM>::_children, NUM, change_callback);
+    }
+    /** Returns true if a client seems to be connected (connected clients should send a ping at least once per second; by default this
+     *  function returns whether a ping has been seen within the last 5000 ms.
+     *  @param latency_ms Number of milliseconds to consider as maximum silence period for an active connection */
+    bool hasActiveClient(uint64_t latency_ms=5000) const {
+        return(_latest_ping && (_latest_ping + latency_ms > millis()));
     }
 protected:
     const char* _title;
     const char* _header_add;
+    uint64_t _latest_ping = 0;
 };
 
 // If the user has not #includ'ed a specific output driver implementation, make a good guess, here
