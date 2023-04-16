@@ -101,11 +101,11 @@ void EmbAJAXConnectionIndicator::print() const {
     _driver->printContent(_content_fail);
     _driver->printContent("</span><script>\n"
                           "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
-                          "'misses': 0,\n"
-                          "'toggle': function(on) { this.div.children[on].style.display = 'none'; this.div.children[1-on].style.display = 'inline'; },\n"
-                          "'in': function() { if(this.misses > 4) { this.toggle(1); } this.misses=0; },\n"
-                           "'out': function() {if (this.misses < 5) { if(++(this.misses) >= 5) this.toggle(0); }}\n"
-                          "};\nwindow.ardujaxsh.toggle(1);\n</script></div>");
+                          "'good': 0,\n"
+                          "'tid': null,\n"
+                          "'toggle': function(on) { this.div.children[on].style.display = 'none'; this.div.children[1-on].style.display = 'inline'; this.good = on; },\n"
+                          "'in': function() { clearTimeout(this.tid); this.tid = window.setTimeout(this.toggle.bind(this, 0), 5000); if(!this.good) {this.toggle(1);} }\n"
+                          "};\nwindow.ardujaxsh.in();\n</script></div>");
 }
 
 ////////////////////////////// EmbAJAXElement /////////////////////////////
@@ -245,7 +245,7 @@ void EmbAJAXSlider::print() const {
     _driver->printAttribute("min", _min);
     _driver->printAttribute("max", _max);
     _driver->printAttribute("value", _value);
-    _driver->printContent(" onInput=\"doRequest(this.id, this.value);\" onChange=\"doRequest(this.id, this.value);\"/>");
+    _driver->printContent(" oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>");
 }
 
 const char* EmbAJAXSlider::value(uint8_t which) const {
@@ -281,7 +281,7 @@ void EmbAJAXColorPicker::print() const {
     _driver->printContent("<input type=\"color\"");
     _driver->printAttribute("id", _id);
     _driver->printAttribute("value", value());
-    _driver->printContent(" onInput=\"doRequest(this.id, this.value);\" onChange=\"doRequest(this.id, this.value);\"/>");
+    _driver->printContent(" oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>");
 }
 
 // helper to make sure we get exactly two hex digits for any input
@@ -528,10 +528,10 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "var request_queue = [];\n"   // requests waiting to be sent
                             // message types: 1: regular: request may be overridden by subsequent value changes on the same id - merge if in queue
                             //                2: distinct: request may not be merged with other requests of the same id (button clicks)
-                            "function doRequest(id='', value='', mtype=1) {\n"
+                            "function doRequest(id, value, mtype=1) {\n"
                             "    var req = {id: id, value: value, mtype: mtype};\n"
                             "    const i = request_queue.findIndex((x) => (x.id == id && x.mtype == 1));\n"
-                            "    if (i >= 0 && (mtype == 1)) request_queue[i] = req;\n"
+                            "    if (i >= 0 && (mtype == 1)) request_queue[i] = req;\n" // NOTE: mtype must be 1 in both the earlier, _and_ this request
                             "    else request_queue.push(req);\n"
                             "    window.setTimeout(sendQueued, 0);\n"  // NOTE: often events will be generated twice (e.g. onInput+onChange). Wait for the second to come in, before sending
                             "}\n"
@@ -547,13 +547,12 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             //   else: Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
                             "    var req = new XMLHttpRequest();\n"
                             "    req.timeout = 10000;\n"   // probably disconnected. Don't stack up request objects forever.
-                            "    if(window.ardujaxsh) window.ardujaxsh.out();\n"
                             "    req.onload = function() {\n"
                             "       doUpdates(JSON.parse(req.responseText));\n"
                             "       if(window.ardujaxsh) window.ardujaxsh.in();\n"
                             "       --num_waiting;\n"
                             "    }\n"
-                            "    req.onerror = req.ontimeout = function() {\n" // if transmission of a value change failed, assume we are out of sync // TODO Fix!
+                            "    req.onerror = req.ontimeout = function() {\n" // if transmission of a value change failed, assume we are out of sync
                             "       if (this.id != '') serverrevision = 0;\n" // this will cause the server to re-send _all_ element states on the next poll()
                             "       --num_waiting;\n"
                             "    }.bind(e);\n"

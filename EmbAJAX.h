@@ -201,7 +201,7 @@ protected:
 
 /** @brief connection status indicator
  *
- *  This passive element can be inserted into a page to indicate the connection status: If more than 5 client requests go unanswered, in a row,
+ *  This passive element can be inserted into a page to indicate the connection status: If there is no reply from the server for 5 seconds,
  *  the connection to the server is assumed to be broken.
  *
  *  @note While this is a "dynamic" display, the entire logic is implemented on the client, for obvious reasons. From the point of view of the
