@@ -47,10 +47,9 @@ public:
      * @param idle_timeout: Timeout after which the position other than center will be regarded as uncertain (e.g. due to unreliable network connection). @Note: While the position is off-center in the client, updates will be send at half this timeout.
      * @param position_adjust: Custom javascript that will be applied to "correct" the user supplied position, e.g. snapping it to certain allowed positions. @See e.g. EmbAJAXJoystick_POSITION_9_DIRECTIONS
      * @param snap_back: Custom javascript that will be applied to snap back the position on mouse release. @See EmbAJAXJoystick_SNAP_BACK */
-    EmbAJAXJoystick(const char* id, int width, int height, int active_timeout=100, int idle_timeout=2000, const char* position_adjust=EmbAJAXJoystick_FREE_POSITION, const char* snap_back=EmbAJAXJoystick_SNAP_BACK) : EmbAJAXElement(id) {
+    EmbAJAXJoystick(const char* id, int width, int height, int idle_timeout=2000, const char* position_adjust=EmbAJAXJoystick_FREE_POSITION, const char* snap_back=EmbAJAXJoystick_SNAP_BACK) : EmbAJAXElement(id) {
         _width = width;
         _height = height;
-        _active_timeout = active_timeout;
         _idle_timeout = idle_timeout;
         _position_adjust = position_adjust;
         _snap_back = snap_back;
@@ -74,7 +73,7 @@ public:
            "  this.update(vals[0], vals[1], false);\n"
            "});\n"
            "\n"
-           "elem.updateFromClient = function(x, y, send_interval) {\n"
+           "elem.updateFromClient = function(x, y, nomerge=false) {\n"
            "  var width = this.width;\n"
            "  var height = this.height;\n"
            "  var pressed = this.pressed;\n"
@@ -83,10 +82,10 @@ public:
         EmbAJAXBase::_driver->printContent(_snap_back);
         EmbAJAXBase::_driver->printContent(_position_adjust);
         EmbAJAXBase::_driver->printContent(
-           "  this.update(x, y, true, send_interval);\n"
+           "  this.update(x, y, true, nomerge);\n"
            "}\n"
            "\n"
-           "elem.update = function(x, y, send=true, send_interval=0) {\n"
+           "elem.update = function(x, y, send=true, nomerge=false) {\n"
            "  var oldx = this.posx;\n"
            "  var oldy = this.posy;\n"
            "  this.posx = x;\n"
@@ -95,7 +94,7 @@ public:
            "    var ctx = this.getContext('2d');\n"
            "    ctx.clearRect(0, 0, this.width, this.height);\n"
            "    this.drawKnob(ctx, this.posx, this.posy);\n"
-           "    if(send) doRequestInterval(this.id,this.pressed + ',' + this.posx + ',' + this.posy,send_interval,this);\n"
+           "    if(send) doRequest(this.id,this.pressed + ',' + this.posx + ',' + this.posy, nomerge ? 2 : 1);\n"
            "  }\n"
            "}\n"
            "\n"
@@ -113,11 +112,11 @@ public:
            "\n"
            "elem.press = function(x, y) {\n"
            "  this.pressed = 1;\n"
-           "  this.updateFromClient(x, y, 0);\n"
+           "  this.updateFromClient(x, y, true);\n"
            "}\n"
            "\n"
            "elem.move = function(x, y) {\n"
-		   "  this.updateFromClient(x, y, ");
+           "  this.updateFromClient(x, y)");
         EmbAJAXBase::_driver->printContent(itoa(_active_timeout, buf, 10));
         EmbAJAXBase::_driver->printContent(
            ");\n"
@@ -125,7 +124,7 @@ public:
            "\n"
            "elem.release = function(x, y) {\n"
            "  this.pressed = 0;\n"
-           "  this.updateFromClient(x, y, 0);\n"
+           "  this.updateFromClient(x, y, true);\n"
            "}\n"
            "\n"
            "elem.addEventListener('mousedown', function(event) { this.press(event.offsetX, event.offsetY); }.bind(elem), false);\n"
@@ -185,7 +184,6 @@ private:
     char _value[16];
     int _width;
     int _height;
-    int _active_timeout;
     int _idle_timeout;
     const char* _snap_back;
     const char* _position_adjust;

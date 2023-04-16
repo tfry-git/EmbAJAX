@@ -27,11 +27,11 @@ EmbAJAXMutableSpan radio_d("radio_d");
 EmbAJAXOptionSelect<3> optionselect("optionselect", radio_opts);
 EmbAJAXMutableSpan optionselect_d("optionselect_d");
 
-EmbAJAXSlider slider("slider", 0, 1000, 500, 100);
+EmbAJAXSlider slider("slider", 0, 1000, 500);
 EmbAJAXMutableSpan slider_d("slider_d");
 char slider_d_buf[BUFLEN];
 
-EmbAJAXColorPicker color("color", 0, 255, 255, 100);
+EmbAJAXColorPicker color("color", 0, 255, 255);
 EmbAJAXMutableSpan color_d("color_d");
 char color_d_buf[BUFLEN];
 

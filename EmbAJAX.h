@@ -25,6 +25,9 @@
 
 #define ARDUJAX_MAX_ID_LEN 16
 
+// Set to a value above 0 for diagnostics on Serial and browser console
+//#define EMBAJAX_DEBUG 3
+
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
 class EmbAJAXContainerBase;
@@ -287,7 +290,11 @@ friend class EmbAJAXBase;
     bool changed(uint16_t since);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXTextInput::print() */
     void printTextInput(size_t size, const char* value) const;
+#if EMBAJAX_DEBUG > 2
+public:
+#else
 private:
+#endif
     uint16_t revision;
 };
 
@@ -353,7 +360,7 @@ protected:
 /** @brief An HTML span element with content that can be updated from the server (not the client) */
 class EmbAJAXSlider : public EmbAJAXElement {
 public:
-    EmbAJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial, int16_t update_min_interval_ms=0);
+    EmbAJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial);
     void print() const override;
     const char* value(uint8_t which = EmbAJAXBase::Value) const override;
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override;
@@ -363,7 +370,7 @@ public:
     }
     void updateFromDriverArg(const char* argname) override;
 private:
-    int16_t _min, _max, _value, _update_min_interval_ms;
+    int16_t _min, _max, _value;
 };
 
 /** @brief A color picker element (\<input type="color">) */
@@ -373,7 +380,7 @@ public:
      *  @param r Initial value for red
      *  @param g Initial value for green
      *  @param b Initial value for blue */
-    EmbAJAXColorPicker(const char* id, uint8_t r, uint8_t g, uint8_t b, int16_t _update_min_interval_ms=0);
+    EmbAJAXColorPicker(const char* id, uint8_t r, uint8_t g, uint8_t b);
     void print() const override;
     const char* value(uint8_t which = EmbAJAXBase::Value) const override;
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override;
@@ -384,7 +391,6 @@ public:
     void updateFromDriverArg(const char* argname) override;
 private:
     uint8_t _r, _g, _b;
-    int16_t _update_min_interval_ms;
 };
 
 /** @brief A push-button.

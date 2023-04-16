@@ -233,11 +233,10 @@ void EmbAJAXMutableSpan::setValue(const char* value, bool allowHTML) {
 
 //////////////////////// EmbAJAXSlider /////////////////////////////
 
-EmbAJAXSlider::EmbAJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial, int16_t update_min_interval_ms) : EmbAJAXElement(id) {
+EmbAJAXSlider::EmbAJAXSlider(const char* id, int16_t min, int16_t max, int16_t initial) : EmbAJAXElement(id) {
     _value = initial;
     _min = min;
     _max = max;
-    _update_min_interval_ms = update_min_interval_ms;
 }
 
 void EmbAJAXSlider::print() const {
@@ -246,14 +245,7 @@ void EmbAJAXSlider::print() const {
     _driver->printAttribute("min", _min);
     _driver->printAttribute("max", _max);
     _driver->printAttribute("value", _value);
-    if (_update_min_interval_ms > 0 ) {
-        _driver->printContent(" onInput=\"doRequestInterval(this.id, this.value,");
-        _driver->printContent(itoa(_update_min_interval_ms, itoa_buf, 10));
-        _driver->printContent(",this);\"  onChange=\"doRequestInterval(this.id, this.value,0,this);\"/>");
-    }
-    else {
-        _driver->printContent(" onChange=\"doRequest(this.id, this.value);\"/>");
-    }
+    _driver->printContent(" onInput=\"doRequest(this.id, this.value);\" onChange=\"doRequest(this.id, this.value);\"/>");
 }
 
 const char* EmbAJAXSlider::value(uint8_t which) const {
@@ -279,29 +271,17 @@ void EmbAJAXSlider::setValue(int16_t value) {
 
 //////////////////////// EmbAJAXColorPicker /////////////////////////
 
-EmbAJAXColorPicker::EmbAJAXColorPicker(const char* id, uint8_t r, uint8_t g, uint8_t b, int16_t update_min_interval_ms) : EmbAJAXElement(id) {
+EmbAJAXColorPicker::EmbAJAXColorPicker(const char* id, uint8_t r, uint8_t g, uint8_t b) : EmbAJAXElement(id) {
     _r = r;
     _g = g;
     _b = b;
-    _update_min_interval_ms = update_min_interval_ms;
 }
 
 void EmbAJAXColorPicker::print() const {
-    char buf[12];
-
     _driver->printContent("<input type=\"color\"");
     _driver->printAttribute("id", _id);
     _driver->printAttribute("value", value());
-	
-    if (_update_min_interval_ms > 0 ) {
-        _driver->printContent(" onInput=\"doRequestInterval(this.id, this.value,");
-        _driver->printContent(itoa(_update_min_interval_ms, buf, 10));
-        _driver->printContent(",this);\"  onChange=\"doRequestInterval(this.id, this.value,0,this);\"/>");
-    }
-    else {
-        // see EmbAJAXTextInput::print(): Use onInput(), instead of onChange().
-        _driver->printContent(" onInput=\"clearTimeout(this.debouncer); this.debouncer=setTimeout(function() {doRequest(this.id, this.value);}.bind(this),1000);\"/>");
-    }
+    _driver->printContent(" onInput=\"doRequest(this.id, this.value);\" onChange=\"doRequest(this.id, this.value);\"/>");
 }
 
 // helper to make sure we get exactly two hex digits for any input
@@ -375,7 +355,7 @@ EmbAJAXPushButton::EmbAJAXPushButton(const char* id, const char* label, void (*c
 void EmbAJAXPushButton::print() const {
     _driver->printContent("<button type=\"button\"");
     _driver->printAttribute("id", _id);
-    _driver->printContent(" onClick=\"doRequest(this.id, 'p');\">");
+    _driver->printContent(" onClick=\"doRequest(this.id, 'p', 2);\">"); // 2 -> not mergeable -> so we can count individual presses, even if they happen fast
     _driver->printFiltered(_label, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
     _driver->printContent("</button>");
 }
@@ -545,46 +525,44 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
     if (_title) _driver->printContent(_title);
     _driver->printContent("</TITLE>\n<SCRIPT>\n");
     _driver->printContent("var serverrevision = 0;\n"
-                            "var num_queue = 0;\n"			  
-                            "function doRequest(id='', value='') {\n"
+                            "var request_queue = [];\n"   // requests waiting to be sent
+                            // message types: 1: regular: request may be overridden by subsequent value changes on the same id - merge if in queue
+                            //                2: distinct: request may not be merged with other requests of the same id (button clicks)
+                            "function doRequest(id='', value='', mtype=1) {\n"
+                            "    var req = {id: id, value: value, mtype: mtype};\n"
+                            "    const i = request_queue.findIndex((x) => (x.id == id && x.mtype == 1));\n"
+                            "    if (i >= 0 && (mtype == 1)) request_queue[i] = req;\n"
+                            "    else request_queue.push(req);\n"
+                            "    window.setTimeout(sendQueued, 0);\n"  // NOTE: often events will be generated twice (e.g. onInput+onChange). Wait for the second to come in, before sending
+                            "}\n"
+
+                            "var num_waiting = 0;\n"      // number of requests sent, with no reply received, yet
+                            "var prev_request = 0;\n"
+                            "function sendQueued() {\n"
+                            "    var now = new Date().getTime();\n"
+                            "    if (num_waiting > 0 || (now - prev_request < 100)) return;\n" // TODO: configurable update min interval
+                            "    var e = {id:'', value:''};\n"
+                            "    if (request_queue.length) e = request_queue.shift();\n"
+                            "    else if (now - prev_request < 1000) return;\n"
+                            //   else: Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
                             "    var req = new XMLHttpRequest();\n"
                             "    req.timeout = 10000;\n"   // probably disconnected. Don't stack up request objects forever.
                             "    if(window.ardujaxsh) window.ardujaxsh.out();\n"
                             "    req.onload = function() {\n"
                             "       doUpdates(JSON.parse(req.responseText));\n"
                             "       if(window.ardujaxsh) window.ardujaxsh.in();\n"
+                            "       --num_waiting;\n"
                             "    }\n"
-                            "    req.onloadend = function() { --num_queue; }\n"
-                            "    if(id) {\n"  // if we fail to transmit a UI change to the server, for whatever reason, we will be out of sync
-                            "       req.onerror = req.ontimeout = function() {\n"
-                            "          serverrevision = 0;\n" // this will cause the server to re-send _all_ element states on the next poll()
-                            "       }\n"
-                            "    }\n"
-                            "    ++num_queue;\n"                    
+                            "    req.onerror = req.ontimeout = function() {\n" // if transmission of a value change failed, assume we are out of sync // TODO Fix!
+                            "       if (this.id != '') serverrevision = 0;\n" // this will cause the server to re-send _all_ element states on the next poll()
+                            "       --num_waiting;\n"
+                            "    }.bind(e);\n"
+                            "    ++num_waiting; prev_request = now;\n"
                             "    req.open('POST', document.URL, true);\n"
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
-                            "    req.send('id=' + id + '&value=' + encodeURIComponent(value) + '&revision=' + serverrevision);\n"
-                            "}\n");
-    
-    _driver->printContent(  "function doRequestInterval(id,value,min_time_transmit,elem) {\n"
-                            "   var now = new Date().getTime();\n"
-                            "   if (elem.sendTimeout) {\n"
-                            "     clearTimeout(elem.sendTimeout);\n"
-                            "     elem.sendTimeout = null;\n"
-                            "   }\n"
-                            "   if((elem.lastSend === undefined || now - elem.lastSend >= min_time_transmit) && (num_queue===0)) {\n"
-                            "     doRequest(id,value);\n"
-                            "     elem.lastSend = new Date().getTime();\n"
-                            "     return;\n"
-                            "   } else {\n"
-                            "      elem.lastId = id;\n"
-                            "      elem.lastValue = value;\n"
-                            "      elem.sendTimeout = setTimeout(function send_waittransmit() {\n"
-                            "         elem.sendTimeout = null;\n"
-                            "         doRequestInterval(elem.lastId,elem.lastValue, min_time_transmit,elem);\n"
-                            "      }, min_time_transmit - (now - elem.lastSend));\n"
-                            "   }\n"
-                            "}\n");
+                            "    req.send('id=' + e.id + '&value=' + encodeURIComponent(e.value) + '&revision=' + serverrevision);\n"
+                            "}\n"
+                            "window.setInterval(sendQueued, 50);\n");  // TODO: configurable min interval
 
     _driver->printContent("function doUpdates(response) {\n"
                             "    serverrevision = response.revision;\n"
@@ -595,6 +573,9 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "       for(j = 0; j < changes.length; ++j) {\n"
                             "          var spec = changes[j][0].split('.');\n"
                             "          var prop = element;\n"
+#if EMBAJAX_DEBUG > 2
+                            "          console.log('Received change at revision ' + serverrevision + ': ' + updates[i].id + '/' + spec + '=' + changes[j][1]);\n"
+#endif
                             "          for(k = 0; k < (spec.length-1); ++k) {\n"   // resolve nested attributes such as style.display
                             "              prop = prop[spec[k]];\n"
                             "          }\n"
@@ -602,14 +583,6 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "       }\n"
                             "    }\n"
                             "}\n");
-    _driver->printContent("function doPoll() {\n"
-                            "    if (num_queue ===0) {\n"  
-                            "      doRequest();\n"  // poll == request without id
-                            "    } else {\n"  
-                            "      if(window.ardujaxsh) window.ardujaxsh.out();\n" // add to misses
-                            "    }" 
-                            "}\n"
-                            "setInterval(doPoll,1000);\n");
     _driver->printContent("</SCRIPT>\n");
     if (_header_add) _driver->printContent(_header_add);
     _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\" onSubmit=\"return false;\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
@@ -633,11 +606,33 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
     const char *id = _driver->getArg("id", conversion_buf, ARDUJAX_MAX_ID_LEN);
     EmbAJAXElement *element = (id[0] == '\0') ? 0 : findChild(id);
     if (element) {
+#if EMBAJAX_DEBUG > 2
+        Serial.print("Updating ");
+        Serial.println(id);
+        Serial.print("old revision ");
+        Serial.print(element->revision);
+        Serial.print(" old value ");
+        Serial.println(element->value());
+#endif
         element->updateFromDriverArg("value");
         element->setChanged(); // So changes sent from one client will be synced to the other clients
         if (change_callback) change_callback();
+#if EMBAJAX_DEBUG > 2
+        Serial.print("new revision ");
+        Serial.print(element->revision);
+        Serial.print(" new value ");
+        Serial.println(element->value());
+#endif
     }
     _driver->nextRevision();
+#if EMBAJAX_DEBUG > 2
+    Serial.print("Update done. Client revision ");
+    Serial.print(client_revision);
+    Serial.print(" driver revision ");
+    Serial.println(_driver->revision());
+#endif
+
+// TODO: Exclude the element that was changed by this request itself from the response
 
     // then relay value changes that have occured in the server (possibly in response to those sent)
     _driver->printHeader(false);
