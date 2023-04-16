@@ -241,8 +241,6 @@ EmbAJAXSlider::EmbAJAXSlider(const char* id, int16_t min, int16_t max, int16_t i
 }
 
 void EmbAJAXSlider::print() const {
-    char buf[12];
-
     _driver->printContent("<input type=\"range\"");
     _driver->printAttribute("id", _id);
     _driver->printAttribute("min", _min);
@@ -250,7 +248,7 @@ void EmbAJAXSlider::print() const {
     _driver->printAttribute("value", _value);
     if (_update_min_interval_ms > 0 ) {
         _driver->printContent(" onInput=\"doRequestInterval(this.id, this.value,");
-        _driver->printContent(itoa(_update_min_interval_ms, buf, 10));
+        _driver->printContent(itoa(_update_min_interval_ms, itoa_buf, 10));
         _driver->printContent(",this);\"  onChange=\"doRequestInterval(this.id, this.value,0,this);\"/>");
     }
     else {
