@@ -92,7 +92,7 @@ jobs:
         with:
           if-no-files-found: error
           path: ${{ env.SKETCHES_REPORTS_PATH }}
-          name: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: sketches-reports-artifact
 
   # When using a matrix to compile for multiple boards, it's necessary to use a separate job for the deltas report
   report:
