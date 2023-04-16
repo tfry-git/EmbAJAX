@@ -33,6 +33,8 @@ The library is still pretty new, but quite functional, and stabilizing. This mea
 However, please note, that there is _no_ guarantee that upcoming versions of this library remain 100% compatible with the current
 version. I'll try not to break things _except_ when there is a good reason to.
 
+For details on what has been changed, refer to [ChangeLog.md].
+
 ### Supported elements / features
 
 These controls / elements are supported as of now:
@@ -97,7 +99,7 @@ EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access them later in our sketch.
-EmbAJAXSlider slider("slider", 0, 500, 400, 100); // slider, from 0 to 500, initial value 400, minimum 100ms between updates
+EmbAJAXSlider slider("slider", 0, 500, 400);      // slider, from 0 to 500, initial value 400
 EmbAJAXMutableSpan display("display");            // a plain text display
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting

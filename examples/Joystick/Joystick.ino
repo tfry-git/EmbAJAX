@@ -17,7 +17,7 @@ EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
-EmbAJAXJoystick joy1("joy1", 300, 300, 100, 2000, EmbAJAXJoystick_POSITION_9_DIRECTIONS);
+EmbAJAXJoystick joy1("joy1", 300, 300, EmbAJAXJoystick_POSITION_9_DIRECTIONS);
 EmbAJAXJoystick joy2("joy2", 300, 300);
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
