@@ -73,22 +73,8 @@ public:
            "  var vals = value.split(',');\n"
            "  this.update(vals[0], vals[1], false);\n"
            "});\n"
-           "elem.last_server_update = Date.now();\n"
-           "elem.sendState = function() {\n"
-           "  var act_t = ");
-        EmbAJAXBase::_driver->printContent(itoa(_active_timeout, buf, 10));
-        EmbAJAXBase::_driver->printContent(
-           ";\n"
-           "  if (Date.now() - this.last_server_update < act_t) {\n"
-           "    window.clearTimeout(this.updatetimeoutid);\n"
-           "    this.updatetimeoutid = window.setTimeout(function() { this.sendState() }.bind(this), act_t*1.5);\n"
-           "  } else {\n"
-           "    doRequest(this.id, this.pressed + ',' + this.posx + ',' + this.posy);\n"
-           "    this.last_server_update = Date.now();\n"
-           "  }\n"
-           "}\n"
            "\n"
-           "elem.updateFromClient = function(x, y) {\n"
+           "elem.updateFromClient = function(x, y, send_interval) {\n"
            "  var width = this.width;\n"
            "  var height = this.height;\n"
            "  var pressed = this.pressed;\n"
@@ -97,10 +83,10 @@ public:
         EmbAJAXBase::_driver->printContent(_snap_back);
         EmbAJAXBase::_driver->printContent(_position_adjust);
         EmbAJAXBase::_driver->printContent(
-           "  this.update(x, y, true);\n"
+           "  this.update(x, y, true, send_interval);\n"
            "}\n"
            "\n"
-           "elem.update = function(x, y, send=true) {\n"
+           "elem.update = function(x, y, send=true, send_interval=0) {\n"
            "  var oldx = this.posx;\n"
            "  var oldy = this.posy;\n"
            "  this.posx = x;\n"
@@ -109,7 +95,7 @@ public:
            "    var ctx = this.getContext('2d');\n"
            "    ctx.clearRect(0, 0, this.width, this.height);\n"
            "    this.drawKnob(ctx, this.posx, this.posy);\n"
-           "    if(send) this.sendState();\n"
+           "    if(send) doRequestInterval(this.id,this.pressed + ',' + this.posx + ',' + this.posy,send_interval,this);\n"
            "  }\n"
            "}\n"
            "\n"
@@ -127,16 +113,19 @@ public:
            "\n"
            "elem.press = function(x, y) {\n"
            "  this.pressed = 1;\n"
-           "  this.updateFromClient(x, y);\n"
+           "  this.updateFromClient(x, y, 0);\n"
            "}\n"
            "\n"
            "elem.move = function(x, y) {\n"
-           "  this.updateFromClient(x, y);\n"
+		   "  this.updateFromClient(x, y, ");
+        EmbAJAXBase::_driver->printContent(itoa(_active_timeout, buf, 10));
+        EmbAJAXBase::_driver->printContent(
+           ");\n"
            "}\n"
            "\n"
            "elem.release = function(x, y) {\n"
            "  this.pressed = 0;\n"
-           "  this.updateFromClient(x, y);\n"
+           "  this.updateFromClient(x, y, 0);\n"
            "}\n"
            "\n"
            "elem.addEventListener('mousedown', function(event) { this.press(event.offsetX, event.offsetY); }.bind(elem), false);\n"
@@ -145,7 +134,7 @@ public:
            "elem.addEventListener('mouseleave', function(event) { this.release(event.offsetX, event.offsetY); }.bind(elem), false);\n"
            "elem.addEventListener('touchstart', function(event) { this.press(event.touches[0].offsetX, event.touches[0].offsetY); }.bind(elem), false);\n"
            "elem.addEventListener('touchmove', function(event) { this.move(event.touches[0].offsetX, event.touches[0].offsetY); }.bind(elem), false);\n"
-           "elem.addEventListener('touchend', function(event) { this.release(event.touches[0].offsetX, event.touches[0].offsetY); }.bind(elem), false);\n"
+           "elem.addEventListener('touchend', function(event) { this.release(event.touches[0].offsetX, event.touches[0].offsetY); }.bind(elem), false);\n"		   
            "</script>\n");
     }
     void updateFromDriverArg(const char* argname) {

@@ -97,8 +97,8 @@ EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access them later in our sketch.
-EmbAJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
-EmbAJAXMutableSpan display("display");         // a plain text display
+EmbAJAXSlider slider("slider", 0, 500, 400, 100); // slider, from 0 to 500, initial value 400, minimum 100ms between updates
+EmbAJAXMutableSpan display("display");            // a plain text display
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
