@@ -88,6 +88,10 @@ void EmbAJAXOutputDriverBase::printAttribute(const char* name, const int32_t val
     printContent(" ");
     printContent(name);
     printContent("=");
+    printInt(value);
+}
+
+void EmbAJAXOutputDriverBase::printInt(int32_t value) {
     char buf[12];
     printContent(itoa(value, buf, 10));
 }
@@ -402,7 +406,7 @@ void EmbAJAXMomentaryButton::print() const {
     _driver->printFiltered(_id, EmbAJAXOutputDriverBase::JSQuoted, false);
     _driver->printContent(");\n"
                           "btn.onmousedown = btn.ontouchstart = function() { clearInterval(this.pinger); this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
-    _driver->printContent(itoa(_timeout / 1.5, itoa_buf, 10));
+    _driver->printInt(_timeout / 1.5);
     _driver->printContent("); doRequest(this.id, 'p'); return false; };\n"
                           "btn.onmouseup = btn.ontouchend = btn.onmouseleave = function() { clearInterval(this.pinger); doRequest(this.id, 'r'); return false;};}\n"
                           "</script>");
@@ -540,7 +544,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "var prev_request = 0;\n"
                             "function sendQueued() {\n"
                             "    var now = new Date().getTime();\n"
-                            "    if (num_waiting > 0 || (now - prev_request < "); _driver->printContent(itoa(_min_interval, itoa_buf, 10)); _driver->printContent(")) return;\n"
+                            "    if (num_waiting > 0 || (now - prev_request < "); _driver->printInt(_min_interval); _driver->printContent(")) return;\n"
                             "    var e = request_queue.shift();\n"
                             "    if (!e && (now - prev_request < 1000)) return;\n"
                             "    if (!e) e = {id: '', value: ''};\n" //Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
@@ -560,7 +564,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                             "    req.send('id=' + e.id + '&value=' + encodeURIComponent(e.value) + '&revision=' + serverrevision);\n"
                             "}\n"
-                            "window.setInterval(sendQueued, "); _driver->printContent(itoa(_min_interval, itoa_buf, 10)); _driver->printContent(");\n");
+                            "window.setInterval(sendQueued, "); _driver->printInt(_min_interval/2+1); _driver->printContent(");\n");
 
     _driver->printContent("function doUpdates(response) {\n"
                             "    serverrevision = response.revision;\n"
@@ -634,7 +638,7 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
     // then relay value changes that have occured in the server (possibly in response to those sent)
     _driver->printHeader(false);
     _driver->printContent("{\"revision\": ");
-    _driver->printContent(itoa(_driver->revision(), conversion_buf, 10));
+    _driver->printInt(_driver->revision());
     _driver->printContent(",\n\"updates\": [\n");
     sendUpdates(_children, NUM, client_revision, true);
     _driver->printContent("\n]}\n");

@@ -157,6 +157,8 @@ public:
     inline void printJSQuoted (const char* value) { printFiltered (value, JSQuoted, false); }
     /** Shorthand for printFiltered(value, HTMLQuoted, false); */
     inline void printHTMLQuoted (const char* value) { printFiltered (value, HTMLQuoted, false); }
+    /** Helper function to write integer number */
+    void printInt(int32_t);
     /** Convenience function to print an attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
      *
