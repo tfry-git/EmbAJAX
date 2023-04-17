@@ -31,7 +31,8 @@ and a focus on keeping things lean in memory.
 
 The library is still pretty new, but quite functional, and stabilizing. This means you can start using the library right now.
 However, please note, that there is _no_ guarantee that upcoming versions of this library remain 100% compatible with the current
-version. I'll try not to break things _except_ when there is a good reason to.
+version. I'll try not to break things _except_ when there is a good reason to. Be aware that this "promise" applies to "released"
+versions, only, however. Inside the git master branch, breaking changes may happen more frequently.
 
 For details on what has been changed, refer to [ChangeLog.md].
 
@@ -146,11 +147,12 @@ void loop() {
 
 ## Installation
 
-For now the installation routine is:
-- Download a ZIP of the current development version: https://github.com/tfry-git/EmbAJAX/archive/master.zip
-- Unzip, rename ```EmbAJAX-master``` to ```EmbAJAX``` (sorry, this step seems really silly, indeed, but is not easily avoidable)
-- In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the renamed EmbAJAX folder for installation
-- You may need to restart your IDE for the library and its examples to show up
+EmbAJAX is available from the (Arduino Library Manager)[https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-installing-a-library].
+
+If, instead, you want to use the bleeding edge version of EmbAJAX, the suggested routine is to _first_ install from the Library Manager, anyway, then
+_replace_ the contents of the installation folder with either a ```git clone``` of this repository, or _the contents_ of an unpackaged ZIP:
+https://github.com/tfry-git/EmbAJAX/archive/master.zip . The important thing is that the library installation folder itself _must_ be named "EmbAJAX",
+while - quite unfortunately - in the ZIP file, the folder is called "EmbAJAX-master".
 
 ## Further readings
 
