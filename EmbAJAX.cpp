@@ -527,11 +527,12 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
     _driver->printContent("var serverrevision = 0;\n"
                             "var request_queue = [];\n"   // requests waiting to be sent
                             // message types: 1: regular: request may be overridden by subsequent value changes on the same id - merge if in queue
-                            //                2: distinct: request may not be merged with other requests of the same id (button clicks)
+                            //                2: semi-distinct: request may override type 1 requests for the same id, but will never be overridden (button clicks)
+                            //                3: fully-distinct: request may not be merged with other requests of the same id at all
                             "function doRequest(id, value, mtype=1) {\n"
                             "    var req = {id: id, value: value, mtype: mtype};\n"
                             "    const i = request_queue.findIndex((x) => (x.id == id && x.mtype == 1));\n"
-                            "    if (i >= 0 && (mtype == 1)) request_queue[i] = req;\n" // NOTE: mtype must be 1 in both the earlier, _and_ this request
+                            "    if (i >= 0 && (mtype < 3)) request_queue[i] = req;\n"
                             "    else request_queue.push(req);\n"
                             "    window.setTimeout(sendQueued, 0);\n"  // NOTE: often events will be generated twice (e.g. onInput+onChange). Wait for the second to come in, before sending
                             "}\n"
@@ -541,10 +542,9 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "function sendQueued() {\n"
                             "    var now = new Date().getTime();\n"
                             "    if (num_waiting > 0 || (now - prev_request < 100)) return;\n" // TODO: configurable update min interval
-                            "    var e = {id:'', value:''};\n"
-                            "    if (request_queue.length) e = request_queue.shift();\n"
-                            "    else if (now - prev_request < 1000) return;\n"
-                            //   else: Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
+                            "    var e = request_queue.shift();\n"
+                            "    if (!e && (now - prev_request < 1000)) return;\n"
+                            "    if (!e) e = {id: '', value: ''};\n" //Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
                             "    var req = new XMLHttpRequest();\n"
                             "    req.timeout = 10000;\n"   // probably disconnected. Don't stack up request objects forever.
                             "    req.onload = function() {\n"
@@ -552,10 +552,10 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "       if(window.ardujaxsh) window.ardujaxsh.in();\n"
                             "       --num_waiting;\n"
                             "    }\n"
-                            "    req.onerror = req.ontimeout = function() {\n" // if transmission of a value change failed, assume we are out of sync
-                            "       if (this.id != '') serverrevision = 0;\n" // this will cause the server to re-send _all_ element states on the next poll()
+                            "    req.onerror = req.ontimeout = function() {\n" // if transmission failed, assume we are out of sync
+                            "       serverrevision = 0;\n" // this will cause the server to re-send _all_ element states on the next poll()
                             "       --num_waiting;\n"
-                            "    }.bind(e);\n"
+                            "    };\n"
                             "    ++num_waiting; prev_request = now;\n"
                             "    req.open('POST', document.URL, true);\n"
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
