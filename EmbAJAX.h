@@ -96,7 +96,7 @@ template<size_t NUM> friend class EmbAJAXContainer;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::findChild() */
     EmbAJAXElement* findChild(EmbAJAXBase** children, size_t num, const char*id) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::print() */
-    void printPage(EmbAJAXBase** children, size_t num, const char* _title, const char* _header) const;
+    void printPage(EmbAJAXBase** children, size_t num, const char* _title, const char* _header, uint16_t _min_interval) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::handleRequest() */
     void handleRequest(EmbAJAXBase** children, size_t num, void (*change_callback)());
 };
@@ -670,11 +670,10 @@ public:
     /** Create a web page.
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
-     *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
-    EmbAJAXPage(EmbAJAXBase* children[NUM], const char* title, const char* header_add = 0) : EmbAJAXContainer<NUM>(children) {
-        _title = title;
-        _header_add = header_add;
-    }
+     *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). 
+     *  @param min_interval minimum interval (ms) between two requests sent by a single client. A lower value may reduce latency at the cost of traffic/CPU. */
+    EmbAJAXPage(EmbAJAXBase* children[NUM], const char* title, const char* header_add = 0, uint16_t min_interval=100) : EmbAJAXContainer<NUM>(children),
+        _title(title), _header_add(header_add), _min_interval(min_interval) {}
     /** Duplication of print(), needed for internal reasons. Use print(), instead! */
     void printPage() override {
         print();
@@ -682,7 +681,7 @@ public:
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
      *  there is a GET request to the desired URL. */
     void print() const override {
-        EmbAJAXBase::printPage(EmbAJAXContainer<NUM>::_children, NUM, _title, _header_add);
+        EmbAJAXBase::printPage(EmbAJAXContainer<NUM>::_children, NUM, _title, _header_add, _min_interval);
     }
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
      *  to whichever URL you served the page itself, from.
@@ -705,6 +704,7 @@ public:
 protected:
     const char* _title;
     const char* _header_add;
+    uint16_t _min_interval;
     uint64_t _latest_ping = 0;
 };
 

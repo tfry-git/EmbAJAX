@@ -519,7 +519,7 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 //////////////////////// EmbAJAXPage /////////////////////////////
 
-void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _title, const char* _header_add) const {
+void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _title, const char* _header_add, uint16_t _min_interval) const {
     _driver->printHeader(true);
     _driver->printContent("<!DOCTYPE html>\n<HTML><HEAD><TITLE>");
     if (_title) _driver->printContent(_title);
@@ -541,7 +541,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "var prev_request = 0;\n"
                             "function sendQueued() {\n"
                             "    var now = new Date().getTime();\n"
-                            "    if (num_waiting > 0 || (now - prev_request < 100)) return;\n" // TODO: configurable update min interval
+                            "    if (num_waiting > 0 || (now - prev_request < "); _driver->printContent(itoa(_min_interval, itoa_buf, 10)); _driver->printContent(") return;\n"
                             "    var e = request_queue.shift();\n"
                             "    if (!e && (now - prev_request < 1000)) return;\n"
                             "    if (!e) e = {id: '', value: ''};\n" //Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
@@ -561,7 +561,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                             "    req.send('id=' + e.id + '&value=' + encodeURIComponent(e.value) + '&revision=' + serverrevision);\n"
                             "}\n"
-                            "window.setInterval(sendQueued, 50);\n");  // TODO: configurable min interval
+                            "window.setInterval(sendQueued, "); _driver->printContent(itoa(_min_interval/2+1, itoa_buf, 10)); _driver->printContent(");\n");
 
     _driver->printContent("function doUpdates(response) {\n"
                             "    serverrevision = response.revision;\n"
