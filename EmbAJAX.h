@@ -26,7 +26,7 @@
 #define ARDUJAX_MAX_ID_LEN 16
 
 // Set to a value above 0 for diagnostics on Serial and browser console
-//#define EMBAJAX_DEBUG 3
+#define EMBAJAX_DEBUG 3
 
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
@@ -290,11 +290,7 @@ friend class EmbAJAXBase;
     bool changed(uint16_t since);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXTextInput::print() */
     void printTextInput(size_t size, const char* value) const;
-#if EMBAJAX_DEBUG > 2
-public:
-#else
 private:
-#endif
     uint16_t revision;
 };
 

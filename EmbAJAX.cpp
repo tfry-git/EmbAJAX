@@ -165,9 +165,8 @@ void EmbAJAXElement::printTextInput(size_t SIZE, const char* _value) const {
     _driver->printAttribute("maxLength", SIZE-1);
     _driver->printAttribute("size", min(max((size_t) SIZE, (size_t) 11), (size_t) 41) - 1);  // Arbitray limit for rendered width of text fields: 10..40 chars
     _driver->printAttribute("value", _value);
-    // Using onChange to update is too awkward. Using plain onInput would generate too may requests (and often result in "eaten" characters). Instead,
-    // as a compromise, we arrange for an update one second after the last key was pressed.
-    _driver->printContent(" onInput=\"clearTimeout(this.debouncer); this.debouncer=setTimeout(function() {doRequest(this.id, this.value);}.bind(this),1000);\"/>");
+    // NOTE: importantly, this gets debounced by the page
+    _driver->printContent(" onInput=\"doRequest(this.id, this.value);\"/>");
 }
 
 //////////////////////// EmbAJAXContainer ////////////////////////////////////
@@ -541,7 +540,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "var prev_request = 0;\n"
                             "function sendQueued() {\n"
                             "    var now = new Date().getTime();\n"
-                            "    if (num_waiting > 0 || (now - prev_request < "); _driver->printContent(itoa(_min_interval, itoa_buf, 10)); _driver->printContent(") return;\n"
+                            "    if (num_waiting > 0 || (now - prev_request < "); _driver->printContent(itoa(_min_interval, itoa_buf, 10)); _driver->printContent(")) return;\n"
                             "    var e = request_queue.shift();\n"
                             "    if (!e && (now - prev_request < 1000)) return;\n"
                             "    if (!e) e = {id: '', value: ''};\n" //Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
@@ -561,7 +560,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                             "    req.send('id=' + e.id + '&value=' + encodeURIComponent(e.value) + '&revision=' + serverrevision);\n"
                             "}\n"
-                            "window.setInterval(sendQueued, "); _driver->printContent(itoa(_min_interval/2+1, itoa_buf, 10)); _driver->printContent(");\n");
+                            "window.setInterval(sendQueued, "); _driver->printContent(itoa(_min_interval, itoa_buf, 10)); _driver->printContent(");\n");
 
     _driver->printContent("function doUpdates(response) {\n"
                             "    serverrevision = response.revision;\n"
@@ -614,10 +613,11 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
         Serial.println(element->value());
 #endif
         element->updateFromDriverArg("value");
-        element->setChanged(); // So changes sent from one client will be synced to the other clients
+        element->setChanged();                  // See bottom of function for an explanation on revision handling here, and in general
+        element->revision = client_revision;
         if (change_callback) change_callback();
 #if EMBAJAX_DEBUG > 2
-        Serial.print("new revision ");
+        Serial.print("(temp) new revision ");
         Serial.print(element->revision);
         Serial.print(" new value ");
         Serial.println(element->value());
@@ -631,8 +631,6 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
     Serial.println(_driver->revision());
 #endif
 
-// TODO: Exclude the element that was changed by this request itself from the response
-
     // then relay value changes that have occured in the server (possibly in response to those sent)
     _driver->printHeader(false);
     _driver->printContent("{\"revision\": ");
@@ -640,4 +638,19 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
     _driver->printContent(",\n\"updates\": [\n");
     sendUpdates(_children, NUM, client_revision, true);
     _driver->printContent("\n]}\n");
+
+    /* Explanation on revision handling:
+     * Bascis - Revision signifies what changes a particular client has already seen. Each client keeps a separate revision number. Each element hold the reivison number of
+     *          its latest change. Finally the server remembers the highest revision number that has _not yet_ been synced to any client (EmbAJAXOutputDriverBase::next_tevision).
+     *          E.g. Element A was changed at revision 4, Element B at revision 7. Client knows revision 5 -> it will be sent the new value of Element B, but not A.
+     *          Now, when Element A is changed, its revision will be upped to 8 (this happens in setChanged(). Subsequent changes will also get that revision number _until_
+     *          a client syncs to that revision. Only now, subsequent changes to any element will get revision number 9. This keeps the numbers from going up very fast.
+     * Here   - An important case to handle, is if a value change is being sent _from_ a client. I response that several further values, and even the value of the element itself
+     *          may be changed. We want to sync all of that _except_ the value which was sent by the client itself. This is rather important, as messages will always arrive with
+     *          at least a few ms delay. If, e.g. the user is typing in a text input, syncing back the change could easily happen _after_ the user has already typed another key.
+     *          This key would then get "swallowed".
+     *          To avoid syncing back this change, while still making sure any secondary change is synced: We first call setChanged() (so that the driver is aware that a new
+     *          revision may be needed). Then, we re-set the revision to the revision number of the client. Usually it will stay that way, unless secondary changes trigger another
+     *          update. Finally, after syncing back changes, we increase the revision, again, such that all further clients will be updated, appropriately. */
+    if (element) element->revision = _driver->revision();
 }
