@@ -165,7 +165,7 @@ public:
      *  @param name name of the attribute
      *  @param value value of the attribute. Will be quoted. */
     void printAttribute(const char* name, const char* value);
-    /** Convenience function to print an integert attribute inside an HTML tag.
+    /** Convenience function to print an integer attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
      *
      *  @param name name of the attribute
