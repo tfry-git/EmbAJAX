@@ -24,6 +24,8 @@
 
 #include "EmbAJAX.h"
 
+#include <cstdarg> // For va_args in printContentF.
+
 #define ITOA_BUFLEN 8
 
 // statics
@@ -32,84 +34,91 @@ char EmbAJAXBase::itoa_buf[ITOA_BUFLEN];
 
 ////////////////////////////// EmbAJAXOutputDriverBase ////////////////////
 
-void EmbAJAXOutputDriverBase::printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped) {
-    // NOTE: The assumption, here is that frequent (char-by-char) calls to printContent() _could_ be expensive, depending on the server
-    //       implementation. Thus, a buffer is used to enable printing in larger chunks.
-    char buf[32];
-    size_t bufpos = 0;
-    if (quoted) buf[bufpos++] = '"';
+void EmbAJAXOutputDriverBase::_printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped) {
+    if (quoted) _printChar('"');
     const char *pos = value;
     while(*pos != '\0') {
-        if (bufpos > 23) {  // == Not enough room for the worst case, i.e. "&quot;" + quote-end + terminating '\0'
-            buf[bufpos] = '\0';
-            printContent(buf);
-            bufpos = 0;
-            continue;
-        }
         if ((quoted == JSQuoted) && (*pos == '"' || *pos == '\\')) {
-            buf[bufpos++] = '\\';
-            buf[bufpos++] = *pos;
+            _printChar('\\');
+            _printChar(*pos);
         } else if ((quoted == HTMLQuoted) && (*pos == '"')) {
-            buf[bufpos++] = '&';
-            buf[bufpos++] = 'q';
-            buf[bufpos++] = 'u';
-            buf[bufpos++] = 'o';
-            buf[bufpos++] = 't';
-            buf[bufpos++] = ';';
+            _printContent("&quot;");
         } else if (HTMLescaped && (*pos == '<')) {
-            buf[bufpos++] = '&';
-            buf[bufpos++] = 'l';
-            buf[bufpos++] = 't';
-            buf[bufpos++] = ';';
+            _printContent("&lt;");
         } else if (HTMLescaped && (*pos == '&')) {
-            buf[bufpos++] = '&';
-            buf[bufpos++] = 'a';
-            buf[bufpos++] = 'm';
-            buf[bufpos++] = 'p';
-            buf[bufpos++] = ';';
+            _printContent("&amp;");
         } else {
-            buf[bufpos++] = *pos;
+            _printChar(*pos);
         }
         ++pos;
     }
-    if (quoted) buf[bufpos++] = '"';
-    buf[bufpos++] = '\0';
-    printContent(buf);
+    if (quoted) _printChar('"');
+}
+
+void EmbAJAXOutputDriverBase::commitBuffer() {
+    _buf[_bufpos] = '\0';
+    printContent(_buf);
+    _bufpos = 0;
+}
+
+void EmbAJAXOutputDriverBase::_printChar(const char value) {
+    if (_bufpos >= 63) commitBuffer();
+    _buf[_bufpos++] = value;
+}
+
+void EmbAJAXOutputDriverBase::_printContent(const char* value) {
+    // NOTE: The assumption, here is that frequent (char-by-char) calls to printContent() _could_ be expensive, depending on the server
+    //       implementation. Thus, a buffer is used to enable printing in larger chunks.
+    const char *pos = value;
+    while(*pos != '\0') {
+        _printChar(*pos);
+        ++pos;
+    }
+}
+
+void EmbAJAXOutputDriverBase::printContentF(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    const char *pos = fmt;
+    while(true) {
+        const char c = *pos;
+        if (c == '\0') break;
+        else if (c == JS_QUOTED_STRING_ARG[0]) {
+            _printFiltered(va_arg(args, char*), JSQuoted, false);
+        } else if (c == HTML_QUOTED_STRING_ARG[0]) {
+            _printFiltered(va_arg(args, char*), HTMLQuoted, false);
+        } else if (c == HTML_ESCAPED_STRING_ARG[0]) {
+            _printFiltered(va_arg(args, char*), NotQuoted, true);
+        } else if (c == INTEGER_VALUE_ARG[0]) {
+            char buf[12];
+            _printContent(itoa(va_arg(args, int), buf, 10));
+        } else {
+            _printChar(c);
+        }
+    }
+    va_end(args);
+    commitBuffer();
 }
 
 void EmbAJAXOutputDriverBase::printAttribute(const char* name, const char* value) {
-    printContent(" ");
-    printContent(name);
-    printContent("=");
-    printHTMLQuoted(value);
+    printContentF(" " PLAIN_STRING_ARG "=" HTML_QUOTED_STRING_ARG, name, value);
 }
 
 void EmbAJAXOutputDriverBase::printAttribute(const char* name, const int32_t value) {
-    printContent(" ");
-    printContent(name);
-    printContent("=");
-    printInt(value);
-}
-
-void EmbAJAXOutputDriverBase::printInt(int32_t value) {
-    char buf[12];
-    printContent(itoa(value, buf, 10));
+    printContentF(" " PLAIN_STRING_ARG "=" INTEGER_VALUE_ARG, name, value);
 }
 
 //////////////////////// EmbAJAXConnectionIndicator ///////////////////////
 
 void EmbAJAXConnectionIndicator::print() const {
-    _driver->printContent("<div class=\"EmbAJAXStatus\"><span>");
-    _driver->printContent(_content_ok);
-    _driver->printContent("</span><span>");
-    _driver->printContent(_content_fail);
-    _driver->printContent("</span><script>\n"
-                          "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
-                          "'good': 0,\n"
-                          "'tid': null,\n"
-                          "'toggle': function(on) { this.div.children[on].style.display = 'none'; this.div.children[1-on].style.display = 'inline'; this.good = on; },\n"
-                          "'in': function() { clearTimeout(this.tid); this.tid = window.setTimeout(this.toggle.bind(this, 0), 5000); if(!this.good) {this.toggle(1);} }\n"
-                          "};\nwindow.ardujaxsh.in();\n</script></div>");
+    _driver->printContentF("<div class=\"EmbAJAXStatus\"><span>" PLAIN_STRING_ARG "</span><span>" PLAIN_STRING_ARG "</span><script>\n"
+                           "window.ardujaxsh = { 'div': document.scripts[document.scripts.length-1].parentNode,\n"
+                           "'good': 0,\n"
+                           "'tid': null,\n"
+                           "'toggle': function(on) { this.div.children[on].style.display = 'none'; this.div.children[1-on].style.display = 'inline'; this.good = on; },\n"
+                           "'in': function() { clearTimeout(this.tid); this.tid = window.setTimeout(this.toggle.bind(this, 0), 5000); if(!this.good) {this.toggle(1);} }\n"
+                           "};\nwindow.ardujaxsh.in();\n</script></div>",
+                           _content_ok, _content_fail);
 }
 
 ////////////////////////////// EmbAJAXElement /////////////////////////////
@@ -124,9 +133,7 @@ EmbAJAXElement::EmbAJAXElement(const char* id) : EmbAJAXBase() {
 bool EmbAJAXElement::sendUpdates(uint16_t since, bool first) {
     if (!changed(since)) return false;
     if (!first) _driver->printContent(",\n");
-    _driver->printContent("{\n\"id\": ");
-    _driver->printJSQuoted(_id);
-    _driver->printContent(",\n\"changes\": [");
+    _driver->printContentF("{\n\"id\": " JS_QUOTED_STRING_ARG ",\n\"changes\": [", _id);
     uint8_t i = 0;
     while (true) {
         const char* pid = valueProperty(i);
@@ -134,9 +141,7 @@ bool EmbAJAXElement::sendUpdates(uint16_t since, bool first) {
         if (!pid || !pval) break;
 
         if (i != 0) _driver->printContent(",");
-        _driver->printContent("[");
-        _driver->printJSQuoted(pid);
-        _driver->printContent(", ");
+        _driver->printContentF("[" JS_QUOTED_STRING_ARG ", ", pid);
         _driver->printFiltered(pval, EmbAJAXOutputDriverBase::JSQuoted, valueNeedsEscaping(i));
         _driver->printContent("]");
 
@@ -164,13 +169,10 @@ bool EmbAJAXElement::changed(uint16_t since) {
 }
 
 void EmbAJAXElement::printTextInput(size_t SIZE, const char* _value) const {
-    _driver->printContent("<input type=\"text\"");
-    _driver->printAttribute("id", _id);
-    _driver->printAttribute("maxLength", SIZE-1);
-    _driver->printAttribute("size", min(max((size_t) SIZE, (size_t) 11), (size_t) 41) - 1);  // Arbitray limit for rendered width of text fields: 10..40 chars
-    _driver->printAttribute("value", _value);
-    // NOTE: importantly, this gets debounced by the page
-    _driver->printContent(" onInput=\"doRequest(this.id, this.value);\"/>");
+    _driver->printContentF("<input type=\"text\" id=" HTML_QUOTED_STRING_ARG " maxLength=" INTEGER_VALUE_ARG " size=" INTEGER_VALUE_ARG
+                           " value=" HTML_QUOTED_STRING_ARG " onInput=\"doRequest(this.id, this.value);\"/>",
+                           _id, SIZE-1, min(max((size_t) SIZE, (size_t) 11), (size_t) 41) - 1, // Arbitray limit for rendered width of text fields: 10..40 chars
+                           _value);
 }
 
 //////////////////////// EmbAJAXContainer ////////////////////////////////////
@@ -204,9 +206,7 @@ EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase** _children, size_t NUM, cons
 //////////////////////// EmbAJAXMutableSpan /////////////////////////////
 
 void EmbAJAXMutableSpan::print() const {
-    _driver->printContent("<span");
-    _driver->printAttribute("id", _id);
-    _driver->printContent(">");
+    _driver->printContentF("<span id=" HTML_QUOTED_STRING_ARG ">", _id);
     if (_value) _driver->printFiltered(_value, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
     _driver->printContent("</span>\n");
 }
@@ -243,12 +243,8 @@ EmbAJAXSlider::EmbAJAXSlider(const char* id, int16_t min, int16_t max, int16_t i
 }
 
 void EmbAJAXSlider::print() const {
-    _driver->printContent("<input type=\"range\"");
-    _driver->printAttribute("id", _id);
-    _driver->printAttribute("min", _min);
-    _driver->printAttribute("max", _max);
-    _driver->printAttribute("value", _value);
-    _driver->printContent(" oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>");
+    _driver->printContentF("<input type=\"range\" id=" HTML_QUOTED_STRING_ARG " min=" INTEGER_VALUE_ARG " max=" INTEGER_VALUE_ARG " value=" INTEGER_VALUE_ARG
+                           " oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>", _id, _min, _max, _value);
 }
 
 const char* EmbAJAXSlider::value(uint8_t which) const {
@@ -281,10 +277,8 @@ EmbAJAXColorPicker::EmbAJAXColorPicker(const char* id, uint8_t r, uint8_t g, uin
 }
 
 void EmbAJAXColorPicker::print() const {
-    _driver->printContent("<input type=\"color\"");
-    _driver->printAttribute("id", _id);
-    _driver->printAttribute("value", value());
-    _driver->printContent(" oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>");
+    _driver->printContentF("<input type=\"color\" id=" HTML_QUOTED_STRING_ARG " value=" HTML_QUOTED_STRING_ARG
+                           " oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>", _id, value());
 }
 
 // helper to make sure we get exactly two hex digits for any input
@@ -356,9 +350,8 @@ EmbAJAXPushButton::EmbAJAXPushButton(const char* id, const char* label, void (*c
 }
 
 void EmbAJAXPushButton::print() const {
-    _driver->printContent("<button type=\"button\"");
-    _driver->printAttribute("id", _id);
-    _driver->printContent(" onClick=\"doRequest(this.id, 'p', 2);\">"); // 2 -> not mergeable -> so we can count individual presses, even if they happen fast
+    _driver->printContentF("<button type=\"button\" id=" HTML_QUOTED_STRING_ARG
+                           " onClick=\"doRequest(this.id, 'p', 2);\">", _id); // 2 -> not mergeable -> so we can count individual presses, even if they happen fast
     _driver->printFiltered(_label, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
     _driver->printContent("</button>");
 }
@@ -396,20 +389,14 @@ EmbAJAXMomentaryButton::EmbAJAXMomentaryButton(const char* id, const char* label
 }
 
 void EmbAJAXMomentaryButton::print() const {
-    _driver->printContent("<button type=\"button\"");
-    _driver->printAttribute("id", _id);
-    _driver->printContent(">");
+    _driver->printContentF("<button type=\"button\" id=" HTML_QUOTED_STRING_ARG ">", _id);
     _driver->printFiltered(_label, EmbAJAXOutputDriverBase::NotQuoted, valueNeedsEscaping());
-    _driver->printContent("</button>"
+    _driver->printContentF("</button>"
                           "<script>\n"
-                          "{let btn=document.getElementById(");
-    _driver->printFiltered(_id, EmbAJAXOutputDriverBase::JSQuoted, false);
-    _driver->printContent(");\n"
-                          "btn.onmousedown = btn.ontouchstart = function() { clearInterval(this.pinger); this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this),");
-    _driver->printInt(_timeout / 1.5);
-    _driver->printContent("); doRequest(this.id, 'p'); return false; };\n"
+                          "{let btn=document.getElementById(" JS_QUOTED_STRING_ARG ");\n"
+                          "btn.onmousedown = btn.ontouchstart = function() { clearInterval(this.pinger); this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this)," INTEGER_VALUE_ARG "); doRequest(this.id, 'p'); return false; };\n"
                           "btn.onmouseup = btn.ontouchend = btn.onmouseleave = function() { clearInterval(this.pinger); doRequest(this.id, 'r'); return false;};}\n"
-                          "</script>");
+                          "</script>", _id, _timeout / 1.5);
 }
 
 EmbAJAXMomentaryButton::Status EmbAJAXMomentaryButton::status() const {
@@ -435,25 +422,20 @@ void EmbAJAXMomentaryButton::updateFromDriverArg(const char* argname) {
 EmbAJAXCheckButton::EmbAJAXCheckButton(const char* id, const char* label, bool checked) : EmbAJAXElement(id) {
     _label = label;
     _checked = checked;
-    radiogroup = 0;
+    radiogroup = nullptr;
 }
 
 void EmbAJAXCheckButton::print() const {
-    _driver->printContent("<span"); // <input> and <label> inside a common span to support hiding, better
-    _driver->printAttribute("class", radiogroup ? "radio" : "checkbox");  // also, assign a class to the surrounding span to ease styling via CSS
-    _driver->printContent("><input");
-    _driver->printAttribute("id", _id);
-    _driver->printAttribute("type", radiogroup ? "radio" : "checkbox");
-    if (radiogroup) {
-        _driver->printAttribute("name", radiogroup->_name);
-    }
-    _driver->printContent(" value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"");
+    _driver->printContentF("<span class=" HTML_QUOTED_STRING_ARG ">" // <input> and <label> inside a common span to support hiding, better.
+                                                                     // Also, assign a class to the surrounding span to ease styling via CSS.
+                           "<input id=" HTML_QUOTED_STRING_ARG " type=" HTML_QUOTED_STRING_ARG
+                           " value=\"t\" onChange=\"doRequest(this.id, this.checked ? 't' : 'f');\"",
+                           radiogroup ? "radio" : "checkbox", _id, radiogroup ? "radio" : "checkbox");
+    if (radiogroup) _driver->printAttribute("name", radiogroup->_name);
     if (_checked) _driver->printContent(" checked=\"true\"");
-    _driver->printContent ("/><label");  // Note: Internal <span> element for more flexbility in styling the control
-    _driver->printAttribute("for", _id);
-    _driver->printContent(">");
-    _driver->printContent(_label);  // NOTE: Not escaping anything, so user can insert HTML.
-    _driver->printContent("</label></span>");
+    // Note: Internal <span> element for more flexbility in styling the control
+    _driver->printContentF("/><label for=" HTML_QUOTED_STRING_ARG ">" PLAIN_STRING_ARG // NOTE: Not escaping _label, so user can insert HTML.
+                           "</label></span>", _id, _label);
 }
 
 const char* EmbAJAXCheckButton::value(uint8_t which) const {
@@ -484,15 +466,9 @@ void EmbAJAXCheckButton::setChecked(bool checked) {
 //////////////////////// EmbAJAXOptionSelect(Base) ///////////////
 
 void EmbAJAXOptionSelectBase::print(const char* const* _labels, uint8_t NUM) const {
-    _driver->printContent("<select");
-    _driver->printAttribute("id", _id);
-    _driver->printContent(" onChange=\"doRequest(this.id, this.value)\">\n");
+    _driver->printContentF("<select id=" HTML_QUOTED_STRING_ARG " onChange=\"doRequest(this.id, this.value)\">\n", _id);
     for(uint8_t i = 0; i < NUM; ++i) {
-        _driver->printContent("<option");
-        _driver->printAttribute("value", i);
-        _driver->printContent(">");
-        _driver->printContent(_labels[i]);
-        _driver->printContent("</option>\n");
+        _driver->printContentF("<option value=" INTEGER_VALUE_ARG ">" HTML_QUOTED_STRING_ARG "</option>\n", i, _labels[i]);
     }
     _driver->printContent("</select>");
 }
@@ -524,10 +500,9 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _title, const char* _header_add, uint16_t _min_interval) const {
     _driver->printHeader(true);
-    _driver->printContent("<!DOCTYPE html>\n<HTML><HEAD><TITLE>");
-    if (_title) _driver->printContent(_title);
-    _driver->printContent("</TITLE>\n<SCRIPT>\n");
-    _driver->printContent("var serverrevision = 0;\n"
+    _driver->printContentF("<!DOCTYPE html>\n<HTML><HEAD><TITLE>" PLAIN_STRING_ARG "</TITLE>\n<SCRIPT>\n"
+
+                            "var serverrevision = 0;\n"
                             "var request_queue = [];\n"   // requests waiting to be sent
                             // message types: 1: regular: request may be overridden by subsequent value changes on the same id - merge if in queue
                             //                2: semi-distinct: request may override type 1 requests for the same id, but will never be overridden (button clicks)
@@ -544,7 +519,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "var prev_request = 0;\n"
                             "function sendQueued() {\n"
                             "    var now = new Date().getTime();\n"
-                            "    if (num_waiting > 0 || (now - prev_request < "); _driver->printInt(_min_interval); _driver->printContent(")) return;\n"
+                            "    if (num_waiting > 0 || (now - prev_request < " INTEGER_VALUE_ARG ")) return;\n"
                             "    var e = request_queue.shift();\n"
                             "    if (!e && (now - prev_request < 1000)) return;\n"
                             "    if (!e) e = {id: '', value: ''};\n" //Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
@@ -564,9 +539,9 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                             "    req.send('id=' + e.id + '&value=' + encodeURIComponent(e.value) + '&revision=' + serverrevision);\n"
                             "}\n"
-                            "window.setInterval(sendQueued, "); _driver->printInt(_min_interval/2+1); _driver->printContent(");\n");
+                            "window.setInterval(sendQueued, " INTEGER_VALUE_ARG ");\n"
 
-    _driver->printContent("function doUpdates(response) {\n"
+                            "function doUpdates(response) {\n"
                             "    serverrevision = response.revision;\n"
                             "    var updates = response.updates;\n"
                             "    for(i = 0; i < updates.length; i++) {\n"
@@ -584,11 +559,14 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "          prop[spec[spec.length-1]] = changes[j][1];\n"
                             "       }\n"
                             "    }\n"
-                            "}\n");
-    _driver->printContent("</SCRIPT>\n");
-    if (_header_add) _driver->printContent(_header_add);
-    _driver->printContent("</HEAD>\n<BODY><FORM autocomplete=\"off\" onSubmit=\"return false;\">\n");  // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions,
-                                                                                                       // but also the "restore latest settings after client reload" is questionable in our use-case.
+                            "}\n"
+
+                            "</SCRIPT>\n"
+                            "</HEAD>\n<BODY><FORM autocomplete=\"off\" onSubmit=\"return false;\">\n" // NOTE: The nasty thing about autocomplete is that it does not trigger
+                                                                                                      // onChange() functions, but also the "restore latest settings after client
+                                                                                                      // reload" is questionable in our use-case.
+                            , _title, _min_interval, _min_interval/2+1, _header_add);
+
     printChildren(_children, NUM);
 
     _driver->printContent("\n</FORM></BODY></HTML>\n");
@@ -637,9 +615,7 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
 
     // then relay value changes that have occured in the server (possibly in response to those sent)
     _driver->printHeader(false);
-    _driver->printContent("{\"revision\": ");
-    _driver->printInt(_driver->revision());
-    _driver->printContent(",\n\"updates\": [\n");
+    _driver->printContentF("{\"revision\": " INTEGER_VALUE_ARG ",\n\"updates\": [\n", _driver->revision());
     sendUpdates(_children, NUM, client_revision, true);
     _driver->printContent("\n]}\n");
 

@@ -52,17 +52,12 @@ public:
         _snap_back = snap_back;
     }
     void print() const override {
-        EmbAJAXBase::_driver->printContent("<canvas");
-        EmbAJAXBase::_driver->printAttribute("id", _id);
-        EmbAJAXBase::_driver->printAttribute("width", _width);
-        EmbAJAXBase::_driver->printAttribute("height", _height);
-        EmbAJAXBase::_driver->printContent(" style=\"cursor: all-scroll\"></canvas>");  // style="border-radius:50%; background-color:grey; cursor: all-scroll"
-        EmbAJAXBase::_driver->printContent(
-           "<script>\n"
-           "var elem = document.getElementById(");
-        EmbAJAXBase::_driver->printAttribute("id", _id);
-        EmbAJAXBase::_driver->printContent(
-           ");\n"
+        EmbAJAXBase::_driver->printContentF("<canvas id=" HTML_QUOTED_STRING_ARG " width=" INTEGER_VALUE_ARG " height=" INTEGER_VALUE_ARG " style=\"cursor: all-scroll\"></canvas>"
+                                            // style="border-radius:50%; background-color:grey; cursor: all-scroll"
+                                            "<script>\n"
+                                            "var elem = document.getElementById(" JS_QUOTED_STRING_ARG ");\n",
+                                            _id, _width, _height, _id);
+        EmbAJAXBase::_driver->printContentF(
            "elem.__defineSetter__('coords', function(value) {\n"
            "  var vals = value.split(',');\n"
            "  this.update(vals[0], vals[1], false);\n"
