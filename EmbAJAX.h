@@ -28,6 +28,13 @@
 // Set to a value above 0 for diagnostics on Serial and browser console
 //#define EMBAJAX_DEBUG 3
 
+#define JS_QUOTED_STRING_ARG "\10"
+#define HTML_QUOTED_STRING_ARG "\11"
+//#define JS_ESCAPED_STRING_ARG '\12'
+#define HTML_ESCAPED_STRING_ARG "\13"
+#define PLAIN_STRING_ARG "\14"
+#define INTEGER_VALUE_ARG "\15"
+
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
 class EmbAJAXContainerBase;
@@ -88,6 +95,7 @@ template<size_t NUM> friend class EmbAJAXContainer;
 
     static EmbAJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
+    constexpr static char null_string[1] = "";
 
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::printChildren() */
     void printChildren(EmbAJAXBase** children, size_t num) const;
@@ -152,13 +160,14 @@ public:
      *  @param HTMLescaped If true, escape any "<" and "&" in the input as "\&lt;" and "\&amp;"
      *                     such that it will appear as plain text if rendered as HTML
      *                     (safe for untrusted user input). */
-    void printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
+    void printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped) {
+        _printFiltered(value, quoted, HTMLescaped);
+        commitBuffer();
+    }
     /** Shorthand for printFiltered(value, JSQuoted, false); */
     inline void printJSQuoted (const char* value) { printFiltered (value, JSQuoted, false); }
     /** Shorthand for printFiltered(value, HTMLQuoted, false); */
     inline void printHTMLQuoted (const char* value) { printFiltered (value, HTMLQuoted, false); }
-    /** Helper function to write integer number */
-    void printInt(int32_t);
     /** Convenience function to print an attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
      *
@@ -171,7 +180,15 @@ public:
      *  @param name name of the attribute
      *  @param value value of the attribute. */
     void printAttribute(const char* name, const int32_t value);
+    void printContentF(const char* fmt, ...);
 private:
+    void _printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
+    void _printContent(const char* content);
+    void _printChar(const char content);
+    void commitBuffer();
+    const int _bufsize = 64;
+    char _buf[64];
+    int _bufpos = 0;
     uint16_t _revision;
     uint16_t next_revision;
 };
@@ -527,9 +544,7 @@ public:
         _childlist = EmbAJAXContainer<NUM>(children);
     }
     void print() const override {
-        _driver->printContent("<div");
-        _driver->printAttribute("id", _id);
-        _driver->printContent(">");
+        _driver->printContentF("<div id=" HTML_QUOTED_STRING_ARG ">", _id);
         _childlist.print();
         _driver->printContent("</div>");
     }
@@ -671,7 +686,7 @@ public:
      *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). 
      *  @param min_interval minimum interval (ms) between two requests sent by a single client. A lower value may reduce latency at the cost of traffic/CPU. */
     EmbAJAXPage(EmbAJAXBase* children[NUM], const char* title, const char* header_add = 0, uint16_t min_interval=100) : EmbAJAXContainer<NUM>(children),
-        _title(title), _header_add(header_add), _min_interval(min_interval) {}
+        _title(title ? title : EmbAJAXBase::null_string), _header_add(header_add ? header_add : EmbAJAXBase::null_string), _min_interval(min_interval) {}
     /** Duplication of print(), needed for internal reasons. Use print(), instead! */
     void printPage() override {
         print();
