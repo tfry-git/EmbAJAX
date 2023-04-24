@@ -82,7 +82,7 @@ void EmbAJAXOutputDriverBase::printContentF(const char* fmt, ...) {
     va_start(args, fmt);
     const char *pos = fmt;
     while(true) {
-        const char c = *pos;
+        const char c = *pos++;
         if (c == '\0') break;
         else if (c == JS_QUOTED_STRING_ARG[0]) {
             _printFiltered(va_arg(args, char*), JSQuoted, false);
@@ -93,6 +93,8 @@ void EmbAJAXOutputDriverBase::printContentF(const char* fmt, ...) {
         } else if (c == INTEGER_VALUE_ARG[0]) {
             char buf[12];
             _printContent(itoa(va_arg(args, int), buf, 10));
+        } else if (c == PLAIN_STRING_ARG[0]) {
+            _printContent(va_arg(args, char*));
         } else {
             _printChar(c);
         }
@@ -397,7 +399,7 @@ void EmbAJAXMomentaryButton::print() const {
                           "{let btn=document.getElementById(" JS_QUOTED_STRING_ARG ");\n"
                           "btn.onmousedown = btn.ontouchstart = function() { clearInterval(this.pinger); this.pinger=setInterval(function() {doRequest(this.id, 'p');}.bind(this)," INTEGER_VALUE_ARG "); doRequest(this.id, 'p'); return false; };\n"
                           "btn.onmouseup = btn.ontouchend = btn.onmouseleave = function() { clearInterval(this.pinger); doRequest(this.id, 'r'); return false;};}\n"
-                          "</script>", _id, _timeout / 1.5);
+                          "</script>", _id, (int) (_timeout / 1.5));
 }
 
 EmbAJAXMomentaryButton::Status EmbAJAXMomentaryButton::status() const {
@@ -500,6 +502,9 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 //////////////////////// EmbAJAXPage /////////////////////////////
 
 void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _title, const char* _header_add, uint16_t _min_interval) const {
+#if EMBAJAX_DEBUG > 2
+    time_t start = millis();
+#endif
     _driver->printHeader(true);
     _driver->printContentF("<!DOCTYPE html>\n<HTML><HEAD><TITLE>" PLAIN_STRING_ARG "</TITLE>\n<SCRIPT>\n"
 
@@ -562,7 +567,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "    }\n"
                             "}\n"
 
-                            "</SCRIPT>\n"
+                            "</SCRIPT>\n" PLAIN_STRING_ARG
                             "</HEAD>\n<BODY><FORM autocomplete=\"off\" onSubmit=\"return false;\">\n" // NOTE: The nasty thing about autocomplete is that it does not trigger
                                                                                                       // onChange() functions, but also the "restore latest settings after client
                                                                                                       // reload" is questionable in our use-case.
@@ -571,6 +576,11 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
     printChildren(_children, NUM);
 
     _driver->printContent("\n</FORM></BODY></HTML>\n");
+#if EMBAJAX_DEBUG > 2
+    Serial.print("Page rendered in ");
+    Serial.print(millis() - start);
+    Serial.println("ms");
+#endif
 }
 
 void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*change_callback)()) {
@@ -608,10 +618,12 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
     }
     _driver->nextRevision();
 #if EMBAJAX_DEBUG > 2
-    Serial.print("Update done. Client revision ");
-    Serial.print(client_revision);
-    Serial.print(" driver revision ");
-    Serial.println(_driver->revision());
+    if (element || (EMBAJAX_DEBUG > 3)) {
+        Serial.print("Update done. Client revision ");
+        Serial.print(client_revision);
+        Serial.print(" driver revision ");
+        Serial.println(_driver->revision());
+    }
 #endif
 
     // then relay value changes that have occured in the server (possibly in response to those sent)
