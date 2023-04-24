@@ -1,4 +1,5 @@
 -- Changes in version 0.2.0 -- UNRELEASED
+* Internal: Add printContentF function to allow more flash-efficient generation of HTML/JS code
 * EmbAJAXSlider and EmbAJAXColorPicker now send "live" updates (while dragging).
 * Page-global minimum delay between any two updates sent to the server.
   Requests from the same element, that get generated within this minimum delay, are merged.
