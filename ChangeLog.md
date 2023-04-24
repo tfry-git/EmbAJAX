@@ -7,7 +7,7 @@
   The former is obsolete by the global limit, the latter had never been implemented.
 * EmbAJAXTextInputs are more responsive, and no longer prone to "swallowing" key presses.
 * Add demo on keeping track of active clients
-X TODO: Testing, sp. joystick
+X TODO: Fix EmbAJAXValidatingTextInput (did it ever work?)
 X TODO: Rework hasActiveClient, again?
 
 -- Changes before version 0.1.1 have not been recorded --
