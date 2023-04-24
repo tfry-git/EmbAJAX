@@ -31,6 +31,7 @@
 // statics
 EmbAJAXOutputDriverBase *EmbAJAXBase::_driver;
 char EmbAJAXBase::itoa_buf[ITOA_BUFLEN];
+constexpr const char EmbAJAXBase::null_string[1];
 
 ////////////////////////////// EmbAJAXOutputDriverBase ////////////////////
 

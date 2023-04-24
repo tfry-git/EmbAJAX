@@ -95,7 +95,7 @@ template<size_t NUM> friend class EmbAJAXContainer;
 
     static EmbAJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
-    constexpr static char null_string[1] = "";
+    constexpr static const char null_string[1] = "";
 
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::printChildren() */
     void printChildren(EmbAJAXBase** children, size_t num) const;
