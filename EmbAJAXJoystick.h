@@ -52,12 +52,11 @@ public:
         _snap_back = snap_back;
     }
     void print() const override {
-        EmbAJAXBase::_driver->printContentF("<canvas id=" HTML_QUOTED_STRING_ARG " width=" INTEGER_VALUE_ARG " height=" INTEGER_VALUE_ARG " style=\"cursor: all-scroll\"></canvas>"
-                                            // style="border-radius:50%; background-color:grey; cursor: all-scroll"
+        EmbAJAXBase::_driver->printFormatted("<canvas id=", HTML_QUOTED_STRING(_id), " width=", INTEGER_VALUE(_width), " height=" INTEGER_VALUE(_height),
+                                             " style=\"cursor: all-scroll\"></canvas>"   // style="border-radius:50%; background-color:grey; cursor: all-scroll"
                                             "<script>\n"
-                                            "var elem = document.getElementById(" JS_QUOTED_STRING_ARG ");\n",
-                                            _id, _width, _height, _id);
-        EmbAJAXBase::_driver->printContentF(
+                                            "var elem = document.getElementById(", JS_QUOTED_STRING(_id), ");\n");
+        EmbAJAXBase::_driver->printFormatted(
            "elem.__defineSetter__('coords', function(value) {\n"
            "  var vals = value.split(',');\n"
            "  this.update(vals[0], vals[1], false);\n"
@@ -68,10 +67,9 @@ public:
            "  var height = this.height;\n"
            "  var pressed = this.pressed;\n"
            "  x = Math.round(((x - width / 2) * 2000) / (width-40));\n"    // Scale values to +/-1000, independent of display size
-           "  y = Math.round(((y - height / 2) * 2000) / (height-40));\n");
-        EmbAJAXBase::_driver->printContent(_snap_back);
-        EmbAJAXBase::_driver->printContent(_position_adjust);
-        EmbAJAXBase::_driver->printContent(
+           "  y = Math.round(((y - height / 2) * 2000) / (height-40));\n",
+           PLAIN_STRING(_snap_back), "",  // NOTE: inserted "", because printFormatted macro assumed static string between each arg
+           PLAIN_STRING(_position_adjust),
            "  this.update(x, y, true, nomerge);\n"
            "}\n"
            "\n"

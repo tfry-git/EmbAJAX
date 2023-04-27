@@ -57,8 +57,8 @@ public:
         _rec_buffer_size = rec_buffer_size;
     }
     void print() const override {
-        _driver->printContentF("<span id=" HTML_QUOTED_STRING_ARG "><script>{\n"
-                              "let spn=document.getElementById(" JS_QUOTED_STRING_ARG ");\n"
+        _driver->printFormatted("<span id=", HTML_QUOTED_STRING(_id), "><script>{\n"
+                              "let spn=document.getElementById(", JS_QUOTED_STRING(_id), ");\n"
                               "Object.defineProperty(spn, 'EmbAJAXValue', {\n"
                               "  set: function(value) {\n"
                               "    if (this.receiveValue) this.receiveValue(value);\n"
@@ -67,13 +67,12 @@ public:
                               "spn.sendValue = function(value) {\n"
                               "  doRequest(this.id, value);\n"
                               "}\n"
-                              "spn.init=function() {\n"
-                              PLAIN_STRING_ARG
+                              "spn.init=function() {\n",
+                              PLAIN_STRING(_script),
                               "\n};\n"
                               "spn.init();\n"
-                              "spn.EmbAJAXValue=" JS_QUOTED_STRING_ARG ";\n"
-                              "}</script></span>\n",
-                              _id, _id, _script, _value);
+                              "spn.EmbAJAXValue=", JS_QUOTED_STRING(_value), ";\n"
+                              "}</script></span>\n");
     }
     const char* value(uint8_t which = EmbAJAXBase::Value) const override {
         if (which == EmbAJAXBase::Value) return _value;
