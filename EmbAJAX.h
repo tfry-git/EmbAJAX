@@ -2,7 +2,7 @@
  * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
- * Copyright (C) 2018-2019 Thomas Friedrichsmeier
+ * Copyright (C) 2018-2023 Thomas Friedrichsmeier
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -28,12 +28,7 @@
 // Set to a value above 0 for diagnostics on Serial and browser console
 //#define EMBAJAX_DEBUG 3
 
-#define JS_QUOTED_STRING_ARG "\10"
-#define HTML_QUOTED_STRING_ARG "\11"
-//#define JS_ESCAPED_STRING_ARG '\12'
-#define HTML_ESCAPED_STRING_ARG "\13"
-#define PLAIN_STRING_ARG "\14"
-#define INTEGER_VALUE_ARG "\15"
+#include "macro_definitions.h"
 
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
@@ -155,6 +150,8 @@ public:
     };
     /** Print the given value filtered according to the parameters:
      *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
+     *
      *  @param quoted If true, add double-quotes around the string, and esacpe any double
      *                quotes within the string as &quot;.
      *  @param HTMLescaped If true, escape any "<" and "&" in the input as "\&lt;" and "\&amp;"
@@ -171,16 +168,60 @@ public:
     /** Convenience function to print an attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
      *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
+     *
      *  @param name name of the attribute
      *  @param value value of the attribute. Will be quoted. */
     void printAttribute(const char* name, const char* value);
     /** Convenience function to print an integer attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
      *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
+     *
      *  @param name name of the attribute
      *  @param value value of the attribute. */
     void printAttribute(const char* name, const int32_t value);
-    void printContentF(const char* fmt, ...);
+    /** Print a static string with parameters replaced, somewhat similar to printf
+     *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
+     *
+     *  See there for further info. This function is really just the internal implementation, public for technical reasons.
+    */
+    void _printContentF(const char* fmt, ...);
+    /** @def printFormatted(...)
+     *  Print a static string with parameters replaced, roughly similar to printf
+     *
+     *  This is the primary function for elements to "print" to the client, i.e. to send the HTML/JS code needed to make
+     *  the element work. The usage may best be explained by example (actual code of EmbAJAXSlider:
+     *  @code{.cpp}
+     *  _driver->printFormatted("<input type=\"range\" id=", HTML_QUOTED_STRING(_id),
+     *                          " min=", INTEGER_VALUE(_min), " max=", INTEGER_VALUE(_max),
+     *                          " value=", INTEGER_VALUE(_value),
+     *                          " oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>");
+     *  @endcode
+     *
+     *  First thing to note is that - although this function is technically implemented as a macro - it behaves like a
+     *  public member function of EmbAJAXOutputDriverBase. Actually the macro relays to appropriate helper functions in that class.
+     *
+     *  Arguments can be either string literals, or values. These two kinds of argument have to be used alternatingly (which is usually
+     *  needed, anyway), i.e. "string", value, "string", value... Values have to be wrapped by one of #HTML_QUOTED_STRING(), #INTEGER_VALUE(),
+     *  #HTML_ESCAPED_STRING, JS_QUOTED_STRING, PLAIN_STRING, which will control just how the value is inserted (with of without quotes, with
+     *  HTML entities escaped, etc.).
+     *
+     *  Internally, all static portions of the output will be concatenated to a single string, which - on architectures where it matters -
+     *  will automatically be wrapped inside an F() macro, for storage in FLASH memory, thus helping a lot to reduce RAM usage (not yet implemented,
+     *  to come soon).
+     *
+     *  For efficiency reasons, you should try to merge as many bits of output in a single printFormatted(), as possible. I.e. instead of
+     *  @code{.cpp}
+     *  _driver->printFormatted("id=", HTML_QUOTED_STRING(_id));
+     *  _driver->printFormatted(" value=", INTEGER_VALUE(_value));
+     *  @endcode
+     *  always use:
+     *  @code{.cpp}
+     *  _driver->printFormatted("id=", HTML_QUOTED_STRING(_id), _driver->printFormatted(" value=", INTEGER_VALUE(_value));
+     *  @endcode
+     * */
 private:
     void _printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
     void _printContent(const char* content);
@@ -544,7 +585,7 @@ public:
         _childlist = EmbAJAXContainer<NUM>(children);
     }
     void print() const override {
-        _driver->printContentF("<div id=" HTML_QUOTED_STRING_ARG ">", _id);
+        _driver->printFormatted("<div id=", HTML_QUOTED_STRING(_id), ">");
         _childlist.print();
         _driver->printContent("</div>");
     }

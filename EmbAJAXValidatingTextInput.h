@@ -32,8 +32,9 @@ public:
         _pattern = nullptr;
     }
     void print() const override {
-        EmbAJAXBase::_driver->printContentF("<input type=\"text\" id=" HTML_QUOTED_STRING_ARG " maxLength=" INTEGER_VALUE_ARG " size=" INTEGER_VALUE_ARG " " PLAIN_STRING_ARG,
-                                           EmbAJAXTextInput<SIZE>::_id, SIZE-1, min(max(SIZE, (size_t) 11), (size_t) 41) - 1, _attributes);
+        EmbAJAXBase::_driver->printFormatted("<input type=\"text\" id=", HTML_QUOTED_STRING(EmbAJAXTextInput<SIZE>::_id), " maxLength=", INTEGER_VALUE(SIZE-1),
+                                             " size=", INTEGER_VALUE(min(max(SIZE, (size_t) 11), (size_t) 41) - 1), " ", PLAIN_STRING(_attributes),
+                                             " onInput=\"doRequest(this.id, this.value); this.checkValidity();\"");
         if (EmbAJAXTextInput<SIZE>::_value[0] != '\0') {
             EmbAJAXBase::_driver->printAttribute("value", EmbAJAXTextInput<SIZE>::_value);
         }
@@ -43,7 +44,7 @@ public:
         if (_pattern != 0) {
             EmbAJAXBase::_driver->printAttribute("pattern", _pattern);
         }
-        EmbAJAXBase::_driver->printContent(" onInput=\"doRequest(this.id, this.value); this.checkValidity();\"/>");
+        EmbAJAXBase::_driver->printContent("/>");
     }
     /** Set a placeholder text (will be shown, when the input is empty) */
     void setPlaceholder(const char* placeholder) {
