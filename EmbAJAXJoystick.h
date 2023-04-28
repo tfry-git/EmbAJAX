@@ -52,7 +52,7 @@ public:
         _snap_back = snap_back;
     }
     void print() const override {
-        EmbAJAXBase::_driver->printFormatted("<canvas id=", HTML_QUOTED_STRING(_id), " width=", INTEGER_VALUE(_width), " height=" INTEGER_VALUE(_height),
+        EmbAJAXBase::_driver->printFormatted("<canvas id=", HTML_QUOTED_STRING(_id), " width=", INTEGER_VALUE(_width), " height=", INTEGER_VALUE(_height),
                                              " style=\"cursor: all-scroll\"></canvas>"   // style="border-radius:50%; background-color:grey; cursor: all-scroll"
                                             "<script>\n"
                                             "var elem = document.getElementById(", JS_QUOTED_STRING(_id), ");\n");
