@@ -24,7 +24,7 @@
 
 #include "EmbAJAX.h"
 
-#include <cstdarg> // For va_args in _printContentF.
+#include <stdarg.h> // For va_args in _printContentF.
 
 #define ITOA_BUFLEN 8
 
@@ -118,6 +118,8 @@ void EmbAJAXOutputDriverBase::_printContentF(const __FlashStringHelper* _fmt, ..
     size_t bufpos = bufsize;
     while(true) {
         if (bufpos == bufsize) {
+            // NOTE: single-byte reads from flash can be terribly inefficient (importantly, on the ESP8266),
+            //       so we read in larger chunks, even if that will somtimes be a little more than we need.
             memcpy_P(buf, fmt, bufsize);
             bufpos = 0;
             fmt += bufsize;

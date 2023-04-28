@@ -26,6 +26,8 @@ jobs:
 
     env:
       SKETCHES_REPORTS_PATH: sketches-reports
+      sketch-paths-wifi: "'examples/Blink', 'examples/ConnectionStatus', 'examples/Inputs', 'examples/Joystick', 'examples/Styling', 'examples/TwoPages', 'examples/Visibility'"
+      sketch-paths-ethernet: "'examples/Blink_Ethernet'"
 
     strategy:
       fail-fast: false
@@ -48,18 +50,25 @@ jobs:
             platforms: |
               - name: rp2040:rp2040
                 source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          - fqbn: arduino:avr:mega:cpu=atmega2560
+            type: atmega2560
         include:
           - board:
               type: esp8266
-            sketch-paths: |
-              - examples/Blink_Ethernet
+            compile-wifi: "true"
+            compile-ethernet: "true"
           - board:
               type: esp32
-            sketch-paths:
+            compile-wifi: "true"
+            compile-ethernet: "false"
           - board:
               type: rp2040
-            sketch-paths: |
-              - examples/Blink_Ethernet
+            compile-wifi: "true"
+            compile-ethernet: "true"
+          - board:
+              type: atmega2560
+            compile-wifi: "false"
+            compile-ethernet: "true"
 
     steps:
       - name: Checkout repository
@@ -71,16 +80,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.board.fqbn }}
           platforms: ${{ matrix.board.platforms }}
-# This is a bit boring: Actually we want to compile all examples, but _exclude_ Blink_Ethernet on EPS32 (where it will not work out of the box). Sadly, there is no mechanism for that.
-          sketch-paths: |
-            - examples/Blink
-            - examples/ConnectionStatus
-            - examples/Inputs
-            - examples/Joystick
-            - examples/Styling
-            - examples/TwoPages
-            - examples/Visibility
-            ${{ matrix.sketch-paths }}
+# This is a real mess, but inside the matrix we cannot acces the env context, so we need this silly logic, instead.
+# Essentially, it just concats the wifi and ethernet sketch-paths as required
+          sketch-paths: "[ ${{ (matrix.compile-wifi == 'true') && env.sketch-paths-wifi || '' }} ${{ (matrix.compile-wifi == matrix.compile-ethernet) && ',' || '' }} ${{ (matrix.compile-ethernet == 'true') && env.sketch-paths-ethernet || '' }} ]"
           libraries: |
             - source-path: ./
             - name: EthernetWebServer
