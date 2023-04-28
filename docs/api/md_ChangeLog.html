@@ -67,6 +67,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>&ndash; Changes in version 0.2.0 &ndash; UNRELEASED</p><ul>
+<li>On Harvard-architecture MCUs, keep most static strings in flash memory, only. This can achieve massive RAM savings on some MCUs (none one others), at the cost of small performance hit (behavior can be customized using the USE_PROGMEM_STRINGS #define).</li>
 <li>Internal: Add printContentF function to allow more flash-efficient generation of HTML/JS code</li>
 <li><a class="el" href="classEmbAJAXSlider.html" title="An HTML span element with content that can be updated from the server (not the client)">EmbAJAXSlider</a> and <a class="el" href="classEmbAJAXColorPicker.html" title="A color picker element (&lt;input type=&quot;color&quot;&gt;)">EmbAJAXColorPicker</a> now send "live" updates (while dragging).</li>
 <li>Page-global minimum delay between any two updates sent to the server. Requests from the same element, that get generated within this minimum delay, are merged.</li>
