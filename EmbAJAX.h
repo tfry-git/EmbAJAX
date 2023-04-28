@@ -23,7 +23,7 @@
 
 #include <Arduino.h>
 
-#define ARDUJAX_MAX_ID_LEN 16
+#define EMBAJAX_MAX_ID_LEN 16
 
 // Set to a value above 0 for diagnostics on Serial and browser console
 //#define EMBAJAX_DEBUG 3
@@ -586,7 +586,7 @@ public:
     EmbAJAXRadioGroup(const char* id_base, const char* options[NUM], uint8_t selected_option = 0) : EmbAJAXContainer<NUM>(), EmbAJAXRadioGroupBase() {
         for (uint8_t i = 0; i < NUM; ++i) {
             char* childid = childids[i];
-            strncpy(childid, id_base, ARDUJAX_MAX_ID_LEN-4);
+            strncpy(childid, id_base, EMBAJAX_MAX_ID_LEN-4);
             itoa(i, &(childid[strlen(childid)]), 10);
             buttons[i] = EmbAJAXCheckButton(childid, options[i], i == selected_option);
             buttons[i].radiogroup = this;
@@ -616,7 +616,7 @@ public:
 private:
     EmbAJAXCheckButton buttons[NUM]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
     EmbAJAXBase* buttonpointers[NUM];
-    char childids[NUM][ARDUJAX_MAX_ID_LEN];
+    char childids[NUM][EMBAJAX_MAX_ID_LEN];
     int8_t _current_option;
     void selectButton(EmbAJAXCheckButton* which) override {
         _current_option = -1;
