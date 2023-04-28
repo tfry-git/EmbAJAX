@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['installpage',['installPage',['../classEmbAJAXOutputDriverBase.html#a7c4044f073ad0fd837e10cb5771d0332',1,'EmbAJAXOutputDriverBase::installPage()'],['../classEmbAJAXOutputDriverESPAsync.html#aec7f6688918ee567ec4d2da1d08a793a',1,'EmbAJAXOutputDriverESPAsync::installPage()'],['../classEmbAJAXOutputDriverGeneric.html#abfef4c12b54b87c6d5b3474c11f4dfed',1,'EmbAJAXOutputDriverGeneric::installPage()']]]
+  ['handlerequest_116',['handleRequest',['../classEmbAJAXBase.html#ad11bd7214844efd92ddef9d60f72c999',1,'EmbAJAXBase::handleRequest()'],['../classEmbAJAXPage.html#add0530439d1461529c7c50c76de92060',1,'EmbAJAXPage::handleRequest(void(*change_callback)()=0) override']]],
+  ['hasactiveclient_117',['hasActiveClient',['../classEmbAJAXPage.html#aed3a8caa6c454eaf2d42f4c6906a6ead',1,'EmbAJAXPage']]]
 ];

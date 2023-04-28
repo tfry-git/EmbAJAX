@@ -188,40 +188,6 @@ public:
      *  See there for further info. This function is really just the internal implementation, public for technical reasons.
     */
     void _printContentF(const char* fmt, ...);
-    /** @def printFormatted(...)
-     *  Print a static string with parameters replaced, roughly similar to printf
-     *
-     *  This is the primary function for elements to "print" to the client, i.e. to send the HTML/JS code needed to make
-     *  the element work. The usage may best be explained by example (actual code of EmbAJAXSlider:
-     *  @code{.cpp}
-     *  _driver->printFormatted("<input type=\"range\" id=", HTML_QUOTED_STRING(_id),
-     *                          " min=", INTEGER_VALUE(_min), " max=", INTEGER_VALUE(_max),
-     *                          " value=", INTEGER_VALUE(_value),
-     *                          " oninput=\"doRequest(this.id, this.value);\" onchange=\"oninput();\"/>");
-     *  @endcode
-     *
-     *  First thing to note is that - although this function is technically implemented as a macro - it behaves like a
-     *  public member function of EmbAJAXOutputDriverBase. Actually the macro relays to appropriate helper functions in that class.
-     *
-     *  Arguments can be either string literals, or values. These two kinds of argument have to be used alternatingly (which is usually
-     *  needed, anyway), i.e. "string", value, "string", value... Values have to be wrapped by one of #HTML_QUOTED_STRING(), #INTEGER_VALUE(),
-     *  #HTML_ESCAPED_STRING, JS_QUOTED_STRING, PLAIN_STRING, which will control just how the value is inserted (with of without quotes, with
-     *  HTML entities escaped, etc.).
-     *
-     *  Internally, all static portions of the output will be concatenated to a single string, which - on architectures where it matters -
-     *  will automatically be wrapped inside an F() macro, for storage in FLASH memory, thus helping a lot to reduce RAM usage (not yet implemented,
-     *  to come soon).
-     *
-     *  For efficiency reasons, you should try to merge as many bits of output in a single printFormatted(), as possible. I.e. instead of
-     *  @code{.cpp}
-     *  _driver->printFormatted("id=", HTML_QUOTED_STRING(_id));
-     *  _driver->printFormatted(" value=", INTEGER_VALUE(_value));
-     *  @endcode
-     *  always use:
-     *  @code{.cpp}
-     *  _driver->printFormatted("id=", HTML_QUOTED_STRING(_id), _driver->printFormatted(" value=", INTEGER_VALUE(_value));
-     *  @endcode
-     * */
 private:
     void _printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
     void _printContent(const char* content);
