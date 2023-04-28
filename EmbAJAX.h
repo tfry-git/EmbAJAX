@@ -26,7 +26,7 @@
 #define EMBAJAX_MAX_ID_LEN 16
 
 // Set to a value above 0 for diagnostics on Serial and browser console
-#define EMBAJAX_DEBUG 3
+// #define EMBAJAX_DEBUG 3
 
 /** \def USE_PROGMEM_STRINGS
  * Control storage of string constants
