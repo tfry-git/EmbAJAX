@@ -77,6 +77,23 @@ void EmbAJAXOutputDriverBase::_printContent(const char* value) {
     }
 }
 
+#define handleOneChar() {                                           \
+    if (c == JS_QUOTED_STRING_ARG[0]) {                             \
+            _printFiltered(va_arg(args, char*), JSQuoted, false);   \
+        } else if (c == HTML_QUOTED_STRING_ARG[0]) {                \
+            _printFiltered(va_arg(args, char*), HTMLQuoted, false); \
+        } else if (c == HTML_ESCAPED_STRING_ARG[0]) {               \
+            _printFiltered(va_arg(args, char*), NotQuoted, true);   \
+        } else if (c == INTEGER_VALUE_ARG[0]) {                     \
+            char buf[12];                                           \
+            _printContent(itoa(va_arg(args, int), buf, 10));        \
+        } else if (c == PLAIN_STRING_ARG[0]) {                      \
+            _printContent(va_arg(args, char*));                     \
+        } else {                                                    \
+            _printChar(c);                                          \
+        }                                                           \
+}
+
 void EmbAJAXOutputDriverBase::_printContentF(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -84,24 +101,36 @@ void EmbAJAXOutputDriverBase::_printContentF(const char* fmt, ...) {
     while(true) {
         const char c = *pos++;
         if (c == '\0') break;
-        else if (c == JS_QUOTED_STRING_ARG[0]) {
-            _printFiltered(va_arg(args, char*), JSQuoted, false);
-        } else if (c == HTML_QUOTED_STRING_ARG[0]) {
-            _printFiltered(va_arg(args, char*), HTMLQuoted, false);
-        } else if (c == HTML_ESCAPED_STRING_ARG[0]) {
-            _printFiltered(va_arg(args, char*), NotQuoted, true);
-        } else if (c == INTEGER_VALUE_ARG[0]) {
-            char buf[12];
-            _printContent(itoa(va_arg(args, int), buf, 10));
-        } else if (c == PLAIN_STRING_ARG[0]) {
-            _printContent(va_arg(args, char*));
-        } else {
-            _printChar(c);
-        }
+        else handleOneChar();
     }
     va_end(args);
     commitBuffer();
 }
+
+#if USE_PROGMEM_STRINGS
+void EmbAJAXOutputDriverBase::_printContentF(const __FlashStringHelper* _fmt, ...) {
+    va_list args;
+    va_start(args, _fmt);
+
+    PGM_P fmt = reinterpret_cast<PGM_P>(_fmt);
+    const size_t bufsize = 32;
+    char buf[bufsize];
+    size_t bufpos = bufsize;
+    while(true) {
+        if (bufpos == bufsize) {
+            memcpy_P(buf, fmt, bufsize);
+            bufpos = 0;
+            fmt += bufsize;
+        }
+
+        const char c = buf[bufpos++];
+        if (c == '\0') break;
+        else handleOneChar();
+    }
+    va_end(args);
+    commitBuffer();
+}
+#endif
 
 void EmbAJAXOutputDriverBase::printAttribute(const char* name, const char* value) {
     _printContentF(" " PLAIN_STRING_ARG "=" HTML_QUOTED_STRING_ARG, name, value);

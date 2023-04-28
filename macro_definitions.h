@@ -115,5 +115,8 @@
 #define printF_24(F1, A1a, A1b, F2, A2a, A2b, F3, A3a, A3b, F4, A4a, A4b, F5, A5a, A5b, F6, A6a, A6b, F7, A7a, A7b, F8, A8a, A8b) printF_proxy((F1 A1a F2 A2a F3 A3a F4 A4a F5 A5a F6 A6a F7 A7a F8 A8a), A1b, A2b, A3b, A4b, A5b, A6b, A7b, A8b)
 #define printF_25(F1, A1a, A1b, F2, A2a, A2b, F3, A3a, A3b, F4, A4a, A4b, F5, A5a, A5b, F6, A6a, A6b, F7, A7a, A7b, F8, A8a, A8b, F9) printF_proxy((F1 A1a F2 A2a F3 A3a F4 A4a F5 A5a F6 A6a F7 A7a F8 A8a F9), A1b, A2b, A3b, A4b, A5b, A6b, A7b, A8b)
 
-#define printF_proxy(X, ...) _printContentF(X, __VA_ARGS__);
-
+#if USE_PROGMEM_STRINGS
+ #define printF_proxy(X, ...) _printContentF(F(X), __VA_ARGS__);
+#else
+ #define printF_proxy(X, ...) _printContentF(X, __VA_ARGS__);
+#endif

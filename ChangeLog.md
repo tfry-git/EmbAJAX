@@ -1,4 +1,7 @@
 -- Changes in version 0.2.0 -- UNRELEASED
+* On Harvard-architecture MCUs, keep most static strings in flash memory, only. This can achieve
+  massive RAM savings on some MCUs (none one others), at the cost of small performance hit
+  (behavior can be customized using the USE_PROGMEM_STRINGS #define).
 * Internal: Add printContentF function to allow more flash-efficient generation of HTML/JS code
 * EmbAJAXSlider and EmbAJAXColorPicker now send "live" updates (while dragging).
 * Page-global minimum delay between any two updates sent to the server.

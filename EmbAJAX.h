@@ -26,7 +26,31 @@
 #define EMBAJAX_MAX_ID_LEN 16
 
 // Set to a value above 0 for diagnostics on Serial and browser console
-//#define EMBAJAX_DEBUG 3
+#define EMBAJAX_DEBUG 3
+
+/** \def USE_PROGMEM_STRINGS
+ * Control storage of string constants
+ *
+ * On some MCU-architectures, RAM and FLASH reside in two logically distinct address spaces. This implies that regular const char* strings
+ * need to be copied into RAM address space, even if they are fully static. EmbAJAX needs many string constants, and is therefore quite affected
+ * by this problem.
+ *
+ * The Arduino F() macro helps to work around this (further reading, there), but does incur a small performance penalty, which can be avoided if
+ * a) RAM usage is not an issue, or b) the MCU uses a unified address space.
+ *
+ * This define controls whether (most) static strings in EmbAJAX will be wrapped into the Arduino F() macro:
+ * 1 - always
+ * 0 - never
+ * undefined - based on auto-detected CPU arch (this is the default) */
+//#define USE_PROGMEM_STRINGS 0
+
+#if !defined USE_PROGMEM_STRINGS
+ #if defined(memcpy_P) && (memcpy_P == memcpy)
+  #define USE_PROGMEM_STRINGS 0
+ #else
+  #define USE_PROGMEM_STRINGS 1
+ #endif
+#endif
 
 #include "macro_definitions.h"
 
@@ -188,6 +212,9 @@ public:
      *  See there for further info. This function is really just the internal implementation, public for technical reasons.
     */
     void _printContentF(const char* fmt, ...);
+#if USE_PROGMEM_STRINGS
+    void _printContentF(const __FlashStringHelper*, ...);
+#endif
 private:
     void _printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
     void _printContent(const char* content);
