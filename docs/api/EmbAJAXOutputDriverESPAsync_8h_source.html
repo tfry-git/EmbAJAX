@@ -76,7 +76,7 @@ $(function() {
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#define EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION</span></div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160; </div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">// For EmbAJAXPage. Important to include after defining EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION</span></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#include &quot;EmbAJAX.h&quot;</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="EmbAJAX_8h.html">EmbAJAX.h</a>&quot;</span></div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160; </div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;ESPAsyncWebServer.h&gt;</span></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160; </div>
@@ -122,13 +122,14 @@ $(function() {
 <div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;<span class="keyword">typedef</span> <a class="code" href="classEmbAJAXOutputDriverESPAsync.html">EmbAJAXOutputDriverESPAsync</a> <a class="code" href="classEmbAJAXOutputDriverESPAsync.html">EmbAJAXOutputDriver</a>;</div>
 <div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160; </div>
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aclassEmbAJAXBase_html_a973abc4dea3246c2b88cf67f73c765d1"><div class="ttname"><a href="classEmbAJAXBase.html#a973abc4dea3246c2b88cf67f73c765d1">EmbAJAXBase::setDriver</a></div><div class="ttdeci">static void setDriver(EmbAJAXOutputDriverBase *driver)</div><div class="ttdef"><b>Definition:</b> EmbAJAX.h:71</div></div>
-<div class="ttc" id="aclassEmbAJAXOutputDriverBase_html"><div class="ttname"><a href="classEmbAJAXOutputDriverBase.html">EmbAJAXOutputDriverBase</a></div><div class="ttdoc">Abstract base class for output drivers/server implementations.</div><div class="ttdef"><b>Definition:</b> EmbAJAX.h:141</div></div>
+<div class="ttc" id="aEmbAJAX_8h_html"><div class="ttname"><a href="EmbAJAX_8h.html">EmbAJAX.h</a></div></div>
+<div class="ttc" id="aclassEmbAJAXBase_html_a973abc4dea3246c2b88cf67f73c765d1"><div class="ttname"><a href="classEmbAJAXBase.html#a973abc4dea3246c2b88cf67f73c765d1">EmbAJAXBase::setDriver</a></div><div class="ttdeci">static void setDriver(EmbAJAXOutputDriverBase *driver)</div><div class="ttdef"><b>Definition:</b> EmbAJAX.h:77</div></div>
+<div class="ttc" id="aclassEmbAJAXOutputDriverBase_html"><div class="ttname"><a href="classEmbAJAXOutputDriverBase.html">EmbAJAXOutputDriverBase</a></div><div class="ttdoc">Abstract base class for output drivers/server implementations.</div><div class="ttdef"><b>Definition:</b> EmbAJAX.h:147</div></div>
 <div class="ttc" id="aclassEmbAJAXOutputDriverESPAsync_html"><div class="ttname"><a href="classEmbAJAXOutputDriverESPAsync.html">EmbAJAXOutputDriverESPAsync</a></div><div class="ttdoc">Output driver implementation. This implementation works with ESPAsyncWebServer (https://github....</div><div class="ttdef"><b>Definition:</b> EmbAJAXOutputDriverESPAsync.h:40</div></div>
 <div class="ttc" id="aclassEmbAJAXOutputDriverESPAsync_html_a07dbd69bd6bd1586f92209eccb8c5031"><div class="ttname"><a href="classEmbAJAXOutputDriverESPAsync.html#a07dbd69bd6bd1586f92209eccb8c5031">EmbAJAXOutputDriverESPAsync::EmbAJAXOutputDriverESPAsync</a></div><div class="ttdeci">EmbAJAXOutputDriverESPAsync(AsyncWebServer *server)</div><div class="ttdef"><b>Definition:</b> EmbAJAXOutputDriverESPAsync.h:44</div></div>
 <div class="ttc" id="aclassEmbAJAXOutputDriverESPAsync_html_a9fd1bafffa7c7f72077817a9192db170"><div class="ttname"><a href="classEmbAJAXOutputDriverESPAsync.html#a9fd1bafffa7c7f72077817a9192db170">EmbAJAXOutputDriverESPAsync::loopHook</a></div><div class="ttdeci">void loopHook() override</div><div class="ttdef"><b>Definition:</b> EmbAJAXOutputDriverESPAsync.h:72</div></div>
 <div class="ttc" id="aclassEmbAJAXOutputDriverESPAsync_html_aec7f6688918ee567ec4d2da1d08a793a"><div class="ttname"><a href="classEmbAJAXOutputDriverESPAsync.html#aec7f6688918ee567ec4d2da1d08a793a">EmbAJAXOutputDriverESPAsync::installPage</a></div><div class="ttdeci">void installPage(EmbAJAXPageBase *page, const char *path, void(*change_callback)()=0) override</div><div class="ttdef"><b>Definition:</b> EmbAJAXOutputDriverESPAsync.h:59</div></div>
-<div class="ttc" id="aclassEmbAJAXPageBase_html"><div class="ttname"><a href="classEmbAJAXPageBase.html">EmbAJAXPageBase</a></div><div class="ttdoc">Absrract internal helper class.</div><div class="ttdef"><b>Definition:</b> EmbAJAX.h:703</div></div>
+<div class="ttc" id="aclassEmbAJAXPageBase_html"><div class="ttname"><a href="classEmbAJAXPageBase.html">EmbAJAXPageBase</a></div><div class="ttdoc">Absrract internal helper class.</div><div class="ttdef"><b>Definition:</b> EmbAJAX.h:709</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

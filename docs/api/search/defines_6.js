@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['make_5fembajaxpage_343',['MAKE_EmbAJAXPage',['../EmbAJAX_8h.html#aa20fe9a3a4357b83ed43c784766a4d42',1,'EmbAJAX.h']]]
+  ['use_5fprogmem_5fstrings_161',['USE_PROGMEM_STRINGS',['../EmbAJAX_8h.html#a705e46debef49de6081ebe4c0248011a',1,'EmbAJAX.h']]]
 ];

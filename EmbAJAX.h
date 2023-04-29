@@ -1,4 +1,4 @@
-/**
+/*
  * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
@@ -23,10 +23,16 @@
 
 #include <Arduino.h>
 
+/** Maximum length to assume for id strings. Reducing this could help to reduce RAM usage, a little. */
 #define EMBAJAX_MAX_ID_LEN 16
 
 // Set to a value above 0 for diagnostics on Serial and browser console
 // #define EMBAJAX_DEBUG 3
+
+/**V@file EmbAJAX.h
+ *
+ * Main include file.
+ */
 
 /** \def USE_PROGMEM_STRINGS
  * Control storage of string constants

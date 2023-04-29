@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['js_5fquoted_5fstring_39',['JS_QUOTED_STRING',['../macro__definitions_8h.html#aee4e5d485bfc8bc27a2e9378bcc2be43',1,'macro_definitions.h']]],
-  ['jsquoted_40',['JSQuoted',['../classEmbAJAXOutputDriverBase.html#ad191a9065376c84fe844c46b2df0466da333c0bd0e8a52e9976187d380c75f3cd',1,'EmbAJAXOutputDriverBase']]]
+  ['loophook_42',['loopHook',['../classEmbAJAXOutputDriverBase.html#a1268b4e6404d41874d8dab07ab02205a',1,'EmbAJAXOutputDriverBase::loopHook()'],['../classEmbAJAXOutputDriverESPAsync.html#a9fd1bafffa7c7f72077817a9192db170',1,'EmbAJAXOutputDriverESPAsync::loopHook()'],['../classEmbAJAXOutputDriverGeneric.html#afb9d77ec350d5737bb229fb40e82686b',1,'EmbAJAXOutputDriverGeneric::loopHook()']]]
 ];

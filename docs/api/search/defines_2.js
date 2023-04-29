@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['js_5fquoted_5fstring_152',['JS_QUOTED_STRING',['../macro__definitions_8h.html#aee4e5d485bfc8bc27a2e9378bcc2be43',1,'macro_definitions.h']]]
+  ['integer_5fvalue_156',['INTEGER_VALUE',['../macro__definitions_8h.html#a4826feae78f44425a4863ac71a0623ad',1,'macro_definitions.h']]]
 ];
