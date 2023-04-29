@@ -550,7 +550,7 @@ public:
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override {
-        for (int i = 0; i < NUM; ++i) {
+        for (uint8_t i = 0; i < NUM; ++i) {
             _children[i]->setBasicProperty(num, status);
         }
     }
