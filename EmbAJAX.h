@@ -26,7 +26,9 @@
 /** Maximum length to assume for id strings. Reducing this could help to reduce RAM usage, a little. */
 #define EMBAJAX_MAX_ID_LEN 16
 
-// Set to a value above 0 for diagnostics on Serial and browser console
+/** \def EMBAJAX_DEBUG
+ * Set to a value above 0 for diagnostics on Serial and browser console (for troubleshooting, only, as it increase flash, RAM, and processing requirements,
+ * considerably. */
 // #define EMBAJAX_DEBUG 3
 
 /**V@file EmbAJAX.h
@@ -45,9 +47,9 @@
  * a) RAM usage is not an issue, or b) the MCU uses a unified address space.
  *
  * This define controls whether (most) static strings in EmbAJAX will be wrapped into the Arduino F() macro:
- * 1 - always
- * 0 - never
- * undefined - based on auto-detected CPU arch (this is the default) */
+ *   - 1 - always
+ *   - 0 - never
+ *   - undefined - based on auto-detected CPU arch (this is the default) */
 //#define USE_PROGMEM_STRINGS 0
 
 #if !defined USE_PROGMEM_STRINGS
