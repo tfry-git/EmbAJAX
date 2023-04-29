@@ -24,7 +24,7 @@
 
 #include "EmbAJAX.h"
 
-#include <cstdarg> // For va_args in _printContentF.
+#include <stdarg.h> // For va_args in _printContentF.
 
 #define ITOA_BUFLEN 8
 
