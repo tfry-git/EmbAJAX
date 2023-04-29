@@ -22,35 +22,29 @@
 #ifndef EMBAJAXVALIDATINGTEXTINPUT_H
 #define EMBAJAXVALIDATINGTEXTINPUT_H
 
-#include <EmbAJAX.h>
+#include "EmbAJAX.h"
 
 template<size_t SIZE> class EmbAJAXValidatingTextInput : public EmbAJAXTextInput<SIZE> {
 public:
     EmbAJAXValidatingTextInput(const char* id) : EmbAJAXTextInput<SIZE>(id) {
-        _attributes = 0;
-        _placeholder = 0;
-        _pattern = 0;
+        _attributes = EmbAJAXBase::null_string;
+        _placeholder = nullptr;
+        _pattern = nullptr;
     }
     void print() const override {
-        EmbAJAXBase::_driver->printContent("<input type=\"text\"");
-        EmbAJAXBase::_driver->printAttribute("id", EmbAJAXTextInput<SIZE>::_id);
-        EmbAJAXBase::_driver->printAttribute("maxLength", SIZE-1);
-        EmbAJAXBase::_driver->printAttribute("size", min(max(SIZE, (size_t) 11), (size_t) 41) - 1);  // Arbitray limit for rendered width of text fields: 10..40 chars
+        EmbAJAXBase::_driver->printFormatted("<input type=\"text\" id=", HTML_QUOTED_STRING(EmbAJAXTextInput<SIZE>::_id), " maxLength=", INTEGER_VALUE(SIZE-1),
+                                             " size=", INTEGER_VALUE(min(max(SIZE, (size_t) 11), (size_t) 41) - 1), " ", PLAIN_STRING(_attributes),
+                                             " onInput=\"doRequest(this.id, this.value); this.checkValidity();\"");
         if (EmbAJAXTextInput<SIZE>::_value[0] != '\0') {
             EmbAJAXBase::_driver->printAttribute("value", EmbAJAXTextInput<SIZE>::_value);
         }
         if (_placeholder != 0) {
             EmbAJAXBase::_driver->printAttribute("placeholder", _placeholder);
         }
-        if (_attributes != 0) {
-            EmbAJAXBase::_driver->printContent(_attributes);
-        }
         if (_pattern != 0) {
             EmbAJAXBase::_driver->printAttribute("pattern", _pattern);
         }
-        // Using onChange to update is too awkward. Using plain onInput would generate too may requests (and often result in "eaten" characters). Instead,
-        // as a compromise, we arrange for an update one second after the last key was pressed.
-        EmbAJAXBase::_driver->printContent(" onInput=\"clearTimeout(this.debouncer); this.debouncer=setTimeout(function() {doRequest(this.id, this.value);}.bind(this),1000); this.checkValidity();\"/>");
+        EmbAJAXBase::_driver->printContent("/>");
     }
     /** Set a placeholder text (will be shown, when the input is empty) */
     void setPlaceholder(const char* placeholder) {

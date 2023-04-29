@@ -17,15 +17,15 @@ EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access to them later in our sketch.
-EmbAJAXJoystick joy1("joy1", 300, 300, 100, 2000, EmbAJAXJoystick_POSITION_9_DIRECTIONS);
-EmbAJAXJoystick joy2("joy2", 300, 300);
+EmbAJAXJoystick joy1("joy1", 300, 300, EmbAJAXJoystick_POSITION_9_DIRECTIONS);
+EmbAJAXJoystick joy2("joy2", 300, 300, EmbAJAXJoystick_FREE_POSITION, EmbAJAXJoystick_NO_SNAP_BACK);
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
 MAKE_EmbAJAXPage(page, "EmbAJAX example - Joystick control", "<style>canvas { background-color: grey; }</style>",
-  new EmbAJAXStatic("<h1>Joystick demonstration.</h1><p><b>Note that the EmbAJAXJoystick class is not entirely finished, yet, and the API and behavior might be subject to change!</b></p><p>The upper joystick is confined to the 9 \"keypad\" positions.</p>"),
+  new EmbAJAXStatic("<h1>Joystick demonstration.</h1><p><b>Note that the EmbAJAXJoystick class is not entirely finished, yet, and the API and behavior might be subject to change!</b></p><p>The upper joystick is confined to the 9 \"keypad\" positions, and snaps back to center on release / leave.</p>"),
   &joy1,
-  new EmbAJAXStatic("<p>This lower joystick follows the position of the upper joystick (for no other purpose than to demonstrate a round-trip over the server). When moving it directly, it is not confined to the keypad positions.</p>"),
+  new EmbAJAXStatic("<p>This lower joystick follows the position of the upper joystick (for no other purpose than to demonstrate a round-trip over the server). When moving it directly, it is not confined to the keypad positions, and does not snap back to center.</p>"),
   &joy2
 )
 

@@ -3,6 +3,13 @@
 Simplistic framework for creating and handling displays and controls on a web page served by an embeddable device (Arduino or other
 microcontroller with Arduino support).
 
+## Documentation
+
+- Overview, basic usage example, troubleshooting basic problems: **Continue reading on this page**
+- More usage examples: The regular [examples folder](/examples)
+- All functions / classes: [full API reference](https://tfry-git.github.io/EmbAJAX/api/annotated.html)
+- Tweaking RAM, flash, and network usage, understanding internal workings: [Technical details](/docs/Technical.md)
+
 ## Overview
 
 In the Arduino world, it has become astonishingly easy to create a web server on a microprocessor. But at the same time there is a
@@ -31,7 +38,10 @@ and a focus on keeping things lean in memory.
 
 The library is still pretty new, but quite functional, and stabilizing. This means you can start using the library right now.
 However, please note, that there is _no_ guarantee that upcoming versions of this library remain 100% compatible with the current
-version. I'll try not to break things _except_ when there is a good reason to.
+version. I'll try not to break things _except_ when there is a good reason to. Be aware that this "promise" applies to "released"
+versions, only, however. Inside the git master branch, breaking changes may happen more frequently.
+
+For details on what has been changed, refer to the [ChangeLog](/docs/ChangeLog.md).
 
 ### Supported elements / features
 
@@ -58,8 +68,14 @@ The following additional features may be of interest (supported as of now):
 
 ### Hardware support
 
-Currently there are output drivers for ESP8266 and ESP32. However, drivers are really easy to add. All that is needed is a very
-basic abstraction across some web server calls.
+Currently EmbAJAX will work, without additional configuration using WiFi on ESP8266, ESP32, and Raspberry Pi Pico.
+
+For the general approach on using EmbAJAX with different hardware, see the Blink_Ethernet example. This relies on the EthernetWebServer library,
+which supports a large number of different boards, including ATMEGA 2560, Teensy, etc. In a similar fashion, it should be possible to utilize the
+WiFiWebServer library for boards that do not include native WiFi (this latter claim has not currently been tested).
+
+Should your hardware need more custom tweaking, or you wish to use a different webserver library, drivers are really easy to add.
+All that is needed is a very basic abstraction across some web server calls.
 
 #### ESP32 quirks and workaround
 
@@ -92,8 +108,8 @@ EmbAJAXOutputDriverWebServerClass server(80);
 EmbAJAXOutputDriver driver(&server);
 
 // Define the main elements of interest as variables, so we can access them later in our sketch.
-EmbAJAXSlider slider("slider", 0, 500, 400);   // slider, from 0 to 500, initial value 400
-EmbAJAXMutableSpan display("display");         // a plain text display
+EmbAJAXSlider slider("slider", 0, 500, 400);      // slider, from 0 to 500, initial value 400
+EmbAJAXMutableSpan display("display");            // a plain text display
 
 // Define a page (named "page") with our elements of interest, above, interspersed by some uninteresting
 // static HTML. Note: MAKE_EmbAJAXPage is just a convenience macro around the EmbAJAXPage<>-class.
@@ -139,15 +155,12 @@ void loop() {
 
 ## Installation
 
-For now the installation routine is:
-- Download a ZIP of the current development version: https://github.com/tfry-git/EmbAJAX/archive/master.zip
-- Unzip, rename ```EmbAJAX-master``` to ```EmbAJAX``` (sorry, this step seems really silly, indeed, but is not easily avoidable)
-- In your Arduino-IDE, select Sketch->Include Library->Add .ZIP Library, then select the renamed EmbAJAX folder for installation
-- You may need to restart your IDE for the library and its examples to show up
+EmbAJAX is available from the (Arduino Library Manager)[https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-installing-a-library].
 
-## Further readings
-
-API documentation is at https://tfry-git.github.io/EmbAJAX/api/annotated.html .
+If, instead, you want to use the bleeding edge version of EmbAJAX, the suggested routine is to _first_ install from the Library Manager, anyway, then
+_replace_ the contents of the installation folder with either a ```git clone``` of this repository, or _the contents_ of an unpackaged ZIP:
+https://github.com/tfry-git/EmbAJAX/archive/master.zip . The important thing is that the library installation folder itself _must_ be named "EmbAJAX",
+while - quite unfortunately - in the ZIP file, the folder is called "EmbAJAX-master".
 
 ## A word on security
 
@@ -162,41 +175,6 @@ If you need remote connections, currently your best bet will be to use an nginx 
 Future versions of EmbAJAX will provide a basic authentication and permission system, but to provide any meaningful level of security, this will
 mean communication with your device will have to be encrypted. One exciting news in this regard is that an HTTPS server implementation is about to be
 added to the ESP8266 arduino core. So check back soon (or submit your pull request)!
-
-## Some implementation notes
-
-Currently, the web servers for embeddables I have dealt with so far, are limited to one client at a time. Therefore, if using
-a permanent connection, all further access would be blocked. Even separate page loads from the same browser. So, instead,
-we resort to regular polling for updates. An update poll is always included, automatically, when the client sends control
-changes to the server, so in most cases, the client would still appear to be refreshed, immediately.
-
-To avoid sending all states of all controls on each request from each client, the framework keeps track of the latest "revision number"
-sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded.
-
-Concurrent access by an arbitrary number of separate clients is the main reason behind going with AJAX, instead of WebSockets, even if the
-latter are often described as more "modern". Note that the purpoted drawback to AJAX - latency - can easily be circumventented for most use
-cases, as desribed, above. Still, it would be relatively easy to generalize the framework to also allow a WebSocket-connection. I'm not
-doing this, ATM, for fear of adding unneccessary complexity for little or no practical gain.
-
-You may have noted that the framework avoids the use of the String class, even though that would make some things easier. The reason
-for this design choice is that the overhead of using char*, here, in a sketch that may be using String, already, is low. However, if this
-framework were to rely on String, while nothing else in the sketch uses String, that would incur a significant overhead. Further, it should
-be noted, that the risk of memory-fragmentation is relatively real in the present use-case, as arbitrary strings are regularly coming in
-"from the outside". Nonetheless, using Strings would relieve the use from having to worry about the lifetime of strings passed in to the
-framework, and thus, in the future, it may make sense to support String *optionally*.
-
-Another thing you will notice is that the framework avoids any sort of dynamic list. Instead, template classes with a size parameter are
-used to keep lists of elements (such as the EmbAJAXPage\<SIZE>). The reason is again, memory efficiency, and fear of fragmentation. Also,
-the vast majority of use cases should be perfectly fine with a statically defined setup of elements. However, should the need arise, it
-would be very easily possible to create a dynamically allocated analogon to EmbAJAXContainer<SIZE>. An instance of that could simply be
-inserted into a page, and serve as a straight-forward wrapper around elements that are created dynamically. (A different question is how to
-keep this in sync with the client, of course, if that is also a requirement...)
-
-Connection error handling, despite asynchronous requests: Both server and client keep track of the "revision" number of their state. This is
-used for keeping several clients in sync, but also for error handling: If the server detects that it has a lower revision than the client, it
-will know that it has rebooted (while the client has not), and will re-send all current states. If the client tries to send a UI change, but
-the network request fails, it will discard its revision, and thereby ask the server to also re-send all states. Thus, the latest user input
-may get lost on a network error, but the state of the controls shown in the client will remain in sync with the state as known to the server.
 
 ## Some TODOs
 

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['handlerequest',['handleRequest',['../classEmbAJAXBase.html#ad11bd7214844efd92ddef9d60f72c999',1,'EmbAJAXBase::handleRequest()'],['../classEmbAJAXPage.html#add0530439d1461529c7c50c76de92060',1,'EmbAJAXPage::handleRequest()']]]
+  ['getx_118',['getX',['../classEmbAJAXJoystick.html#a76d7b4d976664a8d2a53bf22c1a7c426',1,'EmbAJAXJoystick']]],
+  ['gety_119',['getY',['../classEmbAJAXJoystick.html#a31c91995f6856b24936090660e3204a8',1,'EmbAJAXJoystick']]]
 ];

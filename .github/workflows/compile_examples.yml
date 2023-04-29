@@ -1,0 +1,114 @@
+name: Compile Examples
+
+# See: https://docs.github.com/en/free-pro-team@latest/actions/reference/events-that-trigger-workflows
+on:
+  push:
+    paths:
+      - ".github/workflows/compile_examples.yml"
+      - "examples/**"
+      - "**.cpp"
+      - "**.h"
+      - "**.hpp"
+  pull_request:
+    paths:
+      - ".github/workflows/compile_examples.yml"
+      - "examples/**"
+      - "**.cpp"
+      - "**.h"
+      - "**.hpp"
+  workflow_dispatch:
+  repository_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.board.fqbn }}
+    runs-on: ubuntu-latest
+
+    env:
+      SKETCHES_REPORTS_PATH: sketches-reports
+      sketch-paths-wifi: "'examples/Blink', 'examples/ConnectionStatus', 'examples/Inputs', 'examples/Joystick', 'examples/Styling', 'examples/TwoPages', 'examples/Visibility'"
+      sketch-paths-ethernet: "'examples/Blink_Ethernet'"
+
+    strategy:
+      fail-fast: false
+
+# Note: incomplete! See https://github.com/arduino-libraries/ArduinoIoTCloud/blob/master/.github/workflows/compile-examples.yml for a complex multi-board setup
+      matrix:
+        board:
+          - fqbn: esp8266:esp8266:huzzah
+            type: esp8266
+            platforms: |
+              - name: esp8266:esp8266
+                source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          - fqbn: esp32:esp32:d32
+            type: esp32
+            platforms: |
+              - name: esp32:esp32
+                source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          - fqbn: rp2040:rp2040:rpipicow
+            type: rp2040
+            platforms: |
+              - name: rp2040:rp2040
+                source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          - fqbn: arduino:avr:mega:cpu=atmega2560
+            type: atmega2560
+        include:
+          - board:
+              type: esp8266
+            compile-wifi: "true"
+            compile-ethernet: "true"
+          - board:
+              type: esp32
+            compile-wifi: "true"
+            compile-ethernet: "false"
+          - board:
+              type: rp2040
+            compile-wifi: "true"
+            compile-ethernet: "true"
+          - board:
+              type: atmega2560
+            compile-wifi: "false"
+            compile-ethernet: "true"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Compile examples
+        uses: arduino/compile-sketches@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fqbn: ${{ matrix.board.fqbn }}
+          platforms: ${{ matrix.board.platforms }}
+# This is a real mess, but inside the matrix we cannot acces the env context, so we need this silly logic, instead.
+# Essentially, it just concats the wifi and ethernet sketch-paths as required
+          sketch-paths: "[ ${{ (matrix.compile-wifi == 'true') && env.sketch-paths-wifi || '' }} ${{ (matrix.compile-wifi == matrix.compile-ethernet) && ',' || '' }} ${{ (matrix.compile-ethernet == 'true') && env.sketch-paths-ethernet || '' }} ]"
+          libraries: |
+            - source-path: ./
+            - name: EthernetWebServer
+          enable-deltas-report: true
+          sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
+
+      - name: Save sketches report as workflow artifact
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          path: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: sketches-reports-artifact
+
+  # When using a matrix to compile for multiple boards, it's necessary to use a separate job for the deltas report
+  report:
+    needs: build # Wait for the compile job to finish to get the data for the report
+    if: github.event_name == 'pull_request' # Only run the job when the workflow is triggered by a pull request
+    runs-on: ubuntu-latest
+    steps:
+      # This step is needed to get the size data produced by the compile jobs
+      - name: Download sketches reports artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: sketches-reports-artifact
+          path: ${{ env.SKETCHES_REPORTS_PATH }}
+
+      - uses: arduino/report-size-deltas@v1
+        with:
+          sketches-reports-source: ${{ env.SKETCHES_REPORTS_PATH }}

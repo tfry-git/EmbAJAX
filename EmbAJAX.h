@@ -1,8 +1,8 @@
-/**
+/*
  * 
  * EmbAJAX - Simplistic framework for creating and handling displays and controls on a WebPage served by an Arduino (or other small device).
  * 
- * Copyright (C) 2018-2019 Thomas Friedrichsmeier
+ * Copyright (C) 2018-2023 Thomas Friedrichsmeier
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
@@ -23,17 +23,44 @@
 
 #include <Arduino.h>
 
+/** Maximum length to assume for id strings. Reducing this could help to reduce RAM usage, a little. */
 #define EMBAJAX_MAX_ID_LEN 16
 
-#if __cplusplus >= 201402L
-#define EMBAJAX_DEPRECATED(WHEN, WHY) [[deprecated]](WHY)
-#elif defined(__GNUC__) || defined(__clang__)
-#define EMBAJAX_DEPRECATED(WHEN, WHY) __attribute__((deprecated))
-#elif defined(_MSC_VER)
-#define EMBAJAX_DEPRECATED(WHEN, WHY) __declspec(deprecated)
-#else
-#define EMBAJAX_DEPRECATED(WHEN, WHY)
+/** \def EMBAJAX_DEBUG
+ * Set to a value above 0 for diagnostics on Serial and browser console (for troubleshooting, only, as it increase flash, RAM, and processing requirements,
+ * considerably. */
+// #define EMBAJAX_DEBUG 3
+
+/**V@file EmbAJAX.h
+ *
+ * Main include file.
+ */
+
+/** \def USE_PROGMEM_STRINGS
+ * Control storage of string constants
+ *
+ * On some MCU-architectures, RAM and FLASH reside in two logically distinct address spaces. This implies that regular const char* strings
+ * need to be copied into RAM address space, even if they are fully static. EmbAJAX needs many string constants, and is therefore quite affected
+ * by this problem.
+ *
+ * The Arduino F() macro helps to work around this (further reading, there), but does incur a small performance penalty, which can be avoided if
+ * a) RAM usage is not an issue, or b) the MCU uses a unified address space.
+ *
+ * This define controls whether (most) static strings in EmbAJAX will be wrapped into the Arduino F() macro:
+ *   - 1 - always
+ *   - 0 - never
+ *   - undefined - based on auto-detected CPU arch (this is the default) */
+//#define USE_PROGMEM_STRINGS 0
+
+#if !defined USE_PROGMEM_STRINGS
+ #if defined(memcpy_P) && (memcpy_P == memcpy)
+  #define USE_PROGMEM_STRINGS 0
+ #else
+  #define USE_PROGMEM_STRINGS 1
+ #endif
 #endif
+
+#include "macro_definitions.h"
 
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
@@ -95,6 +122,7 @@ friend class EmbAJAXElementList;
 
     static EmbAJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
+    constexpr static const char null_string[1] = "";
 
     // Note: The following can be moved into EmbAJAXElementList once EmbAJAXContainer is removed for good
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::printChildren() */
@@ -151,12 +179,17 @@ public:
     };
     /** Print the given value filtered according to the parameters:
      *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
+     *
      *  @param quoted If true, add double-quotes around the string, and esacpe any double
      *                quotes within the string as &quot;.
      *  @param HTMLescaped If true, escape any "<" and "&" in the input as "\&lt;" and "\&amp;"
      *                     such that it will appear as plain text if rendered as HTML
      *                     (safe for untrusted user input). */
-    void printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
+    void printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped) {
+        _printFiltered(value, quoted, HTMLescaped);
+        commitBuffer();
+    }
     /** Shorthand for printFiltered(value, JSQuoted, false); */
     inline void printJSQuoted (const char* value) { printFiltered (value, JSQuoted, false); }
     /** Shorthand for printFiltered(value, HTMLQuoted, false); */
@@ -164,16 +197,37 @@ public:
     /** Convenience function to print an attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
      *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
+     *
      *  @param name name of the attribute
      *  @param value value of the attribute. Will be quoted. */
     void printAttribute(const char* name, const char* value);
-    /** Convenience function to print an integert attribute inside an HTML tag.
+    /** Convenience function to print an integer attribute inside an HTML tag.
      *  This function adds a space _in front of_ the printed attribute.
+     *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
      *
      *  @param name name of the attribute
      *  @param value value of the attribute. */
     void printAttribute(const char* name, const int32_t value);
+    /** Print a static string with parameters replaced, somewhat similar to printf
+     *
+     *  @note It is genarally recommended to use the #printFormatted(...) macro, wherever possible, instead of this.
+     *
+     *  See there for further info. This function is really just the internal implementation, public for technical reasons.
+    */
+    void _printContentF(const char* fmt, ...);
+#if USE_PROGMEM_STRINGS
+    void _printContentF(const __FlashStringHelper*, ...);
+#endif
 private:
+    void _printFiltered(const char* value, QuoteMode quoted, bool HTMLescaped);
+    void _printContent(const char* content);
+    void _printChar(const char content);
+    void commitBuffer();
+    const int _bufsize = 64;
+    char _buf[64];
+    int _bufpos = 0;
     uint16_t _revision;
     uint16_t next_revision;
 };
@@ -185,7 +239,7 @@ EMBAJAX_DEPRECATED(2023_03_12, "Use EmbAJAXPage constructor, direclty") inline i
  *  @param header_add a custom string to add to the HTML header section, e.g. a CSS definition. */
 #define MAKE_EmbAJAXPage(name, title, header_add, ...) \
     EmbAJAXBase* name##_elements[] = {__VA_ARGS__}; \
-    EmbAJAXPage name(name##_elements, title, header_add); \
+    EmbAJAXPage name(name##_elements, title, header_add, 100); \
     int name##_warning = MAKE_EmbAJAXPageDeprecated();
 
 /** @brief A static chunk of HTML
@@ -207,7 +261,7 @@ protected:
 
 /** @brief connection status indicator
  *
- *  This passive element can be inserted into a page to indicate the connection status: If more than 5 client requests go unanswered, in a row,
+ *  This passive element can be inserted into a page to indicate the connection status: If there is no reply from the server for 5 seconds,
  *  the connection to the server is assumed to be broken.
  *
  *  @note While this is a "dynamic" display, the entire logic is implemented on the client, for obvious reasons. From the point of view of the
@@ -503,7 +557,7 @@ public:
     }
 protected:
     void setBasicProperty(uint8_t num, bool status) override {
-        for (int i = 0; i < NUM; ++i) {
+        for (uint8_t i = 0; i < NUM; ++i) {
             _children[i]->setBasicProperty(num, status);
         }
     }
@@ -577,9 +631,7 @@ class EmbAJAXHideableContainer : public EmbAJAXElement {
 public:
     template<int NUM> EmbAJAXHideableContainer(const char* id, EmbAJAXBase *(&children)[NUM]) : EmbAJAXElement(id), _childlist(children) {}
     void print() const override {
-        _driver->printContent("<div");
-        _driver->printAttribute("id", _id);
-        _driver->printContent(">");
+        _driver->printFormatted("<div id=", HTML_QUOTED_STRING(_id), ">");
         _childlist.print();
         _driver->printContent("</div>");
     }
@@ -715,15 +767,16 @@ public:
     /** Create a web page.
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
-     *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). */
-    template<size_t NUM> constexpr EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0) :
-        EmbAJAXElementList(children), _title(title), _header_add(header_add) {}
+     *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string).
+     *  @param min_interval minimum interval (ms) between two requests sent by a single client. A lower value may reduce latency at the cost of traffic/CPU. */
+    template<size_t NUM> constexpr EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0, uint16_t min_interval=100) :
+        EmbAJAXElementList(children), _title(title), _header_add(header_add), _min_interval(min_interval) {}
     /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
-    constexpr EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0) :
-        EmbAJAXElementList(childcount, children), _title(title), _header_add(header_add) {}
+    constexpr EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0, uint16_t min_interval=100) :
+        EmbAJAXElementList(childcount, children), _title(title), _header_add(header_add), _min_interval(min_interval) {}
     /** constructor taking list of pointers to elements */
-    template<class... T> constexpr EmbAJAXPage(const char* title, const char* header_add, EmbAJAXBase* first, T*... elements) :
-        EmbAJAXElementList(first, elements...), _title(title), _header_add(header_add) {}
+    template<class... T> constexpr EmbAJAXPage(const char* title, const char* header_add, uint16_t min_interval, EmbAJAXBase* first, T*... elements) :
+        EmbAJAXElementList(first, elements...), _title(title), _header_add(header_add), _min_interval(min_interval) {}
 
     /** Duplication of print(), historically needed for internal reasons. Use print(), instead! */
     EMBAJAX_DEPRECATED(2023_03_12, "Use print(), instead") void printPage() const {
@@ -741,19 +794,34 @@ public:
      *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
      *                         (Otherwise the client will be updated on the next poll). */
     void handleRequest(void (*change_callback)()=0);
+    /** Returns true if a client seems to be connected (connected clients should send a ping at least once per second; by default this
+     *  function returns whether a ping has been seen within the last 5000 ms.
+     *  @param latency_ms Number of milliseconds to consider as maximum silence period for an active connection */
+    bool hasActiveClient(uint64_t latency_ms=5000) const {
+        return(_latest_ping && (_latest_ping + latency_ms > millis()));
+    }
 protected:
     const char* _title;
     const char* _header_add;
+    uint16_t _min_interval;
+    uint64_t _latest_ping = 0;
 };
 
 // If the user has not #includ'ed a specific output driver implementation, make a good guess, here
 #if not defined (EMBAJAX_OUTUPUTDRIVER_IMPLEMENTATION)
 #if defined (ESP8266)
-#include <EmbAJAXOutputDriverESP8266.h>
+#include "EmbAJAXOutputDriverESP8266.h"
 #elif defined (ESP32)
-#include <EmbAJAXOutputDriverESP32.h>
+#include "EmbAJAXOutputDriverESP32.h"
+#elif defined (ARDUINO_ARCH_RP2040)
+#include "EmbAJAXOutputDriverRP2040.h"
 #else
-#error No output driver available for this hardware (yet). Please implement your own (it is easy!) and submit a patch.
+#include <WebServer.h>
+#define EmbAJAXOutputDriverWebServerClass WebServer
+#include <WiFi.h>
+#include "EmbAJAXOutputDriverGeneric.h"
+#warning No output driver available for this hardware (yet). We try using the generic driver, but success is not guaranteed.
+#warning In most cases, implementing a driver is as easy as picking the correct header file to include. Please consider submitting a patch.
 #endif
 #endif
 

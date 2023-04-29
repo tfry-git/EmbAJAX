@@ -1,15 +1,11 @@
 var searchData=
 [
-  ['selectedoption',['selectedOption',['../classEmbAJAXRadioGroup.html#a91c27ff1ad175769f80ebf0e36de3ebb',1,'EmbAJAXRadioGroup::selectedOption()'],['../classEmbAJAXOptionSelectBase.html#a3550184effeea995405cfed554acb342',1,'EmbAJAXOptionSelectBase::selectedOption()']]],
-  ['selectoption',['selectOption',['../classEmbAJAXRadioGroup.html#af568f85b415879df31fa83636b9b68ba',1,'EmbAJAXRadioGroup::selectOption()'],['../classEmbAJAXOptionSelectBase.html#aba3530f88d922019a225c06398177e10',1,'EmbAJAXOptionSelectBase::selectOption()']]],
-  ['sendupdates',['sendUpdates',['../classEmbAJAXBase.html#a072fae0ab0c0ea7bb2ffd642716ffe01',1,'EmbAJAXBase::sendUpdates(uint16_t since, bool first)'],['../classEmbAJAXBase.html#ada79ee18b05d251505c1686030564261',1,'EmbAJAXBase::sendUpdates(EmbAJAXBase **children, size_t num, uint16_t since, bool first)'],['../classEmbAJAXElement.html#afa35c93bbc0da3a52ed9ab171e76405f',1,'EmbAJAXElement::sendUpdates()'],['../classEmbAJAXContainer.html#ae0f9dfbf6ab860b008563d0dc9c95369',1,'EmbAJAXContainer::sendUpdates()'],['../classEmbAJAXHideableContainer.html#a211e54ae33b4bfe30b396276ec7980e3',1,'EmbAJAXHideableContainer::sendUpdates()']]],
-  ['setcustomvalidationattributes',['setCustomValidationAttributes',['../classEmbAJAXValidatingTextInput.html#ae7f6271ba3a12ac1b35474a1e1864ca7',1,'EmbAJAXValidatingTextInput']]],
-  ['setdriver',['setDriver',['../classEmbAJAXBase.html#a973abc4dea3246c2b88cf67f73c765d1',1,'EmbAJAXBase']]],
-  ['setenabled',['setEnabled',['../classEmbAJAXBase.html#a1f6e19b1e35e9ba1c605e1fc63d45a32',1,'EmbAJAXBase']]],
-  ['setpattern',['setPattern',['../classEmbAJAXValidatingTextInput.html#af1cabec8dc8d720991d30687fb9e98ab',1,'EmbAJAXValidatingTextInput']]],
-  ['setplaceholder',['setPlaceholder',['../classEmbAJAXValidatingTextInput.html#a5976c503807ccc301e2bc1d3569c515c',1,'EmbAJAXValidatingTextInput']]],
-  ['setposition',['setPosition',['../classEmbAJAXJoystick.html#ae2b43068b6f66dded05256e9f4482177',1,'EmbAJAXJoystick']]],
-  ['settext',['setText',['../classEmbAJAXPushButton.html#a0d407c664c3a15fc95e37c3e78ee0e94',1,'EmbAJAXPushButton']]],
-  ['setvalue',['setValue',['../classEmbAJAXMutableSpan.html#accadb2fb403037963947fd493c398bb3',1,'EmbAJAXMutableSpan::setValue()'],['../classEmbAJAXTextInput.html#a152311ad78f7a50ee0d481f191e98fc7',1,'EmbAJAXTextInput::setValue()'],['../classEmbAJAXScriptedSpan.html#a06b8459f8fa2fa5e9a6f2bceabbd7de7',1,'EmbAJAXScriptedSpan::setValue()']]],
-  ['setvisible',['setVisible',['../classEmbAJAXBase.html#ad433f1f7aa2386e2bd1c04a1fb79ca91',1,'EmbAJAXBase']]]
+  ['print_124',['print',['../classEmbAJAXPage.html#aeb1d8e0ea4b51a35aed7caf26140a41c',1,'EmbAJAXPage']]],
+  ['printattribute_125',['printAttribute',['../classEmbAJAXOutputDriverBase.html#a416a1ddf6cf53a147d8b29f3aaf1fa29',1,'EmbAJAXOutputDriverBase::printAttribute(const char *name, const char *value)'],['../classEmbAJAXOutputDriverBase.html#a1e4a3709a07a2c19dedde3c38a8f60a8',1,'EmbAJAXOutputDriverBase::printAttribute(const char *name, const int32_t value)']]],
+  ['printchildren_126',['printChildren',['../classEmbAJAXBase.html#abb70d6eb4dcfcc96384cc8465b244583',1,'EmbAJAXBase']]],
+  ['printfiltered_127',['printFiltered',['../classEmbAJAXOutputDriverBase.html#ad39c8b7be8ac85acd1658c9b6f9cb1f7',1,'EmbAJAXOutputDriverBase']]],
+  ['printhtmlquoted_128',['printHTMLQuoted',['../classEmbAJAXOutputDriverBase.html#adb79ed980f99d154cd4969991eb9aa39',1,'EmbAJAXOutputDriverBase']]],
+  ['printjsquoted_129',['printJSQuoted',['../classEmbAJAXOutputDriverBase.html#a810883222624b50715a1ae851f2e4354',1,'EmbAJAXOutputDriverBase']]],
+  ['printpage_130',['printPage',['../classEmbAJAXBase.html#ac3deb53f4015084679d8b9311f035a75',1,'EmbAJAXBase::printPage()'],['../classEmbAJAXPage.html#a81474fef191525a30cb30d282389adfb',1,'EmbAJAXPage::printPage()']]],
+  ['printtextinput_131',['printTextInput',['../classEmbAJAXElement.html#aa8f0dfbb302bc796e3f29b7419e9cd48',1,'EmbAJAXElement']]]
 ];

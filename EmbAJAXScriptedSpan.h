@@ -22,7 +22,7 @@
 #ifndef EMBAJAXSCRIPTEDSPAN_H
 #define EMBAJAXSCRIPTEDSPAN_H
 
-#include <EmbAJAX.h>
+#include "EmbAJAX.h"
 
 /** @brief A span element containing a custom javascript script, meant to creating custom dispays
  * 
@@ -51,18 +51,14 @@ public:
      * @param rec_buffer_size size of the rec_buffer.
      */
     EmbAJAXScriptedSpan(const char* id, const char* script, char* rec_buffer = 0, size_t rec_buffer_size=0) : EmbAJAXElement(id) {
-        _value = 0;
+        _value = EmbAJAXBase::null_string;
         _script = script;
         _rec_buffer = rec_buffer;
         _rec_buffer_size = rec_buffer_size;
     }
     void print() const override {
-        _driver->printContent("<span");
-        _driver->printAttribute("id", _id);
-        _driver->printContent("><script>{\n"
-                              "let spn=document.getElementById(");
-        _driver->printFiltered(_id, EmbAJAXOutputDriverBase::JSQuoted, false);
-        _driver->printContent(");\n"
+        _driver->printFormatted("<span id=", HTML_QUOTED_STRING(_id), "><script>{\n"
+                              "let spn=document.getElementById(", JS_QUOTED_STRING(_id), ");\n"
                               "Object.defineProperty(spn, 'EmbAJAXValue', {\n"
                               "  set: function(value) {\n"
                               "    if (this.receiveValue) this.receiveValue(value);\n"
@@ -71,17 +67,11 @@ public:
                               "spn.sendValue = function(value) {\n"
                               "  doRequest(this.id, value);\n"
                               "}\n"
-                              "spn.init=function() {\n");
-        _driver->printContent(_script);
-        _driver->printContent("\n};\n"
+                              "spn.init=function() {\n",
+                              PLAIN_STRING(_script),
+                              "\n};\n"
                               "spn.init();\n"
-                              "spn.EmbAJAXValue=");
-        if (_value) {
-            _driver->printFiltered(_value, EmbAJAXOutputDriverBase::JSQuoted, false);
-        } else {
-            _driver->printContent("''");
-        }
-        _driver->printContent(";\n"
+                              "spn.EmbAJAXValue=", JS_QUOTED_STRING(_value), ";\n"
                               "}</script></span>\n");
     }
     const char* value(uint8_t which = EmbAJAXBase::Value) const override {

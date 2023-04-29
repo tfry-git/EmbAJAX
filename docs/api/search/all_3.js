@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['getx',['getX',['../classEmbAJAXJoystick.html#a76d7b4d976664a8d2a53bf22c1a7c426',1,'EmbAJAXJoystick']]],
-  ['gety',['getY',['../classEmbAJAXJoystick.html#a31c91995f6856b24936090660e3204a8',1,'EmbAJAXJoystick']]]
+  ['findchild_30',['findChild',['../classEmbAJAXBase.html#af27b8d09c93e7c185093e23d3b6868c2',1,'EmbAJAXBase::findChild(const char *id) const'],['../classEmbAJAXBase.html#a0536a62584c31423a502aa6343bb11a0',1,'EmbAJAXBase::findChild(EmbAJAXBase **children, size_t num, const char *id) const'],['../classEmbAJAXContainer.html#a14cf15d9d816b022063e446755eeee1b',1,'EmbAJAXContainer::findChild()'],['../classEmbAJAXHideableContainer.html#a03c15ceed77cf7075d7ea3b06dd87ff9',1,'EmbAJAXHideableContainer::findChild()']]]
 ];
