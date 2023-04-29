@@ -87,6 +87,8 @@ public:
      *  @returns true if anything has been written, false otherwise.
      */
     virtual bool sendUpdates(uint16_t since, bool first) {
+        UNUSED(since);
+        UNUSED(first);
         return false;
     }
     /** Cast this object to EmbAJAXElement if it is a controllable element.
@@ -114,11 +116,12 @@ public:
     /** Find child element of this one, with the given id. Returns 0, if this is not a container, or
      *  does not have such a child. @see EmbAJAXContainer, and @see EmbAJAXHideableContainer. */
     virtual EmbAJAXElement* findChild(const char*id) const {
+        UNUSED(id);
         return 0;
     }
 protected:
 template<size_t NUM> friend class EmbAJAXContainer;
-    virtual void setBasicProperty(uint8_t num, bool status) {};
+    virtual void setBasicProperty(uint8_t num, bool status) { UNUSED(num); UNUSED(status); };
 
     static EmbAJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
@@ -317,6 +320,7 @@ public:
     /** Returns true, if the value may contain HTML, and needs HTML escaping when passed to the client.
      *  Base implementation simply returns false. */
     virtual bool valueNeedsEscaping(uint8_t which = EmbAJAXBase::Value) const {
+        UNUSED(which);
         return false;
     }
 
@@ -332,6 +336,7 @@ public:
     /** override this in your derived class to allow updates to be propagated from client to server (if wanted).
      *  The implementation need not call setChanged(). */
     virtual void updateFromDriverArg(const char* argname) {
+        UNUSED(argname);
         return;
     }
 

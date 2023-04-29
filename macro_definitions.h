@@ -120,3 +120,7 @@
 #else
  #define printF_proxy(X, ...) _printContentF(X, __VA_ARGS__);
 #endif
+
+#ifndef UNUSED
+ #define UNUSED(X) (void)(sizeof(X))
+#endif

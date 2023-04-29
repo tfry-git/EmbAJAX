@@ -1,4 +1,7 @@
--- Changes in version 0.2.0 -- UNRELEASED
+-- Changes in version 0.3.0 -- UNRELEASED
+X TODO: Fix EmbAJAXValidatingTextInput (did it ever work?)
+
+-- Changes in version 0.2.0 -- 2023-04-29
 * On Harvard-architecture MCUs, keep most static strings in flash memory, only. This can achieve
   massive RAM savings on some MCUs (none one others), at the cost of small performance hit
   (behavior can be customized using the USE_PROGMEM_STRINGS #define).
@@ -10,7 +13,5 @@
   The former is obsolete by the global limit, the latter had never been implemented.
 * EmbAJAXTextInputs are more responsive, and no longer prone to "swallowing" key presses.
 * Add demo on keeping track of active clients
-X TODO: Fix EmbAJAXValidatingTextInput (did it ever work?)
-X TODO: Rework hasActiveClient, again?
 
 -- Changes before version 0.1.1 have not been recorded --
