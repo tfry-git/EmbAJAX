@@ -8,7 +8,7 @@ microcontroller with Arduino support).
 - For an overview, getting started, troubleshooting basic problem: **Continue reading on this page**
 - More usage examples: The regular [examples folder](/examples)
 - All functions / classes: [full API reference](https://tfry-git.github.io/EmbAJAX/api/annotated.html)
-- Tweaking RAM, flash, and network usage, understanding internal workings: [Library design considerations](/docs/Technical.md)
+- Tweaking RAM, flash, and network usage, understanding internal workings: [Technical details](/docs/Technical.md)
 
 ## Overview
 

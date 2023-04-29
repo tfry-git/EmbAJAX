@@ -1,4 +1,18 @@
-# Technical background / tweaking performance and resource usage
+# Technical details and performance tweaks
+
+## RAM vs. Flash
+
+On some MCU-architectures, RAM and FLASH reside in two logically distinct address spaces. This implies that regular const char* strings
+need to be copied into RAM address space, even if they are fully static. EmbAJAX needs many string constants, and is therefore quite affected
+by this problem.
+
+The Arduino F() macro helps to work around this (further reading, there), but does incur a small performance (and code size) penalty, which can
+be avoided if a) RAM usage is not an issue, or b) the MCU uses a unified address space.
+
+By default, EmbAJAX tries to detect case b), and will disable use of F() strings, then. The USE_PROGMEM_STRINGS define near the top of EmbAJAX.h
+allows you to tweak this for special needs.
+
+Note that at the time of this writing, there is no distinct support for keeping ```EmbAJAXStatic``` blocks in PROGMEM. Pull requests are welcome.
 
 ## Latency vs. network traffic vs. performance
 
@@ -36,20 +50,6 @@ an unavoidable latency will result from transmission over the network, anyway, a
 To avoid sending all states of all controls on each request from each client, the framework keeps track of the latest "revision number"
 sent to any client. The client pings back its current revision number on each request, so only real changes have to be forwarded. This is particularly
 important where several clients are accessing the same page, and need to be kept in sync.
-
-## RAM vs. Flash
-
-On some MCU-architectures, RAM and FLASH reside in two logically distinct address spaces. This implies that regular const char* strings
-need to be copied into RAM address space, even if they are fully static. EmbAJAX needs many string constants, and is therefore quite affected
-by this problem.
-
-The Arduino F() macro helps to work around this (further reading, there), but does incur a small performance (and code size) penalty, which can
-be avoided if a) RAM usage is not an issue, or b) the MCU uses a unified address space.
-
-By default, EmbAJAX tries to detect case b), and will disable use of F() strings, then. The USE_PROGMEM_STRINGS define near the top of EmbAJAX.h
-allows you to tweak this for special needs.
-
-Note that at the time of this writing, there is no distinct support for keeping ```EmbAJAXStatic``` blocks in PROGMEM. Pull requests are welcome.
 
 ## Some further implementation notes
 
