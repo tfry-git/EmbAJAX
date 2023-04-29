@@ -133,7 +133,7 @@ template<size_t NUM> friend class EmbAJAXContainer;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::print() */
     void printPage(EmbAJAXBase** children, size_t num, const char* _title, const char* _header, uint16_t _min_interval) const;
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::handleRequest() */
-    void handleRequest(EmbAJAXBase** children, size_t num, void (*change_callback)());
+    void handleRequest(EmbAJAXBase** children, size_t num, void (*change_callback)(EmbAJAXElement*));
 };
 
 /** @brief Abstract base class for output drivers/server implementations
@@ -160,7 +160,11 @@ public:
      *
      *  @param change_callback See EmbAJAXPage::handleRequest() for details.
      */
-    virtual void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) = 0;
+    virtual void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)(EmbAJAXElement*)=0) = 0;
+    void _installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) {
+        page->setLegacyChangeCallback(change_callback);
+        installPage(page, path, nullptr);
+    }
     /** Insert this hook into loop(). Takes care of the appropriate server calls, if needed. */
     virtual void loopHook() = 0;
 
@@ -710,7 +714,7 @@ private:
  * Needed for internal reasons. Refer to EmbAJAXPage, instead. */
 class EmbAJAXPageBase {
 public:
-    virtual void handleRequest(void (*change_callback)()=0) = 0;
+    virtual void handleRequest(void (*change_callback)(EmbAJAXElement*)=0) = 0;
     virtual void printPage() = 0;
 };
 
@@ -746,7 +750,7 @@ public:
      *                         response to the change, you should specify this function, and handle the change inside it.
      *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
      *                         (Otherwise the client will be updated on the next poll). */
-    void handleRequest(void (*change_callback)()=0) override {
+    void handleRequest(void (*change_callback)(EmbAJAXElement*)=0) override {
         _latest_ping = millis();
         EmbAJAXBase::handleRequest(EmbAJAXContainer<NUM>::_children, NUM, change_callback);
     }

@@ -611,7 +611,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
 #endif
 }
 
-void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*change_callback)()) {
+void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*change_callback)(EmbAJAXElement*)) {
     char conversion_buf[EMBAJAX_MAX_ID_LEN];
 
     // handle value changes sent from client
@@ -636,7 +636,7 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
         element->updateFromDriverArg("value");
         element->setChanged();                  // See bottom of function for an explanation on revision handling here, and in general
         element->revision = client_revision;
-        if (change_callback) change_callback();
+        if (change_callback) change_callback(element);
 #if EMBAJAX_DEBUG > 2
         Serial.print("(temp) new revision ");
         Serial.print(element->revision);
