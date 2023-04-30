@@ -232,7 +232,7 @@ private:
     uint16_t next_revision;
 };
 
-EMBAJAX_DEPRECATED(2023_03_12, "Use EmbAJAXPage constructor, direclty") inline int MAKE_EmbAJAXPageDeprecated() { return 0; };
+EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXPage constructor, directly") inline int MAKE_EmbAJAXPageDeprecated() { return 0; };
 /** DEPRECATED: Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage().
  *  @param name Variable name of the page instance
  *  @param title HTML Title
@@ -526,7 +526,7 @@ private:
     bool _checked;
     const char* _label;
 template<size_t NUM> friend class EmbAJAXRadioGroup;
-    EmbAJAXCheckButton() : EmbAJAXElement("") {};
+    EmbAJAXCheckButton() : EmbAJAXElement(null_string) {};
     EmbAJAXRadioGroupBase* radiogroup;
 };
 
@@ -540,9 +540,9 @@ friend class EmbAJAXCheckButton;
 };
 
 /** @brief Base class for groups of objects. Deprecated. Use EmbAJAXElementList, instead. */
-template<size_t NUM> class EMBAJAX_DEPRECATED(2023_03_12, "Use EmbAJAXElementList, instead") EmbAJAXContainer : public EmbAJAXBase {
+template<size_t NUM> class EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXElementList, instead") EmbAJAXContainer : public EmbAJAXBase {
 public:
-    EMBAJAX_DEPRECATED(2023_03_12, "Use EmbAJAXElementList, instead") EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
+    EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXElementList, instead") EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
         _children = children;
     }
     void print() const override {
@@ -579,13 +579,20 @@ public:
         EmbAJAXBase(),
         _children(children),
         NUM(childcount) {}
-    /** constructor taking list of pointers to elements */
-    // Note: "first" forces all args to be EmbAJAXBase
+    /** constructor taking list of pointers to elements
     template<class... T> constexpr EmbAJAXElementList(EmbAJAXBase* first, T*... elements) :
         EmbAJAXBase(),
         _children(new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...}),
-        NUM(sizeof...(elements) + 1) {}
-#warning proper d'tor! Perhaps const init arrays should not be accepted at all? EmbAJAXPage c'tor should be the only API entry point where we need backwards compatibility
+        NUM(sizeof...(elements) + 1) {} */
+    // This version would allow to do convient stuff like EmbAJAXList("static html", new EmbAJAXSomething(), "static", ...)
+    // One downside is that this makes it really hard to understand, which elements are "owned" where (destruction)
+    template<class... T> constexpr EmbAJAXElementList(T*... elements) :
+        EmbAJAXBase(),
+        _children(new EmbAJAXBase*[sizeof...(elements)]{toElement(elements)...}),
+        NUM(sizeof...(elements)) {}
+    EmbAJAXBase* toElement(EmbAJAXBase *e) const { return e; }
+    EmbAJAXBase* toElement(const char *e) const { return new EmbAJAXStatic(e); }
+
     void print() const override {
         EmbAJAXBase::printChildren(_children, NUM);
     }
@@ -611,7 +618,7 @@ friend class EmbAJAXHideableContainer;
         }
     }
     EmbAJAXBase* const* _children;
-    size_t NUM; // TODO: make me const, again
+    const size_t NUM;
 };
 
 /** @brief A list of objects that can be hidden, completely
@@ -659,7 +666,7 @@ protected:
 /** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
  *
  *  You can insert either the whole group into an EmbAJAXPage at once, or - for more flexbile
- *  layouting - retrieve the individual buttons using() button, and insert them into the page
+ *  layouting - retrieve the individual buttons using button(), and insert them into the page
  *  as independent elements. */
 template<size_t N> class EmbAJAXRadioGroup : public EmbAJAXElementList, public EmbAJAXRadioGroupBase {
 public:
@@ -779,7 +786,7 @@ public:
         EmbAJAXElementList(first, elements...), _title(title), _header_add(header_add), _min_interval(min_interval) {}
 
     /** Duplication of print(), historically needed for internal reasons. Use print(), instead! */
-    EMBAJAX_DEPRECATED(2023_03_12, "Use print(), instead") void printPage() const {
+    EMBAJAX_DEPRECATED("v0.3.0", "Use print(), instead") void printPage() const {
         print();
     };
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
