@@ -349,8 +349,8 @@ protected:
     }
 friend class EmbAJAXPage;
 friend class EmbAJAXBase;
-    byte _flags;
     const char* _id;
+    byte _flags;
     void setChanged();
     bool changed(uint16_t since);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXTextInput::print() */
