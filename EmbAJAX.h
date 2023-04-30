@@ -300,7 +300,7 @@ private:
 class EmbAJAXElement : public EmbAJAXBase {
 public:
     /** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
-    EmbAJAXElement(const char* id);
+    constexpr EmbAJAXElement(const char* id) : _id(id), _flags(1 << EmbAJAXBase::Visibility | 1 << EmbAJAXBase::Enabledness), revision(1) {}
 
     const char* id() const {
         return _id;
@@ -584,20 +584,13 @@ public:
         EmbAJAXBase(),
         _children(children),
         NUM(childcount) {}
-    /** constructor taking list of pointers to elements
-    template<class... T> constexpr EmbAJAXElementList(EmbAJAXBase* first, T*... elements) :
-        EmbAJAXBase(),
-        _children(new EmbAJAXBase*[sizeof...(elements) + 1] {first, elements...}),
-        NUM(sizeof...(elements) + 1) {} */
-    // This version would allow to do convient stuff like EmbAJAXList("static html", new EmbAJAXSomething(), "static", ...)
-    // One downside is that this makes it really hard to understand, which elements are "owned" where (destruction)
+    /** Constructor taking list of pointers to elements. For convenience, you can also insert static fragments directly, like this:
+        @code{.cpp}EmbAJAXList("static html", new EmbAJAXSomething(), "some more html", ...)@endcode
+        in this case, the string literals will be wrapped into EmbAJAXStatic, automatically. */
     template<class... T> constexpr EmbAJAXElementList(T*... elements) :
         EmbAJAXBase(),
         _children(new EmbAJAXBase*[sizeof...(elements)]{toElement(elements)...}),
         NUM(sizeof...(elements)) {}
-    EmbAJAXBase* toElement(EmbAJAXBase *e) const { return e; }
-    EmbAJAXBase* toElement(const char *e) const { return new EmbAJAXStatic(e); }
-
     void print() const override {
         EmbAJAXBase::printChildren(_children, NUM);
     }
@@ -624,6 +617,9 @@ friend class EmbAJAXHideableContainer;
     }
     EmbAJAXBase* const* _children;
     const size_t NUM;
+private:
+    EmbAJAXBase* toElement(EmbAJAXBase *e) const { return e; }
+    EmbAJAXBase* toElement(const char *e) const { return new EmbAJAXStatic(e); }
 };
 
 /** @brief A list of objects that can be hidden, completely
@@ -641,16 +637,16 @@ friend class EmbAJAXHideableContainer;
  *        inheritance just for this. */
 class EmbAJAXHideableContainer : public EmbAJAXElement {
 public:
-    template<int NUM> EmbAJAXHideableContainer(const char* id, EmbAJAXBase *(&children)[NUM]) : EmbAJAXElement(id), _childlist(children) {}
+    template<int NUM> constexpr EmbAJAXHideableContainer(const char* id, EmbAJAXBase *(&children)[NUM]) : EmbAJAXElement(id), _childlist(children) {}
     void print() const override {
         _driver->printFormatted("<div id=", HTML_QUOTED_STRING(_id), ">");
         _childlist.print();
         _driver->printContent("</div>");
     }
     /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
-    EmbAJAXHideableContainer(const char* id, size_t childcount, EmbAJAXBase* const* children) : EmbAJAXElement(id), _childlist(childcount, children) {}
+    constexpr EmbAJAXHideableContainer(const char* id, size_t childcount, EmbAJAXBase* const* children) : EmbAJAXElement(id), _childlist(childcount, children) {}
     /** constructor taking list of pointers to elements */
-    template<class... T> EmbAJAXHideableContainer(const char* id, EmbAJAXBase* first, T*... elements) : EmbAJAXElement(id), _childlist(first, elements...) {}
+    template<class... T> constexpr EmbAJAXHideableContainer(const char* id, T*... elements) : EmbAJAXElement(id), _childlist(elements...) {}
 
     EmbAJAXElement* findChild(const char* id) const override {
         return _childlist.findChild(id);
@@ -776,19 +772,25 @@ private:
  *  via POST. */
 class EmbAJAXPage : public EmbAJAXElementList {
 public:
+    struct Params {
+        constexpr Params(const char* title = null_string, const char* header_add = null_string, uint16_t min_interval=100) : title(title), header_add(header_add), min_interval(min_interval){};
+        const char* title;
+        const char* header_add;
+        uint16_t min_interval;
+    };
+
     /** Create a web page.
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
      *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string).
      *  @param min_interval minimum interval (ms) between two requests sent by a single client. A lower value may reduce latency at the cost of traffic/CPU. */
     template<size_t NUM> constexpr EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0, uint16_t min_interval=100) :
-        EmbAJAXElementList(children), _title(title), _header_add(header_add), _min_interval(min_interval) {}
+        EmbAJAXElementList(children), p(Params(title, header_add, min_interval)) {}
     /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
     constexpr EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0, uint16_t min_interval=100) :
-        EmbAJAXElementList(childcount, children), _title(title), _header_add(header_add), _min_interval(min_interval) {}
+        EmbAJAXElementList(childcount, children), p(Params(title, header_add, min_interval)) {}
     /** constructor taking list of pointers to elements */
-    template<class... T> constexpr EmbAJAXPage(const char* title, const char* header_add, uint16_t min_interval, EmbAJAXBase* first, T*... elements) :
-        EmbAJAXElementList(first, elements...), _title(title), _header_add(header_add), _min_interval(min_interval) {}
+    template<class... T> constexpr EmbAJAXPage(Params p, T*... elements) : EmbAJAXElementList(elements...), p(p) {}
 
     /** Duplication of print(), historically needed for internal reasons. Use print(), instead! */
     EMBAJAX_DEPRECATED("v0.3.0", "Use print(), instead") void printPage() const {
@@ -813,9 +815,7 @@ public:
         return(_latest_ping && (_latest_ping + latency_ms > millis()));
     }
 protected:
-    const char* _title;
-    const char* _header_add;
-    uint16_t _min_interval;
+    Params p;
     uint64_t _latest_ping = 0;
 };
 

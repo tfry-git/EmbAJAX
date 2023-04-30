@@ -156,13 +156,6 @@ void EmbAJAXConnectionIndicator::print() const {
 
 ////////////////////////////// EmbAJAXElement /////////////////////////////
 
-/** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
-EmbAJAXElement::EmbAJAXElement(const char* id) : EmbAJAXBase() {
-    _id = id;
-    _flags = 1 << EmbAJAXBase::Visibility | 1 << EmbAJAXBase::Enabledness;
-    revision = 1;
-}
-
 bool EmbAJAXElement::sendUpdates(uint16_t since, bool first) {
     if (!changed(since)) return false;
     if (!first) _driver->printContent(",\n");
@@ -535,7 +528,7 @@ void EmbAJAXPage::print() const {
 #endif
 
     _driver->printHeader(true);
-    _driver->printFormatted("<!DOCTYPE html>\n<HTML><HEAD><TITLE>", PLAIN_STRING(_title), "</TITLE>\n<SCRIPT>\n"
+    _driver->printFormatted("<!DOCTYPE html>\n<HTML><HEAD><TITLE>", PLAIN_STRING(p.title), "</TITLE>\n<SCRIPT>\n"
 
                             "var serverrevision = 0;\n"
                             "var request_queue = [];\n"   // requests waiting to be sent
@@ -554,7 +547,7 @@ void EmbAJAXPage::print() const {
                             "var prev_request = 0;\n"
                             "function sendQueued() {\n"
                             "    var now = new Date().getTime();\n"
-                            "    if (num_waiting > 0 || (now - prev_request < ", INTEGER_VALUE(_min_interval), ")) return;\n"
+                            "    if (num_waiting > 0 || (now - prev_request < ", INTEGER_VALUE(p.min_interval), ")) return;\n"
                             "    var e = request_queue.shift();\n"
                             "    if (!e && (now - prev_request < 1000)) return;\n"
                             "    if (!e) e = {id: '', value: ''};\n" //Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
@@ -574,7 +567,7 @@ void EmbAJAXPage::print() const {
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                             "    req.send('id=' + e.id + '&value=' + encodeURIComponent(e.value) + '&revision=' + serverrevision);\n"
                             "}\n"
-                            "window.setInterval(sendQueued, ", INTEGER_VALUE(_min_interval/2+1), ");\n"
+                            "window.setInterval(sendQueued, ", INTEGER_VALUE(p.min_interval/2+1), ");\n"
 
                             "function doUpdates(response) {\n"
                             "    serverrevision = response.revision;\n"
@@ -596,7 +589,7 @@ void EmbAJAXPage::print() const {
                             "    }\n"
                             "}\n"
 
-                            "</SCRIPT>\n", PLAIN_STRING(_header_add),
+                            "</SCRIPT>\n", PLAIN_STRING(p.header_add),
                             "</HEAD>\n<BODY><FORM autocomplete=\"off\" onSubmit=\"return false;\">\n");
                             // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions, but also the
                             // "restore latest settings after client reload" is questionable in our use-case.
