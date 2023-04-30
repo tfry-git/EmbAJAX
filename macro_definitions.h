@@ -121,7 +121,6 @@
  #define printF_proxy(X, ...) _printContentF(X, __VA_ARGS__);
 #endif
 
-
 #if __cplusplus >= 201402L
 #define EMBAJAX_DEPRECATED(WHEN, WHY) [[deprecated(WHY)]]
 #elif defined(__GNUC__) || defined(__clang__)
@@ -130,4 +129,8 @@
 #define EMBAJAX_DEPRECATED(WHEN, WHY) __declspec(deprecated)
 #else
 #define EMBAJAX_DEPRECATED(WHEN, WHY)
+#endif
+
+#ifndef UNUSED
+ #define UNUSED(X) (void)(sizeof(X))
 #endif
