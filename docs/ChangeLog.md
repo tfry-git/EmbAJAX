@@ -1,5 +1,6 @@
 -- Changes in version 0.3.0 -- UNRELEASED
-X Clean up
+x TODO: Adjust radio group, option select
+X TODO: Clean up
 x TODO: More constexpr c'tors
 X TODO: Fix EmbAJAXValidatingTextInput (did it ever work?)
 

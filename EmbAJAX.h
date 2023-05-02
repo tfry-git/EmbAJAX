@@ -148,10 +148,8 @@ friend class EmbAJAXElementList;
  */
 class EmbAJAXOutputDriverBase {
 public:
-    EmbAJAXOutputDriverBase() {
-        _revision = 1;
-        next_revision = _revision;
-    }
+    // Note: Making this constexpr would require useless initialization of _buf before C++20
+    EmbAJAXOutputDriverBase() : _revision(1), next_revision(1) {}
 
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
@@ -252,9 +250,7 @@ EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXPage constructor, directly") inline int
 class EmbAJAXStatic : public EmbAJAXBase {
 public:
     /** ctor. Note: Content string is not copied. Don't make this a temporary. */
-    EmbAJAXStatic(const char* content) {
-        _content = content;
-    }
+    constexpr EmbAJAXStatic(const char* content) : _content(content) {}
     void print() const override {
         _driver->printContent(_content);
     }
@@ -275,10 +271,8 @@ public:
      *
      *  @param content_ok Value to show for OK state. May contain HTML markup. Default is "OK" on a green background.
      *  @param content_ok Value to show for broken state. May contain HTML markup. Default is "FAIL" on a green background. */
-    EmbAJAXConnectionIndicator(const char* content_ok = default_ok, const char* content_fail = default_fail) {
-        _content_ok = content_ok;
-        _content_fail = content_fail;
-    }
+    constexpr EmbAJAXConnectionIndicator(const char* content_ok = default_ok, const char* content_fail = default_fail) :
+        _content_ok(content_ok), _content_fail(content_fail) {}
     void print() const override;
     static constexpr const char* default_ok = {"<span style=\"background-color:green;\">OK</span>"};
     static constexpr const char* default_fail = {"<span style=\"background-color:red;\">FAIL</span>"};
@@ -362,9 +356,8 @@ private:
 /** @brief An HTML span element with content that can be updated from the server (not the client) */
 class EmbAJAXMutableSpan : public EmbAJAXElement {
 public:
-    EmbAJAXMutableSpan(const char* id) : EmbAJAXElement(id) {
-        _value = 0;
-    }
+    constexpr EmbAJAXMutableSpan(const char* id) : EmbAJAXElement(id), _value(0) {}
+
     void print() const override;
     const char* value(uint8_t which = EmbAJAXBase::Value) const override;
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override;
@@ -772,6 +765,7 @@ private:
  *  via POST. */
 class EmbAJAXPage : public EmbAJAXElementList {
 public:
+    /** @See EmbAJAXPage(). Struct to encapsulate the constructor arguments. */
     struct Params {
         constexpr Params(const char* title = null_string, const char* header_add = null_string, uint16_t min_interval=100) : title(title), header_add(header_add), min_interval(min_interval){};
         const char* title;
@@ -786,10 +780,17 @@ public:
      *  @param min_interval minimum interval (ms) between two requests sent by a single client. A lower value may reduce latency at the cost of traffic/CPU. */
     template<size_t NUM> constexpr EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0, uint16_t min_interval=100) :
         EmbAJAXElementList(children), p(Params(title, header_add, min_interval)) {}
-    /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
+    /** constructor taking an array of elements with a size that cannot be determined at compile time.
+     *  @param childcount Number of elements
+     *  @param children array of pointer to elements.
+     *  For the other parameters, see above. */
     constexpr EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0, uint16_t min_interval=100) :
         EmbAJAXElementList(childcount, children), p(Params(title, header_add, min_interval)) {}
-    /** constructor taking list of pointers to elements */
+    /** constructor taking list of pointers to elements.
+     *  @param p page parameters. These are the same as in the other constructors, but encapsulated into a struct to allow for future expansion.
+     *  @param elements page elements. These are passed as either EmbAJAXBase* or as contant strings. The latter are wrapped into
+     *         EmbAJAXStatic, automatically.
+    */
     template<class... T> constexpr EmbAJAXPage(Params p, T*... elements) : EmbAJAXElementList(elements...), p(p) {}
 
     /** Duplication of print(), historically needed for internal reasons. Use print(), instead! */
