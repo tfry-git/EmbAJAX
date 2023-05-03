@@ -465,8 +465,12 @@ void EmbAJAXCheckButton::print() const {
     if (radiogroup) _driver->printAttribute("name", radiogroup->_name);
     if (_checked) _driver->printContent(" checked=\"true\"");
     // Note: Internal <span> element for more flexbility in styling the control
-    _driver->printFormatted("/><label for=", HTML_QUOTED_STRING(_id), ">", PLAIN_STRING(_label), // NOTE: Not escaping _label, so user can insert HTML.
-                           "</label></span>");
+	if (_label) {
+		_driver->printFormatted("/><label for=", HTML_QUOTED_STRING(_id), ">", PLAIN_STRING(_label), // NOTE: Not escaping _label, so user can insert HTML.
+								"</label></span>");
+	} else {
+		_driver->printContent("/></span>");
+	}
 }
 
 const char* EmbAJAXCheckButton::value(uint8_t which) const {

@@ -519,7 +519,7 @@ class EmbAJAXRadioGroupBase;
  *  please do not rely on this implementation detail. */
 class EmbAJAXCheckButton : public EmbAJAXElement {
 public:
-    EmbAJAXCheckButton(const char* id, const char* label, bool checked=false);
+    EmbAJAXCheckButton(const char* id, const char* label=nullptr, bool checked=false);
     void print() const override;
     const char* value(uint8_t which = EmbAJAXBase::Value) const override;
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override;
