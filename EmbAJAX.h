@@ -519,6 +519,15 @@ class EmbAJAXRadioGroupBase;
  *  please do not rely on this implementation detail. */
 class EmbAJAXCheckButton : public EmbAJAXElement {
 public:
+    /** constructor
+    *  @param id Id of this checkbox. @See EmbAJAXElement().
+    *  @param label Label of the checkbox. May contain HTML (no quoting is done).
+    *               The label is added as a <label/>-element next to the checkbox (<input type="checkbox"/>).
+    *               Speficying an empty string ("") causes the label to be empty, but leaving the value as nullptr
+    *               will cause the <label/>-element to be omitted (useful with some CSS definitions).
+    *  @param checked If true, the checkbox will be initially checked. @see setChecked().
+    */
+    EmbAJAXCheckButton(const char* id, const char* label=EmbAJAXBase::null_string, bool checked=false);
     EmbAJAXCheckButton(const char* id, const char* label=nullptr, bool checked=false);
     void print() const override;
     const char* value(uint8_t which = EmbAJAXBase::Value) const override;
