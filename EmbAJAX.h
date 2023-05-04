@@ -527,7 +527,6 @@ public:
     *               will cause the <label/>-element to be omitted (useful with some CSS definitions).
     *  @param checked If true, the checkbox will be initially checked. @see setChecked().
     */
-    EmbAJAXCheckButton(const char* id, const char* label=EmbAJAXBase::null_string, bool checked=false);
     EmbAJAXCheckButton(const char* id, const char* label=nullptr, bool checked=false);
     void print() const override;
     const char* value(uint8_t which = EmbAJAXBase::Value) const override;
