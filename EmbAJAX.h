@@ -503,7 +503,7 @@ private:
     uint16_t _timeout;
 };
 
-class EmbAJAXRadioGroupBase;
+class EmbAJAXRadioGroupImpl;
 
 /** @brief A checkable (option) button.
  *
@@ -523,18 +523,9 @@ public:
 private:
     bool _checked;
     const char* _label;
-template<size_t NUM> friend class EmbAJAXRadioGroup;
+friend class EmbAJAXRadioGroupImpl;
     EmbAJAXCheckButton() : EmbAJAXElement(null_string) {};
-    EmbAJAXRadioGroupBase* radiogroup;
-};
-
-/** @brief abstract base for EmbAJAXRadioGroup, needed for internal reasons. */
-class EmbAJAXRadioGroupBase {
-protected:
-    EmbAJAXRadioGroupBase() {};
-friend class EmbAJAXCheckButton;
-    virtual void selectButton(EmbAJAXCheckButton* which) = 0;
-    const char* _name;
+    EmbAJAXRadioGroupImpl* radiogroup;
 };
 
 /** @brief Base class for groups of objects. Deprecated. Use EmbAJAXElementList, instead. */
@@ -659,34 +650,35 @@ protected:
 
 /** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
  *
- *  You can insert either the whole group into an EmbAJAXPage at once, or - for more flexbile
- *  layouting - retrieve the individual buttons using button(), and insert them into the page
- *  as independent elements. */
-template<size_t N> class EmbAJAXRadioGroup : public EmbAJAXElementList, public EmbAJAXRadioGroupBase {
+ *  Note: This class is provided to keep old code working, but will be removed in the future.
+ *        You can use all members of this class, but please instantiate it as EmbAJAXRadioGroup.
+ */
+class EmbAJAXRadioGroupImpl : public EmbAJAXElementList {
 public:
-    /** ctor.
-     *  @param id_base the "base" id. Internally, radio buttons with id_s id_base0, id_base1, etc. will be created.
-     *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
-     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
-     *                         no option selected by default. */
-    EmbAJAXRadioGroup(const char* id_base, const char* options[N], uint8_t selected_option = 0) : EmbAJAXElementList(N), EmbAJAXRadioGroupBase() {
-#warning port to element list properly
-        for (uint8_t i = 0; i < N; ++i) {
+    EmbAJAXRadioGroupImpl(const char* id_base, int8_t N_options, const char** options, uint8_t selected_option = 0) : EmbAJAXElementList(N_options) {
+        auto buttons = new EmbAJAXBase*[N_options];
+        childids = new char[N_options][EMBAJAX_MAX_ID_LEN];   // NOTE: this could be RAM optimized
+        for (uint8_t i = 0; i < N_options; ++i) {
             char* childid = childids[i];
             strncpy(childid, id_base, EMBAJAX_MAX_ID_LEN-4);
             itoa(i, &(childid[strlen(childid)]), 10);
-            buttons[i] = EmbAJAXCheckButton(childid, options[i], i == selected_option);
-            buttons[i].radiogroup = this;
-            buttonpointers[i] = &buttons[i];
+            auto button = new EmbAJAXCheckButton(childid, options[i], i == selected_option);
+            button->radiogroup = this;
+            buttons[i] = button;
         }
         _current_option = selected_option;
-        _children = buttonpointers;
+        _children = buttons;
         _name = id_base;
-    }
+    }/*
+    ~EmbAJAXRadioGroup() {
+        for (uint8_t i = 0; i < NUM; ++i) delete _children[i];
+        delete _children;
+        delete childids;
+    }*/
     /** Select / check the option at the given index. All other options in this radio group will become deselected. */
     void selectOption(uint8_t num) {
         for (uint8_t i = 0; i < NUM; ++i) {
-            buttons[i].setChecked(i == num);
+            static_cast<EmbAJAXCheckButton*>(static_cast<EmbAJAXElement*>(_children[i]))->setChecked(i == num);
         }
         _current_option = num;  // NOTE: might be outside of range, but that's ok, signifies "none selected"
     }
@@ -697,24 +689,61 @@ public:
     /** @returns a representation of an individual option element. You can use this to insert the individual buttons
      *           at arbitrary positions in the page layout. */
     EmbAJAXBase* button(uint8_t num) {
-        if (num < NUM) return (&buttons[num]);
-        return 0;
+        if (num < NUM) return (_children[num]);
+        return nullptr;
     }
 private:
-    EmbAJAXCheckButton buttons[N]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
-    EmbAJAXBase* buttonpointers[N]; /** NOTE: ... and, unfortunately, we need a separate persistent array of pointers... */
-    char childids[N][EMBAJAX_MAX_ID_LEN]; /** NOTE: Child ids are not copied by EmbAJAXElement. This is the storage space for them */  // TODO: Can we remove those, by using a recursive lookup scheme, instead? (groupid.buttonid)
+friend class EmbAJAXCheckButton;
+    const char* _name;
+    typedef char idstring[EMBAJAX_MAX_ID_LEN];
+    idstring *childids; /** NOTE: Child ids are not copied by EmbAJAXElement. This is the storage space for them */
+    // TODO: Can we remove those, by using a recursive lookup scheme, instead? (groupid.buttonid)
     int8_t _current_option;
-    void selectButton(EmbAJAXCheckButton* which) override {
+    void selectButton(EmbAJAXCheckButton* which) {
         _current_option = -1;
         for (uint8_t i = 0; i < NUM; ++i) {
             if (which == _children[i]) {
                 _current_option = i;
             } else {
-                buttons[i].setChecked(false);
+                static_cast<EmbAJAXCheckButton*>(static_cast<EmbAJAXElement*>(_children[i]))->setChecked(false);
             }
         }
     }
+};
+
+/** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
+ *
+ *  You can insert either the whole group into an EmbAJAXPage at once, or - for more flexbile
+ *  layouting - retrieve the individual buttons using button(), and insert them into the page
+ *  as independent elements.
+ *
+ *  Note: Template parameter is retained for backwards compatility, only, and will be removed in a future release.
+ *        Almost all member functions are defined in EmbAJAXRadioGroupImpl, for the same reason. In new code, you should
+ *        still use EmbAJAXRadioGroup, but _without_ any template parameter specified. Eventually, EmbAJAXRadioGroupImpl
+ *        will be merged into this class, and your code will continue working, unchanged.
+ *
+ *        Do _not_ specifiy a template parameter.
+ */
+template<size_t N=0> class EmbAJAXRadioGroup : public EmbAJAXRadioGroupImpl {
+public:
+    /** ctor.
+     *  @param id_base the "base" id. Internally, radio buttons with ids id_base0, id_base1, etc. will be created.
+     *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
+     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
+     *                         no option selected by default. */
+    EMBAJAX_DEPRECATED("v0.3.0", "Use template free constructor, instead") EmbAJAXRadioGroup(const char* id_base, const char* options[N], uint8_t selected_option = 0) : EmbAJAXRadioGroupImpl(id_base, N, options, selected_option) {};
+    EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXRadioGroup without specifying a template parameter") EmbAJAXRadioGroup(const char* id_base, int8_t N_options, const char** options, uint8_t selected_option = 0) : EmbAJAXRadioGroupImpl(id_base, N_options, options, selected_option) {};
+};
+
+/* Specialization in order not to nag about template parameter, when none is specified. */
+template<> class EmbAJAXRadioGroup<0> : public EmbAJAXRadioGroupImpl {
+public:
+    /** ctor.
+     *  @param id_base the "base" id. Internally, radio buttons with ids id_base0, id_base1, etc. will be created.
+     *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
+     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
+     *                         no option selected by default. */
+    EmbAJAXRadioGroup(const char* id_base, int8_t N_options, const char** options, uint8_t selected_option = 0) : EmbAJAXRadioGroupImpl(id_base, N_options, options, selected_option) {};
 };
 
 /** @brief Abstract base class for EmbAJAXOptionSelect. */
