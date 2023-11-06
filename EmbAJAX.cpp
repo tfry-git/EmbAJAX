@@ -42,6 +42,8 @@ void EmbAJAXOutputDriverBase::_printFiltered(const char* value, QuoteMode quoted
         if ((quoted == JSQuoted) && (*pos == '"' || *pos == '\\')) {
             _printChar('\\');
             _printChar(*pos);
+        } else if ((quoted == JSQuoted) && (*pos == '\n')) {
+            _printContent("\\n");
         } else if ((quoted == HTMLQuoted) && (*pos == '"')) {
             _printContent("&quot;");
         } else if (HTMLescaped && (*pos == '<')) {
