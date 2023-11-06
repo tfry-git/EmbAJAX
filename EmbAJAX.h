@@ -64,8 +64,7 @@
 
 class EmbAJAXOutputDriverBase;
 class EmbAJAXElement;
-class EmbAJAXContainerBase;
-class EmbAJAXPageBase;
+class EmbAJAXPage;
 
 /** @brief Abstract base class for anything shown on an EmbAJAXPage
  *
@@ -114,29 +113,27 @@ public:
         HTMLAllowed=7
     };
     /** Find child element of this one, with the given id. Returns 0, if this is not a container, or
-     *  does not have such a child. @see EmbAJAXContainer, and @see EmbAJAXHideableContainer. */
+     *  does not have such a child. @see EmbAJAXElementList, and @see EmbAJAXHideableContainer. */
     virtual EmbAJAXElement* findChild(const char*id) const {
         UNUSED(id);
         return 0;
     }
 protected:
 template<size_t NUM> friend class EmbAJAXContainer;
+friend class EmbAJAXElementList;
     virtual void setBasicProperty(uint8_t num, bool status) { UNUSED(num); UNUSED(status); };
 
     static EmbAJAXOutputDriverBase *_driver;
     static char itoa_buf[8];
     constexpr static const char null_string[1] = "";
 
-    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::printChildren() */
-    void printChildren(EmbAJAXBase** children, size_t num) const;
-    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::sendUpdates() */
-    bool sendUpdates(EmbAJAXBase** children, size_t num, uint16_t since, bool first);
-    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXContainer::findChild() */
-    EmbAJAXElement* findChild(EmbAJAXBase** children, size_t num, const char*id) const;
-    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::print() */
-    void printPage(EmbAJAXBase** children, size_t num, const char* _title, const char* _header, uint16_t _min_interval) const;
-    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXPage::handleRequest() */
-    void handleRequest(EmbAJAXBase** children, size_t num, void (*change_callback)());
+    // Note: The following can be moved into EmbAJAXElementList once EmbAJAXContainer is removed for good
+    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::printChildren() */
+    void printChildren(EmbAJAXBase* const* children, size_t num) const;
+    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::sendUpdates() */
+    bool sendUpdates(EmbAJAXBase* const* children, size_t num, uint16_t since, bool first);
+    /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXElementList::findChild() */
+    EmbAJAXElement* findChild(EmbAJAXBase* const* children, size_t num, const char*id) const;
 };
 
 /** @brief Abstract base class for output drivers/server implementations
@@ -151,10 +148,8 @@ template<size_t NUM> friend class EmbAJAXContainer;
  */
 class EmbAJAXOutputDriverBase {
 public:
-    EmbAJAXOutputDriverBase() {
-        _revision = 1;
-        next_revision = _revision;
-    }
+    // Note: Making this constexpr would require useless initialization of _buf before C++20
+    EmbAJAXOutputDriverBase() : _revision(1), next_revision(1) {}
 
     virtual void printHeader(bool html) = 0;
     virtual void printContent(const char *content) = 0;
@@ -163,7 +158,7 @@ public:
      *
      *  @param change_callback See EmbAJAXPage::handleRequest() for details.
      */
-    virtual void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) = 0;
+    virtual void installPage(EmbAJAXPage *page, const char *path, void (*change_callback)()=0) = 0;
     /** Insert this hook into loop(). Takes care of the appropriate server calls, if needed. */
     virtual void loopHook() = 0;
 
@@ -238,13 +233,15 @@ private:
     uint16_t next_revision;
 };
 
-/** Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage()
+EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXPage constructor, directly") inline int MAKE_EmbAJAXPageDeprecated() { return 0; };
+/** DEPRECATED: Convenience macro to set up an EmbAJAXPage, without counting the number of elements for the template. See EmbAJAXPage::EmbAJAXPage().
  *  @param name Variable name of the page instance
  *  @param title HTML Title
  *  @param header_add a custom string to add to the HTML header section, e.g. a CSS definition. */
 #define MAKE_EmbAJAXPage(name, title, header_add, ...) \
     EmbAJAXBase* name##_elements[] = {__VA_ARGS__}; \
-    EmbAJAXPage<sizeof(name##_elements)/sizeof(EmbAJAXBase*)> name(name##_elements, title, header_add);
+    EmbAJAXPage name(name##_elements, title, header_add, 100); \
+    int name##_warning = MAKE_EmbAJAXPageDeprecated();
 
 /** @brief A static chunk of HTML
  *
@@ -253,9 +250,7 @@ private:
 class EmbAJAXStatic : public EmbAJAXBase {
 public:
     /** ctor. Note: Content string is not copied. Don't make this a temporary. */
-    EmbAJAXStatic(const char* content) {
-        _content = content;
-    }
+    constexpr EmbAJAXStatic(const char* content) : _content(content) {}
     void print() const override {
         _driver->printContent(_content);
     }
@@ -276,10 +271,8 @@ public:
      *
      *  @param content_ok Value to show for OK state. May contain HTML markup. Default is "OK" on a green background.
      *  @param content_ok Value to show for broken state. May contain HTML markup. Default is "FAIL" on a green background. */
-    EmbAJAXConnectionIndicator(const char* content_ok = default_ok, const char* content_fail = default_fail) {
-        _content_ok = content_ok;
-        _content_fail = content_fail;
-    }
+    constexpr EmbAJAXConnectionIndicator(const char* content_ok = default_ok, const char* content_fail = default_fail) :
+        _content_ok(content_ok), _content_fail(content_fail) {}
     void print() const override;
     static constexpr const char* default_ok = {"<span style=\"background-color:green;\">OK</span>"};
     static constexpr const char* default_fail = {"<span style=\"background-color:red;\">FAIL</span>"};
@@ -301,7 +294,7 @@ private:
 class EmbAJAXElement : public EmbAJAXBase {
 public:
     /** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
-    EmbAJAXElement(const char* id);
+    constexpr EmbAJAXElement(const char* id) : _id(id), _flags(1 << EmbAJAXBase::Visibility | 1 << EmbAJAXBase::Enabledness), revision(1) {}
 
     const char* id() const {
         return _id;
@@ -348,10 +341,10 @@ protected:
     bool basicProperty(uint8_t num) const {
         return (_flags & (1 << num));
     }
-    byte _flags;
-template<size_t NUM> friend class EmbAJAXPage;
+friend class EmbAJAXPage;
 friend class EmbAJAXBase;
     const char* _id;
+    byte _flags;
     void setChanged();
     bool changed(uint16_t since);
     /** Filthy trick to keep (template) implementation out of the header. See EmbAJAXTextInput::print() */
@@ -363,9 +356,8 @@ private:
 /** @brief An HTML span element with content that can be updated from the server (not the client) */
 class EmbAJAXMutableSpan : public EmbAJAXElement {
 public:
-    EmbAJAXMutableSpan(const char* id) : EmbAJAXElement(id) {
-        _value = 0;
-    }
+    constexpr EmbAJAXMutableSpan(const char* id) : EmbAJAXElement(id), _value(0) {}
+
     void print() const override;
     const char* value(uint8_t which = EmbAJAXBase::Value) const override;
     const char* valueProperty(uint8_t which = EmbAJAXBase::Value) const override;
@@ -511,7 +503,7 @@ private:
     uint16_t _timeout;
 };
 
-class EmbAJAXRadioGroupBase;
+class EmbAJAXRadioGroupImpl;
 
 /** @brief A checkable (option) button.
  *
@@ -539,24 +531,15 @@ public:
 private:
     bool _checked;
     const char* _label;
-template<size_t NUM> friend class EmbAJAXRadioGroup;
-    EmbAJAXCheckButton() : EmbAJAXElement("") {};
-    EmbAJAXRadioGroupBase* radiogroup;
+friend class EmbAJAXRadioGroupImpl;
+    EmbAJAXCheckButton() : EmbAJAXElement(null_string) {};
+    EmbAJAXRadioGroupImpl* radiogroup;
 };
 
-/** @brief abstract base for EmbAJAXRadioGroup, needed for internal reasons. */
-class EmbAJAXRadioGroupBase {
-protected:
-    EmbAJAXRadioGroupBase() {};
-friend class EmbAJAXCheckButton;
-    virtual void selectButton(EmbAJAXCheckButton* which) = 0;
-    const char* _name;
-};
-
-/** @brief Base class for groups of objects */
-template<size_t NUM> class EmbAJAXContainer : public EmbAJAXBase {
+/** @brief Base class for groups of objects. Deprecated. Use EmbAJAXElementList, instead. */
+template<size_t NUM> class EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXElementList, instead") EmbAJAXContainer : public EmbAJAXBase {
 public:
-    EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
+    EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXElementList, instead") EmbAJAXContainer(EmbAJAXBase *children[NUM]) : EmbAJAXBase() {
         _children = children;
     }
     void print() const override {
@@ -575,34 +558,88 @@ protected:
             _children[i]->setBasicProperty(num, status);
         }
     }
-template<size_t> friend class EmbAJAXHideableContainer;
+
     EmbAJAXContainer() {};
     EmbAJAXBase** _children;
 };
 
+/** @brief A container for a group of elements
+ *
+ * This is a modernized alternative to EmbAJAXContainer, without requiring a template parameter.
+ */
+class EmbAJAXElementList : public EmbAJAXBase {
+public:
+    /** constructor taking a static array of elements */
+    template<size_t N> constexpr EmbAJAXElementList(EmbAJAXBase* (&children)[N]) : _children(children), NUM(N) {};
+    /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
+    constexpr EmbAJAXElementList(size_t childcount, EmbAJAXBase* const* children) :
+        EmbAJAXBase(),
+        _children(children),
+        NUM(childcount) {}
+    /** Constructor taking list of pointers to elements. For convenience, you can also insert static fragments directly, like this:
+        @code{.cpp}EmbAJAXList("static html", new EmbAJAXSomething(), "some more html", ...)@endcode
+        in this case, the string literals will be wrapped into EmbAJAXStatic, automatically. */
+    template<class... T> constexpr EmbAJAXElementList(T*... elements) :
+        EmbAJAXBase(),
+        _children(new EmbAJAXBase*[sizeof...(elements)]{toElement(elements)...}),
+        NUM(sizeof...(elements)) {}
+    void print() const override {
+        EmbAJAXBase::printChildren(_children, NUM);
+    }
+    bool sendUpdates(uint16_t since, bool first) override {
+        return EmbAJAXBase::sendUpdates(_children, NUM, since, first);
+    }
+    /** Recursively look for a child (hopefully, there is only one) of the given id, and return a pointer to it. */
+    EmbAJAXElement* findChild(const char*id) const override final {
+        return EmbAJAXBase::findChild(_children, NUM, id);
+    }
+    size_t size() const {
+        return NUM;
+    }
+    EmbAJAXBase* getChild(const size_t index) const {
+        return _children[index];
+    }
+protected:
+friend class EmbAJAXHideableContainer;
+    constexpr EmbAJAXElementList(size_t N) : _children(nullptr), NUM(N) {};
+    void setBasicProperty(uint8_t num, bool status) override {
+        for (size_t i = 0; i < NUM; ++i) {
+            _children[i]->setBasicProperty(num, status);
+        }
+    }
+    EmbAJAXBase* const* _children;
+    const size_t NUM;
+private:
+    EmbAJAXBase* toElement(EmbAJAXBase *e) const { return e; }
+    EmbAJAXBase* toElement(const char *e) const { return new EmbAJAXStatic(e); }
+};
+
 /** @brief A list of objects that can be hidden, completely
  *
- *  This is _essentially_ an EmbAJAXContainer with an id. The one advantage that this
- *  class has other EmbAJAXContainer, is that it can be hidden _completely_, including
+ *  This is _essentially_ an EmbAJAXElementList with an id. The one advantage that this
+ *  class has other EmbAJAXElementList, is that it can be hidden _completely_, including
  *  any EmbAJAXStatic objects inside it. On the client, the children of this element
  *  are encapsulated in a \<div> element. Other than this, it should behave identical
- *  to EmbAJAXContainer.
+ *  to EmbAJAXElementList.
  *
- *  You do _not_ need this class to hide an EmbAJAXContainer that contains only EmbAJAXElement
+ *  You do _not_ need this class to hide an EmbAJAXElementList that contains only EmbAJAXElement
  *  derived objects, or standalone EmbAJAXElement objects.
  *
- *  @note This is _not_ a derived class of EmbAJAXContainer, to avoid adding virtual
+ *  @note This is _not_ a derived class of EmbAJAXElementList, to avoid adding virtual
  *        inheritance just for this. */
-template<size_t NUM> class EmbAJAXHideableContainer : public EmbAJAXElement {
+class EmbAJAXHideableContainer : public EmbAJAXElement {
 public:
-    EmbAJAXHideableContainer(const char* id, EmbAJAXBase *children[NUM]) : EmbAJAXElement(id) {
-        _childlist = EmbAJAXContainer<NUM>(children);
-    }
+    template<int NUM> constexpr EmbAJAXHideableContainer(const char* id, EmbAJAXBase *(&children)[NUM]) : EmbAJAXElement(id), _childlist(children) {}
     void print() const override {
         _driver->printFormatted("<div id=", HTML_QUOTED_STRING(_id), ">");
         _childlist.print();
         _driver->printContent("</div>");
     }
+    /** constructor taking an array of elements with a size that cannot be determined at compile time. In this case, you'll have to specify the size, as the first parameter */
+    constexpr EmbAJAXHideableContainer(const char* id, size_t childcount, EmbAJAXBase* const* children) : EmbAJAXElement(id), _childlist(childcount, children) {}
+    /** constructor taking list of pointers to elements */
+    template<class... T> constexpr EmbAJAXHideableContainer(const char* id, T*... elements) : EmbAJAXElement(id), _childlist(elements...) {}
+
     EmbAJAXElement* findChild(const char* id) const override {
         return _childlist.findChild(id);
     }
@@ -616,38 +653,40 @@ protected:
         EmbAJAXElement::setBasicProperty(num, status);
         _childlist.setBasicProperty(num, status);
     }
-    EmbAJAXContainer<NUM> _childlist;
+    EmbAJAXElementList _childlist;
 };
 
 /** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
  *
- *  You can insert either the whole group into an EmbAJAXPage at once, or - for more flexbile
- *  layouting - retrieve the individual buttons using() button, and insert them into the page
- *  as independent elements. */
-template<size_t NUM> class EmbAJAXRadioGroup : public EmbAJAXContainer<NUM>, public EmbAJAXRadioGroupBase {
+ *  Note: This class is provided to keep old code working, but will be removed in the future.
+ *        You can use all members of this class, but please instantiate it as EmbAJAXRadioGroup.
+ */
+class EmbAJAXRadioGroupImpl : public EmbAJAXElementList {
 public:
-    /** ctor.
-     *  @param id_base the "base" id. Internally, radio buttons with id_s id_base0, id_base1, etc. will be created.
-     *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
-     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
-     *                         no option selected by default. */
-    EmbAJAXRadioGroup(const char* id_base, const char* options[NUM], uint8_t selected_option = 0) : EmbAJAXContainer<NUM>(), EmbAJAXRadioGroupBase() {
-        for (uint8_t i = 0; i < NUM; ++i) {
+    EmbAJAXRadioGroupImpl(const char* id_base, int8_t N_options, const char** options, uint8_t selected_option = 0) : EmbAJAXElementList(N_options) {
+        auto buttons = new EmbAJAXBase*[N_options];
+        childids = new char[N_options][EMBAJAX_MAX_ID_LEN];   // NOTE: this could be RAM optimized
+        for (uint8_t i = 0; i < N_options; ++i) {
             char* childid = childids[i];
             strncpy(childid, id_base, EMBAJAX_MAX_ID_LEN-4);
             itoa(i, &(childid[strlen(childid)]), 10);
-            buttons[i] = EmbAJAXCheckButton(childid, options[i], i == selected_option);
-            buttons[i].radiogroup = this;
-            buttonpointers[i] = &buttons[i];
+            auto button = new EmbAJAXCheckButton(childid, options[i], i == selected_option);
+            button->radiogroup = this;
+            buttons[i] = button;
         }
         _current_option = selected_option;
-         EmbAJAXContainer<NUM>::_children = buttonpointers;  // Hm, why do I need to specify EmbAJAXContainer<NUM>::, explicitly?
+        _children = buttons;
         _name = id_base;
-    }
+    }/*
+    ~EmbAJAXRadioGroup() {
+        for (uint8_t i = 0; i < NUM; ++i) delete _children[i];
+        delete _children;
+        delete childids;
+    }*/
     /** Select / check the option at the given index. All other options in this radio group will become deselected. */
     void selectOption(uint8_t num) {
         for (uint8_t i = 0; i < NUM; ++i) {
-            buttons[i].setChecked(i == num);
+            static_cast<EmbAJAXCheckButton*>(static_cast<EmbAJAXElement*>(_children[i]))->setChecked(i == num);
         }
         _current_option = num;  // NOTE: might be outside of range, but that's ok, signifies "none selected"
     }
@@ -658,24 +697,61 @@ public:
     /** @returns a representation of an individual option element. You can use this to insert the individual buttons
      *           at arbitrary positions in the page layout. */
     EmbAJAXBase* button(uint8_t num) {
-        if (num < NUM) return (&buttons[num]);
-        return 0;
+        if (num < NUM) return (_children[num]);
+        return nullptr;
     }
 private:
-    EmbAJAXCheckButton buttons[NUM]; /** NOTE: Internally, the radio groups allocates individual check buttons. This is the storage space for those. */
-    EmbAJAXBase* buttonpointers[NUM];
-    char childids[NUM][EMBAJAX_MAX_ID_LEN];
+friend class EmbAJAXCheckButton;
+    const char* _name;
+    typedef char idstring[EMBAJAX_MAX_ID_LEN];
+    idstring *childids; /** NOTE: Child ids are not copied by EmbAJAXElement. This is the storage space for them */
+    // TODO: Can we remove those, by using a recursive lookup scheme, instead? (groupid.buttonid)
     int8_t _current_option;
-    void selectButton(EmbAJAXCheckButton* which) override {
+    void selectButton(EmbAJAXCheckButton* which) {
         _current_option = -1;
         for (uint8_t i = 0; i < NUM; ++i) {
-            if (which == buttonpointers[i]) {
+            if (which == _children[i]) {
                 _current_option = i;
             } else {
-                buttons[i].setChecked(false);
+                static_cast<EmbAJAXCheckButton*>(static_cast<EmbAJAXElement*>(_children[i]))->setChecked(false);
             }
         }
     }
+};
+
+/** @brief A set of radio buttons (mutally exclusive buttons), e.g. for on/off, or low/mid/high, etc.
+ *
+ *  You can insert either the whole group into an EmbAJAXPage at once, or - for more flexbile
+ *  layouting - retrieve the individual buttons using button(), and insert them into the page
+ *  as independent elements.
+ *
+ *  Note: Template parameter is retained for backwards compatility, only, and will be removed in a future release.
+ *        Almost all member functions are defined in EmbAJAXRadioGroupImpl, for the same reason. In new code, you should
+ *        still use EmbAJAXRadioGroup, but _without_ any template parameter specified. Eventually, EmbAJAXRadioGroupImpl
+ *        will be merged into this class, and your code will continue working, unchanged.
+ *
+ *        Do _not_ specifiy a template parameter.
+ */
+template<size_t N=0> class EmbAJAXRadioGroup : public EmbAJAXRadioGroupImpl {
+public:
+    /** ctor.
+     *  @param id_base the "base" id. Internally, radio buttons with ids id_base0, id_base1, etc. will be created.
+     *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
+     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
+     *                         no option selected by default. */
+    EMBAJAX_DEPRECATED("v0.3.0", "Use template free constructor, instead") EmbAJAXRadioGroup(const char* id_base, const char* options[N], uint8_t selected_option = 0) : EmbAJAXRadioGroupImpl(id_base, N, options, selected_option) {};
+    EMBAJAX_DEPRECATED("v0.3.0", "Use EmbAJAXRadioGroup without specifying a template parameter") EmbAJAXRadioGroup(const char* id_base, int8_t N_options, const char** options, uint8_t selected_option = 0) : EmbAJAXRadioGroupImpl(id_base, N_options, options, selected_option) {};
+};
+
+/* Specialization in order not to nag about template parameter, when none is specified. */
+template<> class EmbAJAXRadioGroup<0> : public EmbAJAXRadioGroupImpl {
+public:
+    /** ctor.
+     *  @param id_base the "base" id. Internally, radio buttons with ids id_base0, id_base1, etc. will be created.
+     *  @param options labels for the options. Note: The @em array of options may be a temporary, but the option-strings themselves will have to be persistent!
+     *  @param selected_option index of the default option. 0 by default, for the first option, may be > NUM, for
+     *                         no option selected by default. */
+    EmbAJAXRadioGroup(const char* id_base, int8_t N_options, const char** options, uint8_t selected_option = 0) : EmbAJAXRadioGroupImpl(id_base, N_options, options, selected_option) {};
 };
 
 /** @brief Abstract base class for EmbAJAXOptionSelect. */
@@ -718,39 +794,49 @@ private:
     const char* _labels[NUM];
 };
 
-/** @brief Absrract internal helper class
- *
- * Needed for internal reasons. Refer to EmbAJAXPage, instead. */
-class EmbAJAXPageBase {
-public:
-    virtual void handleRequest(void (*change_callback)()=0) = 0;
-    virtual void printPage() = 0;
-};
-
 /** @brief The main interface class
  *
  *  This is the main interface class. Create a web-page with a list of elements on it, and arrange for
  *  print() (for page loads) adn handleRequest() (for AJAX calls) to be called on requests. By default,
  *  both page loads, and AJAX are handled on the same URL, but the first via GET, and the second
  *  via POST. */
-template<size_t NUM> class EmbAJAXPage : public EmbAJAXContainer<NUM>, public EmbAJAXPageBase {
+class EmbAJAXPage : public EmbAJAXElementList {
 public:
+    /** @See EmbAJAXPage(). Struct to encapsulate the constructor arguments. */
+    struct Params {
+        constexpr Params(const char* title = null_string, const char* header_add = null_string, uint16_t min_interval=100) : title(title), header_add(header_add), min_interval(min_interval){};
+        const char* title;
+        const char* header_add;
+        uint16_t min_interval;
+    };
+
     /** Create a web page.
      *  @param children list of elements on the page
      *  @param title title (may be 0). This string is not copied, please do not use a temporary string.
-     *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string). 
+     *  @param header_add literal text (may be 0) to be added to the header, e.g. CSS (linked or in-line). This string is not copied, please do not use a temporary string).
      *  @param min_interval minimum interval (ms) between two requests sent by a single client. A lower value may reduce latency at the cost of traffic/CPU. */
-    EmbAJAXPage(EmbAJAXBase* children[NUM], const char* title, const char* header_add = 0, uint16_t min_interval=100) : EmbAJAXContainer<NUM>(children),
-        _title(title ? title : EmbAJAXBase::null_string), _header_add(header_add ? header_add : EmbAJAXBase::null_string), _min_interval(min_interval) {}
-    /** Duplication of print(), needed for internal reasons. Use print(), instead! */
-    void printPage() override {
+    template<size_t NUM> constexpr EmbAJAXPage(EmbAJAXBase* (&children)[NUM], const char* title, const char* header_add = 0, uint16_t min_interval=100) :
+        EmbAJAXElementList(children), p(Params(title, header_add, min_interval)) {}
+    /** constructor taking an array of elements with a size that cannot be determined at compile time.
+     *  @param childcount Number of elements
+     *  @param children array of pointer to elements.
+     *  For the other parameters, see above. */
+    constexpr EmbAJAXPage(size_t childcount, EmbAJAXBase* const* children, const char* title, const char* header_add = 0, uint16_t min_interval=100) :
+        EmbAJAXElementList(childcount, children), p(Params(title, header_add, min_interval)) {}
+    /** constructor taking list of pointers to elements.
+     *  @param p page parameters. These are the same as in the other constructors, but encapsulated into a struct to allow for future expansion.
+     *  @param elements page elements. These are passed as either EmbAJAXBase* or as contant strings. The latter are wrapped into
+     *         EmbAJAXStatic, automatically.
+    */
+    template<class... T> constexpr EmbAJAXPage(Params p, T*... elements) : EmbAJAXElementList(elements...), p(p) {}
+
+    /** Duplication of print(), historically needed for internal reasons. Use print(), instead! */
+    EMBAJAX_DEPRECATED("v0.3.0", "Use print(), instead") void printPage() const {
         print();
-    }
+    };
     /** Serve the page including headers and all child elements. You should arrange for this function to be called, whenever
      *  there is a GET request to the desired URL. */
-    void print() const override {
-        EmbAJAXBase::printPage(EmbAJAXContainer<NUM>::_children, NUM, _title, _header_add, _min_interval);
-    }
+    void print() const override;
     /** Handle AJAX client request. You should arrange for this function to be called, whenever there is a POST request
      *  to whichever URL you served the page itself, from.
      *
@@ -759,10 +845,7 @@ public:
      *                         response to the change, you should specify this function, and handle the change inside it.
      *                         This way, an update can be sent back to the client, immediately, for a smooth UI experience.
      *                         (Otherwise the client will be updated on the next poll). */
-    void handleRequest(void (*change_callback)()=0) override {
-        _latest_ping = millis();
-        EmbAJAXBase::handleRequest(EmbAJAXContainer<NUM>::_children, NUM, change_callback);
-    }
+    void handleRequest(void (*change_callback)()=0);
     /** Returns true if a client seems to be connected (connected clients should send a ping at least once per second; by default this
      *  function returns whether a ping has been seen within the last 5000 ms.
      *  @param latency_ms Number of milliseconds to consider as maximum silence period for an active connection */
@@ -770,9 +853,7 @@ public:
         return(_latest_ping && (_latest_ping + latency_ms > millis()));
     }
 protected:
-    const char* _title;
-    const char* _header_add;
-    uint16_t _min_interval;
+    Params p;
     uint64_t _latest_ping = 0;
 };
 
