@@ -90,11 +90,11 @@ jobs:
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
 
       - name: Save sketches report as workflow artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           path: ${{ env.SKETCHES_REPORTS_PATH }}
-          name: sketches-reports-artifact
+          name: sketches-reports-artifact-${{ matrix.board.type }}
 
   # When using a matrix to compile for multiple boards, it's necessary to use a separate job for the deltas report
   report:
@@ -104,9 +104,10 @@ jobs:
     steps:
       # This step is needed to get the size data produced by the compile jobs
       - name: Download sketches reports artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: sketches-reports-artifact
+          pattern: sketches-reports-artifact-*
+          merge-multiple: true
           path: ${{ env.SKETCHES_REPORTS_PATH }}
 
       - uses: arduino/report-size-deltas@v1
