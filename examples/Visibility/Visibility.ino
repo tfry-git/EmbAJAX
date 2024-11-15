@@ -37,10 +37,10 @@ void buttonPressed(EmbAJAXPushButton*) { }
 EmbAJAXPushButton button("button", "I can count", buttonPressed);
 
 EmbAJAXBase* container1_contents[] = {&statics[0], &check, &statics[1], &optionselect, &statics[2], &slider, &statics[3]};
-EmbAJAXContainer<7> container1(container1_contents);
+EmbAJAXElementList container1(container1_contents);
 
 EmbAJAXBase* container2_contents[] = {&statics[0], &button, &statics[1], &text, &statics[2], &radio, &statics[3]};
-EmbAJAXHideableContainer<7> container2("hideable", container2_contents);
+EmbAJAXHideableContainer container2("hideable", container2_contents);
 
 // Define the page
 MAKE_EmbAJAXPage(page, "EmbAJAX example - Visibility", "",

@@ -1,4 +1,7 @@
 -- Changes in version 0.3.0 -- UNRELEASED
+x TODO: Adjust radio group, option select
+X TODO: Clean up
+x TODO: More constexpr c'tors
 X TODO: Fix EmbAJAXValidatingTextInput (did it ever work?)
 
 -- Changes in version 0.2.0 -- 2023-04-29

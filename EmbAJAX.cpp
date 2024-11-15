@@ -158,13 +158,6 @@ void EmbAJAXConnectionIndicator::print() const {
 
 ////////////////////////////// EmbAJAXElement /////////////////////////////
 
-/** @param id: The id for the element. Note that the string is not copied. Do not use a temporary string in this place. Also, do keep it short. */
-EmbAJAXElement::EmbAJAXElement(const char* id) : EmbAJAXBase() {
-    _id = id;
-    _flags = 1 << EmbAJAXBase::Visibility | 1 << EmbAJAXBase::Enabledness;
-    revision = 1;
-}
-
 bool EmbAJAXElement::sendUpdates(uint16_t since, bool first) {
     if (!changed(since)) return false;
     if (!first) _driver->printContent(",\n");
@@ -211,13 +204,13 @@ void EmbAJAXElement::printTextInput(size_t SIZE, const char* _value) const {
 
 //////////////////////// EmbAJAXContainer ////////////////////////////////////
 
-void EmbAJAXBase::printChildren(EmbAJAXBase** _children, size_t NUM) const {
+void EmbAJAXBase::printChildren(EmbAJAXBase* const* _children, size_t NUM) const {
     for (size_t i = 0; i < NUM; ++i) {
         _children[i]->print();
     }
 }
 
-bool EmbAJAXBase::sendUpdates(EmbAJAXBase** _children, size_t NUM, uint16_t since, bool first) {
+bool EmbAJAXBase::sendUpdates(EmbAJAXBase* const* _children, size_t NUM, uint16_t since, bool first) {
     for (size_t i = 0; i < NUM; ++i) {
         bool sent = _children[i]->sendUpdates(since, first);
         if (sent) first = false;
@@ -225,7 +218,7 @@ bool EmbAJAXBase::sendUpdates(EmbAJAXBase** _children, size_t NUM, uint16_t sinc
     return !first;
 }
 
-EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase** _children, size_t NUM, const char*id) const {
+EmbAJAXElement* EmbAJAXBase::findChild(EmbAJAXBase* const* _children, size_t NUM, const char*id) const {
     for (size_t i = 0; i < NUM; ++i) {
         EmbAJAXElement* child = _children[i]->toElement();
         if (child) {
@@ -535,12 +528,13 @@ void EmbAJAXOptionSelectBase::updateFromDriverArg(const char* argname) {
 
 //////////////////////// EmbAJAXPage /////////////////////////////
 
-void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _title, const char* _header_add, uint16_t _min_interval) const {
+void EmbAJAXPage::print() const {
 #if EMBAJAX_DEBUG > 2
     time_t start = millis();
 #endif
+
     _driver->printHeader(true);
-    _driver->printFormatted("<!DOCTYPE html>\n<HTML><HEAD><TITLE>", PLAIN_STRING(_title), "</TITLE>\n<SCRIPT>\n"
+    _driver->printFormatted("<!DOCTYPE html>\n<HTML><HEAD><TITLE>", PLAIN_STRING(p.title), "</TITLE>\n<SCRIPT>\n"
 
                             "var serverrevision = 0;\n"
                             "var request_queue = [];\n"   // requests waiting to be sent
@@ -559,7 +553,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "var prev_request = 0;\n"
                             "function sendQueued() {\n"
                             "    var now = new Date().getTime();\n"
-                            "    if (num_waiting > 0 || (now - prev_request < ", INTEGER_VALUE(_min_interval), ")) return;\n"
+                            "    if (num_waiting > 0 || (now - prev_request < ", INTEGER_VALUE(p.min_interval), ")) return;\n"
                             "    var e = request_queue.shift();\n"
                             "    if (!e && (now - prev_request < 1000)) return;\n"
                             "    if (!e) e = {id: '', value: ''};\n" //Nothing in queue, but last request more than 1000 ms ago? Send a ping to query for updates
@@ -579,7 +573,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "    req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n"
                             "    req.send('id=' + e.id + '&value=' + encodeURIComponent(e.value) + '&revision=' + serverrevision);\n"
                             "}\n"
-                            "window.setInterval(sendQueued, ", INTEGER_VALUE(_min_interval/2+1), ");\n"
+                            "window.setInterval(sendQueued, ", INTEGER_VALUE(p.min_interval/2+1), ");\n"
 
                             "function doUpdates(response) {\n"
                             "    serverrevision = response.revision;\n"
@@ -601,7 +595,7 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
                             "    }\n"
                             "}\n"
 
-                            "</SCRIPT>\n", PLAIN_STRING(_header_add),
+                            "</SCRIPT>\n", PLAIN_STRING(p.header_add),
                             "</HEAD>\n<BODY><FORM autocomplete=\"off\" onSubmit=\"return false;\">\n");
                             // NOTE: The nasty thing about autocomplete is that it does not trigger onChange() functions, but also the
                             // "restore latest settings after client reload" is questionable in our use-case.
@@ -617,7 +611,8 @@ void EmbAJAXBase::printPage(EmbAJAXBase** _children, size_t NUM, const char* _ti
 #endif
 }
 
-void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*change_callback)()) {
+void EmbAJAXPage::handleRequest(void (*change_callback)()) {
+    _latest_ping = millis();
     char conversion_buf[EMBAJAX_MAX_ID_LEN];
 
     // handle value changes sent from client
@@ -663,7 +658,7 @@ void EmbAJAXBase::handleRequest(EmbAJAXBase** _children, size_t NUM, void (*chan
     // then relay value changes that have occured in the server (possibly in response to those sent)
     _driver->printHeader(false);
     _driver->printFormatted("{\"revision\": ", INTEGER_VALUE(_driver->revision()), ",\n\"updates\": [\n");
-    sendUpdates(_children, NUM, client_revision, true);
+    sendUpdates(client_revision, true);
     _driver->printContent("\n]}\n");
 
     /* Explanation on revision handling:

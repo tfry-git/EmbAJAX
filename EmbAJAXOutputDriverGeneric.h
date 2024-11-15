@@ -58,12 +58,12 @@ public:
         _server->arg(name).toCharArray (buf, buflen);
         return buf;
     }
-    void installPage(EmbAJAXPageBase *page, const char *path, void (*change_callback)()=0) override {
+    void installPage(EmbAJAXPage *page, const char *path, void (*change_callback)()=0) override {
         _server->on(path, [=]() {
              if (_server->method() == HTTP_POST) {  // AJAX request
                  page->handleRequest(change_callback);
              } else {  // Page load
-                 page->printPage();
+                 page->print();
              }
         });
     }
